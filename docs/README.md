@@ -13,6 +13,7 @@ Read in this order. Each builds on the previous.
 5. **[`05-data-model.md`](./05-data-model.md)** — Concrete data model: entities, relationships, SQLite schema sketch.
 6. **[`06-out-of-scope.md`](./06-out-of-scope.md)** — Explicit list of things v1 does *not* do, with rationale. Important for resisting scope creep.
 7. **[`07-open-questions.md`](./07-open-questions.md)** — Assumptions to validate with real organizers before deep build, and decisions deferred to v2+.
+8. **[`milestones/`](./milestones/README.md)** — Implementation plan broken into ten sequential, self-contained milestones (00 scaffolding → 09 archive + polish). Each milestone has its own deliverables, ordered tasks, data-model deltas, API surface, tests, risks, and acceptance criteria. Locked decisions that override docs 01–07 (single-event-per-file, maroto-not-chromedp, feature-oriented Go layout, etc.) are listed in `milestones/README.md`.
 
 ## Conventions
 
