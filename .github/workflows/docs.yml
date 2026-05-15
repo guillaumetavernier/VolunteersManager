@@ -20,8 +20,9 @@ jobs:
       # cache is warm by the time M00 lands.
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.25"
           cache: false
+        if: hashFiles('go.mod') != ''
       - uses: pnpm/action-setup@v4
         with:
           version: 9
@@ -29,7 +30,7 @@ jobs:
         with:
           node-version: "20"
           cache: pnpm
-          cache-dependency-path: web/pnpm-lock.yaml
-        if: hashFiles('web/pnpm-lock.yaml') != ''
+          cache-dependency-path: pnpm-lock.yaml
+        if: hashFiles('pnpm-lock.yaml') != ''
       - name: harness
         run: ./scripts/harness/check.sh

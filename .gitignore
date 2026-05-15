@@ -1,2 +1,31 @@
+# OS
 .DS_Store
+
+# Local agent isolation
 .claude/worktrees/
+
+# Node / frontend
+node_modules/
+web/node_modules/
+
+# Vite output: ignored except for the placeholder index.html that lets
+# `//go:embed all:dist` compile before the frontend has been built.
+web/dist/*
+!web/dist/.gitkeep
+!web/dist/index.html
+
+# Go build output (root-only; do not match web/dist)
+/dist/
+
+# Runtime data
+*.db
+*.db-wal
+*.db-shm
+*.db.bak
+
+# Tile + asset bundles (populated locally)
+tiles/
+/assets/
+
+# TypeScript build cache
+*.tsbuildinfo

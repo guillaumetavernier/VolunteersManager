@@ -3,7 +3,7 @@
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
 **Last updated:** 2026-05-15
-**Current milestone:** none in progress. Next to start: **[00-scaffolding](../docs/milestones/00-scaffolding.md)**.
+**Current milestone:** **[00-scaffolding](../docs/milestones/00-scaffolding.md)** (in_progress).
 
 ## Status legend
 
@@ -16,7 +16,7 @@
 
 | #  | Slug                          | Status         | Notes |
 |----|-------------------------------|----------------|-------|
-| 00 | 00-scaffolding                | ⚪ not_started | First up. Sets repo layout + CI + dev loop. |
+| 00 | 00-scaffolding                | 🟡 in_progress | First up. Sets repo layout + CI + dev loop. |
 | 01 | 01-event-vs-map               | ⚪ not_started | |
 | 02 | 02-races-gpx                  | ⚪ not_started | |
 | 03 | 03-volunteers-cars-csv        | ⚪ not_started | |
@@ -32,7 +32,14 @@
 When you start a milestone, copy its **Acceptance criteria** block from the milestone file into the corresponding section below and tick items off as they pass. The milestone file remains the canonical wording; this section is the live progress board.
 
 ### 00-scaffolding
-_Not yet started._
+
+- [x] `make dev` opens the browser to a placeholder page served at `http://localhost:8080` proxied to Vite.
+- [x] `make build` produces a single static binary; running it from a fresh directory creates `event.db`, applies migrations, serves the SPA.
+- [x] `go test ./...` green; `pnpm test` green.
+- [ ] CI green on a clean push.
+- [x] Migration runner backs up `event.db` to `event.db.bak` before applying anything pending.
+
+> CI box stays unchecked until the branch is pushed and the workflow runs.
 
 ### 01-event-vs-map
 _Not yet started._

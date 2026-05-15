@@ -1,0 +1,15 @@
+# Release pipeline. Stub for M00 — populated in M09.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    name: cross-compile (stub)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: stub
+        run: echo "Release cross-compilation will be wired up in M09."

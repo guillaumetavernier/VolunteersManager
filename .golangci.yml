@@ -1,0 +1,17 @@
+# Minimal golangci-lint config; expanded as the codebase grows.
+run:
+  timeout: 5m
+  go: "1.25"
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosimple
+
+issues:
+  exclude-use-default: false
