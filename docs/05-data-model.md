@@ -1,5 +1,9 @@
 # 05 — Data Model
 
+> ⚠️ **Substantially superseded.** This schema was sketched assuming multiple events per SQLite file. The implementation uses **one event per SQLite file**, so every `event_id` column shown below has been **dropped** in the actual migrations. The authoritative schemas live in the per-milestone files under [`milestones/`](./milestones/) (`0001_init.sql` through `0008_*.sql`). Use this document as a *conceptual* reference for what each entity stores and how they relate — not for column-level DDL.
+>
+> See [`milestones/README.md`](./milestones/README.md) ("Locked decisions") for the full list of overrides.
+
 This is a concrete sketch, not the final migration. Field names, types, and constraints will be refined as the code is written. Use as a reference, not a contract.
 
 ## Entity-relationship overview

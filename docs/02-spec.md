@@ -1,5 +1,7 @@
 # 02 — Functional Specification
 
+> ⚠️ **Partially superseded.** Several decisions in this document were revised during pre-implementation grilling. See [`milestones/README.md`](./milestones/README.md) ("Locked decisions" section) for the authoritative current call on: single event per SQLite file (replaces "multiple events in the app, but each self-contained" in §1), and the implementation-shape choices that shape §7 (roadbook). Treat the locked-decisions list as binding when it conflicts with anything below.
+
 This document describes *what* the app does, from the coordinator's perspective. Implementation details are in [`03-architecture.md`](./03-architecture.md) and [`04-design.md`](./04-design.md).
 
 ## 1. Top-level concepts

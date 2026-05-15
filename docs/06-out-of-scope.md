@@ -1,5 +1,7 @@
 # 06 — Out of Scope for v1
 
+> ℹ️ **Mostly still authoritative**, but cross-check [`milestones/README.md`](./milestones/README.md) ("Locked decisions") — a handful of items here (auth, routing API, PDF stack, multi-event) have been narrowed further in v1 than this document originally implied.
+
 A list of things this app **does not do**, with explicit rationale. The purpose of this document is to resist scope creep during build and to give a future contributor (or future-you) a clear understanding of *why* each line was drawn.
 
 ## Operational features

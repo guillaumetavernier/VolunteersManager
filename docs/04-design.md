@@ -1,5 +1,13 @@
 # 04 — Detailed Design
 
+> ⚠️ **Substantially superseded.** Several subsystem designs in this document were revised during pre-implementation grilling. See [`milestones/README.md`](./milestones/README.md) ("Locked decisions") and the relevant milestone file before treating any detail here as binding. Specifically:
+>
+> - **§5 Roadbook generation**: rendered with pure-Go maroto v2, not HTML templates fed to chromedp. Mini-maps via go-staticmaps (with the caveat documented in [`milestones/08-roadbook.md`](./milestones/08-roadbook.md) "Risks" — vector pmtiles → PNG is non-trivial). The "HTML → chromedp → PDF" pipeline described here is the old plan; see [`milestones/08-roadbook.md`](./milestones/08-roadbook.md) for the current one.
+> - **§10 Internationalization**: v1 ships **FR only**, with a `t()` API in place so EN is a later mechanical pass.
+> - **§3 Travel-time matrix**: the ORS/OSRM `auto` path is forward-looking; v1 only writes `fallback` (haversine) and `manual` rows.
+>
+> Treat the locked-decisions list and the milestone schemas as authoritative.
+
 This document goes deeper on the subsystems that have non-obvious design decisions. Read [`02-spec.md`](./02-spec.md) and [`03-architecture.md`](./03-architecture.md) first.
 
 ## 1. The constraint engine

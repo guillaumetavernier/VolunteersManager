@@ -1,5 +1,7 @@
 # 07 — Open Questions and Deferred Decisions
 
+> ℹ️ **Partially answered.** Several "validate-before-coding" assumptions here were accepted during pre-implementation grilling (the developer is also the target coordinator-user, so external validation isn't blocking). See [`milestones/README.md`](./milestones/README.md) ("Locked decisions") for what was settled. Remaining open questions and the v2 candidate list at the bottom are still live.
+
 These are questions that came up during scoping and either weren't fully nailed down, or deserve real-world validation before deep build. Sorted by urgency.
 
 ## Validate-before-coding (high priority)

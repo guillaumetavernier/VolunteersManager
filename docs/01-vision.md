@@ -1,5 +1,7 @@
 # 01 — Vision
 
+> ⚠️ **Partially superseded.** Several decisions in this document were revised during pre-implementation grilling. See [`milestones/README.md`](./milestones/README.md) ("Locked decisions" section) for the authoritative current call on: single event per SQLite file (no `event_id` columns), pure-Go PDF via maroto v2 (not chromedp/headless Chrome), feature-oriented Go layout, haversine-only routing in v1, no auth, FR-only i18n in v1, and others. Treat the locked-decisions list as binding when it conflicts with anything below.
+
 ## Problem
 
 Multi-day trail races (and similar multi-day, geographically-distributed events) rely on dozens to hundreds of volunteers staffing aid stations, junctions, dangerous descents, and logistics points across a mountainous course. Coordinators plan all of this in spreadsheets, group chats, and paper. The result is fragile: people get stranded between checkpoints, cars are double-booked, volunteers receive incomplete or contradictory instructions, and last-minute reorganizations cascade through Excel cells nobody can fully trust.

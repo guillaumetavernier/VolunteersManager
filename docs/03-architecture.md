@@ -1,5 +1,14 @@
 # 03 — Architecture
 
+> ⚠️ **Substantially superseded.** This document was written before pre-implementation grilling. See [`milestones/README.md`](./milestones/README.md) ("Locked decisions" section) before treating any detail here as binding. Specifically:
+>
+> - **PDF generation**: pure-Go via maroto v2 + go-staticmaps. **Not** chromedp / headless Chrome. Chrome is no longer a system dependency. The "PDF generation" subsection, the chromedp box in the ASCII diagram, and the "Dependencies the user installs" section are all outdated.
+> - **Routing**: haversine-only in v1. ORS / OSRM is **not** wired in v1; the `travel_times.source` column reserves space for later. The "Routing API" subsection is forward-looking, not v1 scope.
+> - **Repository layout**: feature-oriented (`internal/features/<resource>/`) with cross-cutting subsystems (`internal/{domain/constraints,gpx,routing,roadbook,csv,archive,store,server,i18n}`). The horizontal sketch under "Repository layout" is **not** the layout we're using.
+> - **Database**: single event per SQLite file. No `event_id` column anywhere; switching events = opening a different DB file.
+>
+> Treat the locked-decisions list and the milestone schemas as authoritative.
+
 ## High-level shape
 
 A **single-binary application** that runs locally on the coordinator's laptop (or on a small VPS for the self-hosting-inclined). The binary serves a web UI on `localhost` and stores all data in a SQLite file next to itself.
