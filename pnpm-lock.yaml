@@ -29,6 +29,9 @@ importers:
       pmtiles:
         specifier: ^3.2.0
         version: 3.2.1
+      protomaps-themes-base:
+        specifier: ^4.5.0
+        version: 4.5.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -1242,6 +1245,10 @@ packages:
 
   protocol-buffers-schema@3.6.1:
     resolution: {integrity: sha512-VG2K63Igkiv9p76tk1lilczEK1cT+kCjKtkdhw1dQZV3k3IXJbd3o6Ho8b9zJZaHSnT2hKe4I+ObmX9w6m5SmQ==}
+
+  protomaps-themes-base@4.5.0:
+    resolution: {integrity: sha512-z5A6oXAXNi/CHEIbCfzZ/6uVDgnv3pO4C3LFvomxjUFXwyqWZ7HJdfPoNJSIlsvaQubqsaxCbamEzqBr/W7vkg==}
+    deprecated: This package has been migrated to @protomaps/basemaps with a new major version. See the CHANGELOG at https://github.com/protomaps/basemaps/blob/main/CHANGELOG.md for how to migrate.
 
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
@@ -2657,6 +2664,8 @@ snapshots:
   potpack@2.1.0: {}
 
   protocol-buffers-schema@3.6.1: {}
+
+  protomaps-themes-base@4.5.0: {}
 
   punycode@2.3.1: {}
 

@@ -34,7 +34,9 @@ func run() error {
 	var (
 		port          = flag.Int("port", 8080, "TCP port to listen on")
 		bind          = flag.String("bind", "127.0.0.1", "interface to bind to; v1 forbids non-loopback (see CLAUDE.md)")
-		dataDir       = flag.String("data-dir", ".", "directory containing event.db")
+		dataDir       = flag.String("data-dir", ".", "directory containing event.db, tiles/ and assets/")
+		offlineTiles  = flag.String("offline-tiles", "", "if set, use this directory for .pmtiles instead of <data-dir>/tiles")
+		tileBaseURL   = flag.String("tile-base-url", "https://build.protomaps.com", "upstream prefix used by POST /api/tiles/download")
 		logLevel      = flag.String("log-level", "info", "log level: debug|info|warn|error")
 		frontendProxy = flag.String("frontend-proxy", "", "if set, proxy non-API requests to this URL (dev only)")
 		openBrowser   = flag.Bool("open", true, "open the default browser on startup")
@@ -57,9 +59,29 @@ func run() error {
 		return err
 	}
 
+	tileDir := *offlineTiles
+	if tileDir == "" {
+		tileDir = filepath.Join(*dataDir, "tiles")
+	}
+	if err := os.MkdirAll(tileDir, 0o755); err != nil {
+		return err
+	}
+	if server.AreTilesEmpty(tileDir) {
+		logger.Info("tiles directory empty; downloader available at POST /api/tiles/download", "dir", tileDir)
+	}
+
+	assetDir := filepath.Join(*dataDir, "assets")
+	if err := os.MkdirAll(assetDir, 0o755); err != nil {
+		return err
+	}
+
 	handler, err := server.New(server.Config{
 		Logger:        logger,
 		I18n:          cat,
+		DB:            st.DB,
+		AssetDir:      assetDir,
+		TileDir:       tileDir,
+		TileBaseURL:   *tileBaseURL,
 		FrontendProxy: *frontendProxy,
 	})
 	if err != nil {

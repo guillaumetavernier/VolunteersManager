@@ -41,13 +41,13 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 
 ### 01-event-vs-map
 
-- [ ] Fresh `event.db` → first request returns the wizard.
-- [ ] Wizard submission writes the event row + kicks off tile download.
-- [ ] Once tiles are in place, the map renders fully offline (verify by killing internet).
-- [ ] Click empty map → VS create panel; submit → marker appears.
-- [ ] Drag marker → coords update in DB.
-- [ ] Photo upload writes a content-hashed file; the panel shows the image.
-- [ ] `go test ./...` and `pnpm test` green; Playwright e2e green.
+- [x] Fresh `event.db` → first request returns the wizard. (GET /api/event 404 → wizard renders)
+- [x] Wizard submission writes the event row + kicks off tile download. (PUT /api/event + POST /api/tiles/download chained in mutation)
+- [ ] Once tiles are in place, the map renders fully offline (verify by killing internet). _Mechanically wired (MapLibre + pmtiles protocol). Needs runtime verification with a real `.pmtiles` archive._
+- [ ] Click empty map → VS create panel; submit → marker appears. _Wired via `MapView` click handler; needs Playwright e2e to tick._
+- [x] Drag marker → coords update in DB. (PATCH /api/vs/{id} on marker dragend; PATCH endpoint covered by tests + verified via curl)
+- [x] Photo upload writes a content-hashed file; the panel shows the image. (backend table-driven test; frontend hook wires multipart upload)
+- [ ] `go test ./...` and `pnpm test` green; Playwright e2e green. _Go + Vitest green; Playwright still has no specs (deferred from M00 scaffold; will land as part of e2e pass)._
 
 ### 02-races-gpx
 _Not yet started._
@@ -84,7 +84,7 @@ These came up during pre-implementation grilling and the post-merge review but a
 - **Mini-map vector-pmtiles → PNG rasterization** (M08). Three mitigations enumerated in M08 risks; the current default is to ship v1 with mini-maps disabled if neither (a) raster pmtiles archive nor (b) offline pre-rasterization lands easily. Spike on this before committing to a roadbook ship date.
 - **`gpx_files.day`, `missions.day`, `trips.day` → real-date helper** (cross-cutting). The integer `day` and `events.start_date` need a single helper for conversion. Decide where it lives — likely `internal/domain/eventcal.go` — before M02.
 - **i18n key extraction timing** (M05 → v1.x). Current FR-only constraint engine emits messages directly. Refactor to emit `(Key, Args)` instead of `Message` is scheduled "when EN ships."
-- **Tile style JSON specifics** (M01). `protomaps-themes-base` is the chosen generator; lock the theme variant (`light`, `dark`, `white`, `black`, `grayscale`) before M01.
+- ~~**Tile style JSON specifics** (M01). `protomaps-themes-base` is the chosen generator; lock the theme variant (`light`, `dark`, `white`, `black`, `grayscale`) before M01.~~ **Resolved 2026-05-16:** `light` variant locked in `web/src/features/map/style.ts`.
 
 When an open question gets answered, move it into the relevant milestone file and remove it from here.
 

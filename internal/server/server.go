@@ -2,6 +2,7 @@
 package server
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -10,12 +11,18 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/guillaumetavernier/volunteersmanager/internal/features/event"
+	"github.com/guillaumetavernier/volunteersmanager/internal/features/vs"
 	"github.com/guillaumetavernier/volunteersmanager/internal/i18n"
 )
 
 type Config struct {
 	Logger        *slog.Logger
 	I18n          *i18n.Catalog
+	DB            *sql.DB
+	AssetDir      string // where photo uploads land
+	TileDir       string // where pmtiles files live
+	TileBaseURL   string // upstream prefix for downloads; empty disables remote fetch
 	FrontendProxy string // when non-empty, "/" is proxied to this URL (dev only)
 }
 
@@ -28,6 +35,14 @@ func New(cfg Config) (http.Handler, error) {
 	r.Use(recoverer(cfg.Logger))
 
 	r.Get("/healthz", healthz)
+
+	if cfg.DB != nil {
+		event.NewHandler(event.NewStore(cfg.DB)).Mount(r)
+		vs.NewHandler(vs.NewStore(cfg.DB), cfg.AssetDir).Mount(r)
+	}
+	if cfg.TileDir != "" {
+		NewTileService(cfg.TileDir, cfg.TileBaseURL).Mount(r)
+	}
 
 	frontend, err := frontendHandler(cfg.FrontendProxy)
 	if err != nil {
