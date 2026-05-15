@@ -88,7 +88,7 @@ func loadApplied(db *sql.DB) (map[int]bool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("migrate: list applied: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	out := map[int]bool{}
 	for rows.Next() {
 		var v int
@@ -177,7 +177,7 @@ func backup(path string) error {
 	if err != nil {
 		return err
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 
 	dstPath := path + ".bak"
 	if err := os.MkdirAll(filepath.Dir(dstPath), 0o755); err != nil {
