@@ -2,8 +2,8 @@
 
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
-**Last updated:** 2026-05-15
-**Current milestone:** **[00-scaffolding](../docs/milestones/00-scaffolding.md)** (in_progress).
+**Last updated:** 2026-05-16
+**Current milestone:** **[01-event-vs-map](../docs/milestones/01-event-vs-map.md)** (in_progress).
 
 ## Status legend
 
@@ -16,8 +16,8 @@
 
 | #  | Slug                          | Status         | Notes |
 |----|-------------------------------|----------------|-------|
-| 00 | 00-scaffolding                | 🟡 in_progress | First up. Sets repo layout + CI + dev loop. |
-| 01 | 01-event-vs-map               | ⚪ not_started | |
+| 00 | 00-scaffolding                | 🟢 completed   | All five CI checks green on PR #1. |
+| 01 | 01-event-vs-map               | 🟡 in_progress | Event + VS CRUD + Protomaps tile serving. |
 | 02 | 02-races-gpx                  | ⚪ not_started | |
 | 03 | 03-volunteers-cars-csv        | ⚪ not_started | |
 | 04 | 04-missions-assignments       | ⚪ not_started | Includes VS-delete cascade-confirm extension. |
@@ -36,13 +36,18 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 - [x] `make dev` opens the browser to a placeholder page served at `http://localhost:8080` proxied to Vite.
 - [x] `make build` produces a single static binary; running it from a fresh directory creates `event.db`, applies migrations, serves the SPA.
 - [x] `go test ./...` green; `pnpm test` green.
-- [ ] CI green on a clean push.
+- [x] CI green on a clean push.
 - [x] Migration runner backs up `event.db` to `event.db.bak` before applying anything pending.
 
-> CI box stays unchecked until the branch is pushed and the workflow runs.
-
 ### 01-event-vs-map
-_Not yet started._
+
+- [ ] Fresh `event.db` → first request returns the wizard.
+- [ ] Wizard submission writes the event row + kicks off tile download.
+- [ ] Once tiles are in place, the map renders fully offline (verify by killing internet).
+- [ ] Click empty map → VS create panel; submit → marker appears.
+- [ ] Drag marker → coords update in DB.
+- [ ] Photo upload writes a content-hashed file; the panel shows the image.
+- [ ] `go test ./...` and `pnpm test` green; Playwright e2e green.
 
 ### 02-races-gpx
 _Not yet started._
