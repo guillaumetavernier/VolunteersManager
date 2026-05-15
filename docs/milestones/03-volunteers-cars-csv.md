@@ -59,6 +59,14 @@ The coordinator can populate the volunteer roster (form-by-form or via CSV impor
        created_at        TEXT NOT NULL DEFAULT (datetime('now')),
        updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
    );
+
+   -- Transient CSV-import sessions (cleaned on commit or after 1h TTL).
+   CREATE TABLE csv_imports (
+       id          TEXT PRIMARY KEY,            -- random session ID
+       state       TEXT NOT NULL,               -- JSON: parsed rows, mapping, classifications, resolutions
+       created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+       expires_at  TEXT NOT NULL                -- created_at + 1h; checked on every access
+   );
    ```
 2. **`internal/features/volunteer/`** — model + store + handlers + tests. CRUD endpoints plus a `?archived=true|false|all` query parameter on list.
 3. **`internal/features/car/`** — same layout.
@@ -90,7 +98,7 @@ The coordinator can populate the volunteer roster (form-by-form or via CSV impor
 
 ## API surface
 
-- Volunteer CRUD: `GET /api/volunteers`, `POST`, `GET /api/volunteers/{id}`, `PATCH`, `DELETE` (archives unless `?hard=true`).
+- Volunteer CRUD: `GET /api/volunteers`, `POST`, `GET /api/volunteers/{id}`, `PATCH`, `DELETE` (archives by default — soft delete via `archived = 1`). `DELETE /api/volunteers/{id}?hard=true` performs a hard delete; if the volunteer has assignments, trips (as driver or passenger), or is a car's default driver, the endpoint returns **409 with a payload describing dependents** and the UI must show a cascade-confirmation dialog before retrying with `?hard=true&force=true`. This mirrors the VS-delete pattern set up in M01 and extended in M04/M06.
 - Car CRUD: same shape on `/api/cars`.
 - CSV: `POST /api/csv/upload`, `POST /api/csv/{session}/mapping`, `POST /api/csv/{session}/resolve`, `POST /api/csv/{session}/commit`, `GET /api/volunteers/export.csv`, `GET /api/volunteers/template.csv`.
 
@@ -111,7 +119,7 @@ The coordinator can populate the volunteer roster (form-by-form or via CSV impor
 
 ## Risks
 
-- **Free-text role_types.** Without a canonical roles table, typos proliferate ("Ravitaillement" vs "ravitaillement" vs "Ravito"). Mitigation: case-insensitive autocomplete from the union of all existing role_types.
+- **Free-text role_types.** Without a canonical roles table, typos proliferate ("Ravitaillement" vs "ravitaillement" vs "Ravito"). Mitigation: case-insensitive autocomplete from the union of all existing role_types. **Downstream cost:** typos here cascade into false `role_mismatch` warnings in M05 (a volunteer with `["Ravito"]` won't match a mission with `role_type = "Ravitaillement"`). M05's risk section flags this; the cheapest mitigation is autocomplete here.
 - **Phone normalization edge cases.** Numbers without country prefix get the event default. Numbers with `+` are accepted as-is. Numbers that fail parsing show a row error in the preview rather than silently failing.
 
 ## Acceptance criteria

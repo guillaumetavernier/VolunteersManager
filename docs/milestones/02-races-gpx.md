@@ -71,12 +71,12 @@ The coordinator can define one or more races inside the event, upload one or mor
 3. **`internal/features/race/`** — CRUD, plus `POST /api/races/{id}/gpx` (multipart upload) and `POST /api/races/{id}/recompute` (recomputes projections + auto times).
 4. **`internal/features/race_vs/`** — manage the ordered list:
    - `GET /api/races/{id}/vs` — ordered list with both projected dist and time fields.
-   - `PUT /api/races/{id}/vs` — replaces the whole ordered list. Body: `[{vs_id, sequence}]`. Triggers auto-recompute.
-   - `PATCH /api/races/{id}/vs/{vs_id}` — sets `manual_first_in`/`manual_last_in` overrides.
-5. **Auto-recompute logic**:
+   - `PUT /api/races/{id}/vs` — **replaces the whole ordered list**. Body: `[{vs_id, sequence}]`. Used by the frontend on drag-reorder (`useUpdateRaceVsOrder`) and on add/remove of an entry. Triggers auto-recompute.
+   - `PATCH /api/races/{id}/vs/{vs_id}` — **sets per-entry `manual_first_in` / `manual_last_in` overrides only**. Used by the frontend on inline-edit of those two fields (`useOverrideRaceVsTimes`). Does **not** change ordering.
+5. **Auto-recompute logic** (units: paces are in km/h, distance in metres, so convert with `* 1000.0 / 3600.0` to m/s):
    - Each VS's projected distance = `NearestOnTrack(merged_gpx_points, vs.lat, vs.lon).cumDistM`.
-   - `auto_first_in = start_time + projected_dist_m / (front_pace * 1000/3600)`.
-   - `auto_last_in = start_time + projected_dist_m / (tail_pace * 1000/3600)`.
+   - `auto_first_in = start_time + projected_dist_m / (front_pace * 1000.0 / 3600.0)` — front-runner (fastest) pace gives the **earliest** arrival.
+   - `auto_last_in  = start_time + projected_dist_m / (tail_pace  * 1000.0 / 3600.0)` — tail-runner (slowest) pace gives the **latest** arrival.
    - Manual values, when non-null, take precedence in any consumer.
 6. **Recompute triggers** — fired automatically on:
    - GPX upload to a race.

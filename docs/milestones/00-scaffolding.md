@@ -47,7 +47,7 @@ A single repo where `make dev` brings up a working dev loop (Go backend + Vite f
 │   │   ├── migrate.go                          # ordered .sql file runner + .bak before apply
 │   │   ├── migrate_test.go
 │   │   └── migrations/
-│   │       └── 0001_init.sql                   # empty events table (singleton row)
+│   │       └── 0001_init.sql                   # singleton events table; row inserted in M01
 │   ├── domain/
 │   │   └── types.go                            # ID type aliases used everywhere
 │   ├── i18n/
@@ -108,7 +108,7 @@ A single repo where `make dev` brings up a working dev loop (Go backend + Vite f
 5. **`internal/server/server.go`.** chi router. Mount `/healthz` returning `{"ok": true}`. Slog request logger. Panic recovery middleware. Read flags: `--port`, `--data-dir`, `--log-level`, `--bind` (default `127.0.0.1`).
 6. **`internal/server/embed.go`.** `//go:embed web/dist` is mounted; not-found falls back to `index.html` for SPA routing.
 7. **`cmd/volunteers/main.go`.** Parse flags, init store, run migrations, build server, listen, and `open` the default browser (a small helper that runs `open` / `xdg-open` / `start` based on OS).
-8. **Vite frontend scaffold.** `pnpm create vite web --template react-ts`. Install: `react-router` is unused — install `@tanstack/react-router`, `@tanstack/react-query`, `zustand`, `tailwindcss`, `@dnd-kit/core`, `react-hook-form`, `zod`, `@hookform/resolvers`, `maplibre-gl`, `lucide-react`. Configure Tailwind. Add the placeholder route.
+8. **Vite frontend scaffold.** `pnpm create vite web --template react-ts`. Install (use `@tanstack/react-router`, not `react-router`): `@tanstack/react-router`, `@tanstack/react-query`, `zustand`, `tailwindcss`, `@dnd-kit/core`, `react-hook-form`, `zod`, `@hookform/resolvers`, `maplibre-gl`, `pmtiles`, `lucide-react`. Configure Tailwind. Add the placeholder route.
 9. **shadcn/ui setup.** Initialize per their docs in `web/src/components/ui/`, but only generate components as features need them (start with none).
 10. **`web/src/lib/api.ts`** — `apiFetch<T>(path, opts)` wrapper using the same base URL as the page (works behind a reverse proxy).
 11. **`web/src/lib/i18n.ts`** — `t(key, args)` returns key for now; will load `fr.json` once any string exists.

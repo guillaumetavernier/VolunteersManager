@@ -16,7 +16,7 @@ The ordering reflects the layer-cake decision (foundation first, then geometry, 
 | [05](./05-constraints.md) | **Constraint engine** | Pure-function warning engine, full recompute on every mutation, badges + issues panel |
 | [06](./06-trips-travel-matrix.md) | **Trips + Travel matrix** | Haversine travel-time matrix, trip editor, board/alight per stop, transport warnings |
 | [07](./07-timeline.md) | **Timeline** | Hand-rolled scrubber, front/tail runner animation along GPX, volunteer & car position sync |
-| [08](./08-roadbook.md) | **Roadbook** | maroto v2 PDFs, mini-map via go-staticmaps, master document, golden-file determinism |
+| [08](./08-roadbook.md) | **Roadbook** | maroto v2 PDFs, master document, golden-file determinism (mini-map is conditional — see M08 risks) |
 | [09](./09-archive-polish.md) | **Archive + polish** | Event zip export/import, daily auto-backup, performance pass, release pipeline |
 
 ## Conventions
@@ -24,7 +24,7 @@ The ordering reflects the layer-cake decision (foundation first, then geometry, 
 - **Acceptance criteria** end each milestone. Don't move on until they pass.
 - **Deliverables** are concrete artifacts: files, endpoints, screens, tests.
 - **Out of scope** sections are explicit per milestone — features that belong later go in a later milestone, not this one.
-- **References** link back to the relevant section of the spec docs (`docs/01-vision.md` through `docs/07-open-questions.md`).
+- **References** link back to the relevant section of the spec docs (`docs/01-vision.md` through `docs/07-open-questions.md`). ⚠️ **Those original docs are partially superseded** by the locked decisions below and by these per-milestone files. Each of `docs/01-07` carries a banner at the top flagging this. When a reference cites them, treat the cited content as conceptual context unless it's reaffirmed in the milestone itself.
 
 ## Locked decisions that apply across milestones
 

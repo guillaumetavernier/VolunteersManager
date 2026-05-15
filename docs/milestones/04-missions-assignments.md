@@ -70,7 +70,7 @@ The coordinator can define missions at each VS (day, time window, role, headcoun
    - `GET /api/assignments?volunteer={vid}` — volunteer's schedule.
 4. **Staffing computation** — derived, not stored: `len(assignments) vs headcount`. Surface in the mission API response as `{assigned: N, needed: N, status: under|exact|over}`. This is *not* the constraint engine yet; it's just a count.
 5. **"Volunteer picker" filter logic** — implemented client-side for responsiveness; the server provides the raw `GET /api/volunteers` and the client filters by:
-   - `volunteer.role_types ∩ mission.role_type ≠ ∅` (role match).
+   - `mission.role_type ∈ volunteer.role_types` (role match; `role_type` is a single string on the mission and a list on the volunteer).
    - No existing assignment overlaps `[mission.start_time, mission.end_time]`.
    - Availability windows overlap the mission's time window.
    The UI shows compatible volunteers above a "show all" toggle.
@@ -83,6 +83,8 @@ The coordinator can define missions at each VS (day, time window, role, headcoun
    - `<AssignmentDropTarget>` and `<VolunteerDragItem>` components built on dnd-kit.
    - `VolunteerPicker` modal — search + filter pills (role, availability), click-to-assign.
 8. **Grid view** — `/missions/grid` — wide table, rows = VS, columns = 30-min time buckets per day, cell content = mission chips. Used as the coordinator's command paper precursor.
+9. **Extend VS delete handler** (forward-reference from M01): `missions.vs_id` and `assignments.mission_id` both cascade. The `DELETE /api/vs/{id}` handler must now refuse with `409 + {dependents: {missions: N, assignments: M}}` unless `?force=true` is passed. The frontend `useDeleteVs()` mutation surfaces the dependent counts in a confirmation dialog before retrying with `force`. This is the realization of the principle in `docs/01-vision.md` "never make data unrecoverable without explicit confirmation."
+10. **Tagged-race cleanup on race delete** — `missions.tagged_race_ids` is a JSON list with no FK. When a race is deleted, run an opportunistic cleanup pass that removes that race's ID from any mission's `tagged_race_ids`. Document as known limitation: orphan IDs are non-load-bearing (they're filter-only per `02-spec.md` §1), so missing the cleanup is non-fatal but messy.
 
 ## Data model deltas
 
@@ -118,6 +120,9 @@ The coordinator can define missions at each VS (day, time window, role, headcoun
 - [ ] Try to assign the same volunteer twice → friendly error (409 surfaced as a toast).
 - [ ] The volunteer picker filters compatible candidates by default; "show all" reveals the rest.
 - [ ] Reload → assignments persist; grid view shows them in the right cells.
+- [ ] Grid view (`/missions/grid`) renders correctly for a multi-day event with overlapping missions in the same VS.
+- [ ] Delete a VS that has missions and assignments → confirmation dialog lists the counts → confirming with force performs the cascade.
+- [ ] Delete a race that is in a mission's `tagged_race_ids` → the tag disappears from the mission on next list fetch.
 - [ ] `go test ./...` and `pnpm test` green; Playwright e2e green.
 
 ## References

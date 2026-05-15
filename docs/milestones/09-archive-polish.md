@@ -10,7 +10,7 @@ The coordinator can export the current event as a portable zip archive (DB dump 
 
 ## Scope (in)
 
-- **Export event** → `event_<slug>_<YYYYMMDD>.zip` with `manifest.json`, `event.sql`, `assets/`, `gpx/`, `tiles/` *excluded* (too large; user re-downloads or supplies separately).
+- **Export event** → `event_<slug>_<YYYYMMDD>.zip` with `manifest.json`, `event.sql`, `assets/`, `gpx/`. **`tiles/` is excluded** (a regional `.pmtiles` is 100s of MB to GBs; archives stay portable). On import on a new machine without internet, the importer logs a clear warning that map tiles must be supplied separately (via `--offline-tiles=<path>` or the in-app downloader); all non-map functionality works without them.
 - **Import event** → creates a *new SQLite file* (because v1 is single-event-per-file), restores schema + rows + assets + gpx into the new file's directory layout.
 - **Daily auto-backup** option in event settings → copies `event.db` to `backups/event.db.YYYY-MM-DD` if last backup is >24h old.
 - **Performance pass**: scripts to bench constraint engine, roadbook generation, timeline frame budget against the targets in [`../03-architecture.md`](../03-architecture.md) §Performance.
@@ -33,12 +33,13 @@ The coordinator can export the current event as a portable zip archive (DB dump 
      - `event.sql`: a SQL dump of every table (excluding `schema_migrations`), in canonical row order (`ORDER BY id`).
      - `assets/`: every file referenced by a row's `*_path` column.
      - `gpx/`: GPX source files for every race.
-   - `import.go` — `Import(zip io.Reader, targetDBPath string) error`. Creates a new empty SQLite at `targetDBPath`, runs migrations to current schema version, executes the dumped SQL (rewriting `INSERT INTO ... (id, ...)` so new IDs are auto-assigned but FKs are re-mapped — easiest approach: import in topological order and remember an old-id→new-id map per table).
+   - `import.go` — `Import(zip io.Reader, targetDBPath string) error`. Creates a new empty SQLite at `targetDBPath`, runs migrations to current schema version, then replays the dumped SQL **preserving original IDs** (since the target DB starts empty, original IDs are free to take; replay = wrapped `INSERT` statements verbatim, then `UPDATE sqlite_sequence SET seq = (SELECT MAX(id) FROM <table>)` for each AUTOINCREMENT table). This is much simpler than rewriting FKs with an old-id→new-id map. The one wrinkle: the `events` row has `CHECK (id = 1)`; if the archive's `events` row is `id = 1` (always true in single-event-per-file mode, by definition), this works directly with no renumbering.
    - `manifest.go` — the JSON shape; refuses imports with `schema_version > current`.
    - Heavy tests: round-trip a fixture event, hash both DBs (canonical dump), assert equality.
 2. **Auto-backup** — `internal/server/backup.go`:
    - On startup, if `backup.daily = true` in event settings and `backups/event.db.<today>` doesn't exist, copy the file before running migrations.
    - Setting is event-scoped; UI is a single toggle.
+   - **Coexists with M00's migration `.bak`**: the migration runner already writes `event.db.bak` immediately before applying any pending migration. The daily backup writes `backups/event.db.<YYYY-MM-DD>` once per calendar day. Different purposes — `.bak` is rollback-on-migration-failure (overwritten each migration), the daily file is point-in-time history (one per day, kept forever). Document both in the README so the coordinator knows what each is for.
 3. **Bench scripts** under `scripts/`:
    - `bench_constraints.go` — generates a 100-vol / 200-mission / 50-trip fixture in a temp DB, runs `Compute` 1000× from a warm cache, reports mean / p95 / p99. Fails CI if p95 > 100 ms.
    - `bench_roadbook.go` — generates 100 PDFs against the same fixture; reports total wall-clock. Fails CI if > 60 s.
@@ -90,6 +91,7 @@ The coordinator can export the current event as a portable zip archive (DB dump 
 - **Asset path rewriting on import.** Old paths like `assets/vs/<hash>.jpg` are re-used as-is in the new file's directory — easy because content-hashes make the paths stable. If two events happen to share a hash, both point at the same byte content (fine, idempotent).
 - **Schema version drift.** If we ship v1.0 and then add a column in v1.1, importing a v1.0 archive into v1.1 must auto-migrate. The migration runner already handles this — the import just runs it against the freshly-created target DB.
 - **Performance budget on slower laptops.** The "modest laptop" target in the spec is aspirational. If a coordinator's old machine misses the 30 fps timeline target, document the minimum spec rather than chasing micro-optimizations.
+- **Imports on machines without tiles.** Tiles are excluded from the archive; the imported event opens but the map shows a blank background until the coordinator provides tiles. This is intentional — surface it as a one-time toast on first-open of an imported event.
 
 ## Acceptance criteria
 

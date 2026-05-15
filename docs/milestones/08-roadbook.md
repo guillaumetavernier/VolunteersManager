@@ -20,7 +20,7 @@ The coordinator clicks "Generate roadbooks" and the app produces one byte-determ
 - Co-staff/co-passenger disclosure: name + role + phone only (no email/address/emergency contact).
 - Driver's own roadbook lists their trips as "Drive: pick up X at VS-A at HH:MM..." plus their missions.
 - Determinism harness: golden-file tests.
-- In-app preview: HTML mirror of the maroto layout for an iframe preview.
+- In-app preview: render the **real PDF** for a single volunteer via the maroto pipeline, return its URL, embed it in the settings page via a browser-native `<iframe src="<pdf-url>">`. No HTML mirror — the PDF *is* the preview, which avoids maintaining a parallel renderer (the trade-off vs. the old chromedp design, where HTML and PDF were the same artifact).
 - Settings UI for all roadbook customization fields.
 
 ## Scope (out)
@@ -32,23 +32,28 @@ The coordinator clicks "Generate roadbooks" and the app produces one byte-determ
 
 ## Implementation steps
 
-1. **Migration `0008_roadbook_settings.sql`** — the `events.settings` JSON gains a `roadbook` object. No schema change required if we keep the JSON-blob approach; the migration just adds a constraint or default if needed:
+1. **Migration `0008_roadbook_fields.sql`** — adds four event-level columns that the roadbook needs but didn't fit cleanly in the `settings` JSON blob (they're either large binaries referenced by path, or frequently-read fields):
    ```sql
-   -- Optional: nothing new; settings JSON gains a roadbook key handled at app level.
+   ALTER TABLE events ADD COLUMN logo_path         TEXT;          -- assets/logo/<sha>.<ext>
+   ALTER TABLE events ADD COLUMN sponsor_path      TEXT;          -- assets/sponsor/<sha>.<ext>
+   ALTER TABLE events ADD COLUMN coordinator_name  TEXT;          -- prints in roadbook header
+   ALTER TABLE events ADD COLUMN coordinator_phone TEXT;          -- E.164; prints in roadbook header
    ```
+   Everything else (colors, toggles, section order, header/footer text) lives in `events.settings` JSON under a `roadbook` key — no DDL for those.
 2. **Settings shape** in `internal/features/event/settings.go`:
    ```go
    type RoadbookSettings struct {
-       LogoPath       string            // assets/logo/<sha>.png
-       PrimaryColor   string            // hex
-       SponsorStrip   string            // optional asset path
+       PrimaryColor   string            // hex; lives in events.settings.roadbook
        HeaderText     string            // multi-line
        FooterText     string            // multi-line
        SectionOrder   []SectionKind     // explicit ordering
        SectionVisible map[SectionKind]bool
-       MiniMap        bool
+       MiniMap        bool              // see "Risks" — may force-off in v1 if vector→PNG can't be solved
    }
    type SectionKind string  // header, day, footer, sponsor, emergency_contact, customizable_message, general_info, vs_reference
+
+   // Coordinator name/phone and logo/sponsor paths live on the events row (see migration 0008),
+   // accessed via Event.LogoPath, Event.CoordinatorPhone, etc. — not in RoadbookSettings.
    ```
 3. **`internal/roadbook/` package**:
    - `gather.go` — `BuildVolunteerData(state, volunteerID) (VolunteerRoadbook, error)`. Pulls assignments, trips (as driver or passenger), default VS, settings; builds an ordered day-by-day list of `Mission | Trip | Idle` blocks with all required fields (co-staff phone numbers etc.).
@@ -58,33 +63,38 @@ The coordinator clicks "Generate roadbooks" and the app produces one byte-determ
    - `minimap.go` — `RenderMiniMap(day, race, vsList) ([]byte, error)`. Uses `go-staticmaps` to draw the bounding box, GPX polyline, VS markers; returns a deterministic PNG (no antialiasing variability — seed fixed; tile provider configured to local pmtiles via custom tile fetcher).
    - `determinism.go` — wrap maroto calls to suppress timestamps/random IDs; embed fonts; content-hash any image path.
 4. **maroto v2 wiring** — start with a small subset of components (text, image, signature, divider, page-break). Section composition is a `func(m core.Maroto, data VolunteerRoadbook, settings RoadbookSettings)` pattern; sections register themselves in an ordered list keyed by `SectionKind`.
-5. **Mini-map tile source for go-staticmaps**: implement a custom `TileProvider` that reads from our local `.pmtiles` archive (reuse the byte-range reader from M01). This keeps the mini-map fully offline.
+5. **Mini-map tile source for go-staticmaps** — **see "Risks" below; this step is the largest unknown in the milestone.** `go-staticmaps` expects raster PNG tiles; the M01 `.pmtiles` archive is vector. Rendering vector pmtiles to a deterministic PNG inside pure Go has no off-the-shelf library. Three possible paths:
+   - **(a)** Ship a small raster pmtiles archive (e.g., `tiles/<region>.raster.pmtiles`) just for mini-map use; download alongside the vector one. Easiest, but adds another asset.
+   - **(b)** Rasterize regions of interest offline (one PNG per day's bounding box) at event-setup time using an external tool (`tippecanoe`, `maputnik`, headless MapLibre); cache in `assets/minimaps/<sha>.png`. Adds offline tooling.
+   - **(c)** Force-off the mini-map in v1. `RoadbookSettings.MiniMap = false`, no rendering. Defer the geographic visual to v1.x. **Recommended if (a) and (b) are both painful.**
+   Pick (c) for the initial v1 ship unless one of (a)/(b) lands easily during implementation. The settings UI keeps the toggle; if disabled at the binary level (no rasterizer), it's grayed out with a tooltip.
 6. **Driver roadbook variant** — when rendering for a driver, prepend a "Drive" block to each day's timeline summarizing the trip's stops with timing.
 7. **Master grid sheet** — wide table (landscape page or scaled), rows = VS, columns = 30-min slots per day, cells = mission titles + assignee initials.
 8. **Endpoints** in `internal/features/roadbook/`:
-   - `POST /api/roadbooks/generate` — synchronous (per [`../06-out-of-scope.md`](../06-out-of-scope.md) "No background job queue"). Returns `{volunteer_pdfs: [{volunteer_id, path}], master_pdf: path}`.
-   - `GET /api/roadbooks/<sha>.pdf` — download by hash (PDFs are content-addressed under `exports/<eventSlug>/`).
-   - `POST /api/roadbooks/preview` — body: `{volunteer_id, settings}`. Returns HTML for iframe preview.
+   - `POST /api/roadbooks/generate` — synchronous (per [`../06-out-of-scope.md`](../06-out-of-scope.md) "No background job queue"). Returns `{volunteer_pdfs: [{volunteer_id, filename}], master_pdf: filename}`. Each filename is the safe form `roadbook_<last>_<first>.pdf` (or `master_<slug>.pdf`); the file lives at `exports/<eventSlug>/<filename>`.
+   - `GET /api/roadbooks/files/{filename}` — download by filename (whitelist enforced; only files under `exports/<eventSlug>/` are servable, path traversal blocked).
+   - `POST /api/roadbooks/preview` — body: `{volunteer_id, settings_override?}`. Renders a real PDF via the maroto pipeline for that one volunteer (with the optional settings override applied) and returns `{filename}`; the frontend embeds it via `<iframe src="/api/roadbooks/files/<filename>">`. Preview PDFs go in `exports/<eventSlug>/preview/` and are not part of the deterministic golden-test set.
 9. **Frontend `web/src/features/roadbook/`**:
-   - `RoadbookSettingsPage` — every customization knob, with a live preview iframe.
+   - `RoadbookSettingsPage` — every customization knob, with a live preview iframe embedding a real PDF.
    - `RoadbookSectionOrderEditor` — dnd-kit drag-reorder of section keys, toggles for visibility.
    - `GenerateRoadbooksButton` — POSTs to the endpoint, polls progress (long sync calls show a progress modal), then surfaces download links.
-   - `PreviewIframe` — sandboxed iframe loading `/api/roadbooks/preview`.
+   - `PreviewIframe` — sandboxed iframe loading `/api/roadbooks/files/<filename>` returned by `POST /api/roadbooks/preview`. Browser-native PDF viewer; no PDF.js dependency.
 10. **i18n note** — all FR strings used in the templates live in `internal/i18n/fr.json` (or alongside the templates) so a later EN pass can swap them mechanically.
 
 ## Data model deltas
 
-- None at the SQL level; `events.settings` JSON gains a `roadbook` key.
-- Filesystem: `exports/<eventSlug>/roadbook_<last>_<first>.pdf`, `exports/<eventSlug>/master_<eventSlug>.pdf`.
-- `assets/logo/<sha>.png`, `assets/sponsor/<sha>.png`.
+- `events` table gains four columns: `logo_path`, `sponsor_path`, `coordinator_name`, `coordinator_phone` (migration `0008_roadbook_fields.sql`).
+- `events.settings` JSON gains a `roadbook` key for everything else.
+- Filesystem: `exports/<eventSlug>/roadbook_<last>_<first>.pdf`, `exports/<eventSlug>/master_<slug>.pdf`, `exports/<eventSlug>/preview/<filename>`.
+- `assets/logo/<sha>.<ext>`, `assets/sponsor/<sha>.<ext>`.
 
 ## API surface
 
 - `POST /api/roadbooks/generate`.
-- `GET /api/roadbooks/<sha>.pdf`.
+- `GET /api/roadbooks/files/{filename}`.
 - `POST /api/roadbooks/preview`.
-- Settings managed through the existing `PUT /api/event` (the JSON blob includes the roadbook subsection).
-- `POST /api/event/logo`, `POST /api/event/sponsor` for asset uploads.
+- Settings managed through the existing `PUT /api/event` (the JSON blob includes the roadbook subsection); coordinator name/phone are top-level event fields, set via the same endpoint.
+- `POST /api/event/logo`, `POST /api/event/sponsor` for asset uploads (write `events.logo_path` / `events.sponsor_path`; max 5 MB; PNG/JPEG only; content-hashed filenames).
 
 ## Frontend surface
 
@@ -101,10 +111,12 @@ The coordinator clicks "Generate roadbooks" and the app produces one byte-determ
 
 ## Risks
 
-- **maroto v2 layout limits.** Complex multi-page layouts with custom headers/footers can hit corners. If a feature genuinely can't be expressed (e.g., per-section reordering across page breaks), fall back to `typst` CLI subprocess (still pure-binary, no Chrome) before chromedp.
-- **Deterministic mini-map rendering.** `go-staticmaps` must be driven without any per-run randomness; tile fetcher must return identical bytes for identical inputs. Pin a tile snapshot in the test if needed.
+- **🟥 Vector pmtiles → PNG for the mini-map** is the single largest unknown in the milestone. `go-staticmaps` expects raster PNG tiles; the M01 `.pmtiles` is vector. No off-the-shelf pure-Go library rasterizes vector pmtiles deterministically. Mitigations are listed in step 5 (raster pmtiles archive, offline pre-rasterization, or drop the mini-map in v1). **The plan ships with mini-maps disabled by default in v1 unless one of the rasterization paths lands easily.** This is *the* item to spike on before committing to a roadbook ship date.
+- **maroto v2 layout limits.** Complex multi-page layouts with custom headers/footers can hit corners. If a feature genuinely can't be expressed (e.g., per-section reordering across page breaks), fall back to `typst` CLI subprocess (still pure-binary, no Chrome) before reconsidering.
+- **Deterministic mini-map rendering** (only relevant if mini-map ships). `go-staticmaps` must be driven without any per-run randomness; tile fetcher must return identical bytes for identical inputs. Pin a tile snapshot in the test if needed.
 - **Font embedding.** maroto needs fonts embedded for determinism + offline. Choose a permissively-licensed font (e.g., Inter, DejaVu) and ship the .ttf in the binary via `//go:embed`.
 - **Generation time on large events.** Target: 100 PDFs + master in <60 s. If we miss, parallelize per-volunteer renders inside the generate endpoint (still synchronous overall).
+- **Preview-PDF cache hygiene.** The preview endpoint writes PDFs to `exports/<eventSlug>/preview/`. Without cleanup, this directory accumulates over time. Run a sweep on startup deleting preview PDFs older than 1 hour.
 
 ## Acceptance criteria
 

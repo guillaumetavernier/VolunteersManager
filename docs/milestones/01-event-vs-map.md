@@ -54,11 +54,11 @@ The coordinator can initialize the event (one-time wizard), see a map of their r
    - `POST /api/vs` → create. Body: `{name, lat, lon, notes?, what3words?}`. 409 on duplicate name.
    - `GET /api/vs/{id}` → detail.
    - `PATCH /api/vs/{id}` → partial update (any subset of fields).
-   - `DELETE /api/vs/{id}` → delete (cascades not relevant yet).
+   - `DELETE /api/vs/{id}` → delete. Cascades are not visible yet (M01 has no dependent rows), but the handler is **forward-extended in M04 and M06** to surface a confirmation prompt listing what will be deleted (missions, assignments) or refusing (trip_stops via `ON DELETE RESTRICT`). Keep the handler structure ready to refuse with a 409 + payload describing dependents.
    - `POST /api/vs/{id}/photo` → multipart upload; max 10 MB; JPEG/PNG only; stored at `assets/vs/<sha256>.<ext>`; updates `photo_path`.
 4. **Tile serving** — `internal/server/tiles.go`:
-   - `GET /tiles/{name}/{z}/{x}/{y}.mvt` is **not** what we serve; Protomaps reads the `.pmtiles` archive directly via byte-range requests. Instead serve `/tiles/{name}.pmtiles` with `Accept-Ranges: bytes` and proper `Range` handling.
-   - Files live under `./tiles/`. `--offline-tiles=<path>` overrides the directory.
+   - `GET /tiles/{region}/{z}/{x}/{y}.mvt` is **not** what we serve; Protomaps reads the `.pmtiles` archive directly via byte-range requests. Instead serve `/tiles/{region}.pmtiles` with `Accept-Ranges: bytes` and proper `Range` handling. The path segment is the region slug (matches the wizard's region choice and the filename on disk).
+   - Files live under `./tiles/<region>.pmtiles`. `--offline-tiles=<path>` overrides the directory.
 5. **Tile downloader** — `internal/server/tile_download.go`:
    - On first run if `tiles/` is empty: server emits a startup log "Tiles directory empty; tile downloader available at /api/tiles/download".
    - `POST /api/tiles/download` with `{region: "europe-france"}` downloads from the Protomaps daily build URL pattern and saves to disk.
@@ -68,7 +68,7 @@ The coordinator can initialize the event (one-time wizard), see a map of their r
    - `useEvent()` TanStack Query hook hitting `/api/event`.
    - `EventInitWizard` component: shown when `useEvent` 404s. Form fields (name, start_date, end_date, timezone, country_code, region for tiles). Submit calls `PUT /api/event` and `POST /api/tiles/download`.
 7. **Frontend `web/src/features/map/`**:
-   - `MapView` component owns a MapLibre `Map` instance (created in `useEffect`, cleaned up on unmount). Style URL points to `/tiles/<region>.pmtiles` via the [pmtiles protocol](https://github.com/protomaps/PMTiles/tree/main/js).
+   - `MapView` component owns a MapLibre `Map` instance (created in `useEffect`, cleaned up on unmount). MapLibre needs a **style JSON** (not just a tile URL). Use [`protomaps-themes-base`](https://github.com/protomaps/basemaps) (npm package) to generate a style for the basemap, then register the [pmtiles protocol](https://github.com/protomaps/PMTiles/tree/main/js) and point its source URL at `pmtiles:///tiles/<region>.pmtiles`. The style is generated once at app boot from `protomaps-themes-base` and stays static.
    - VS markers as a GeoJSON source layer (one feature per VS). Click handler opens a side panel.
    - Click-on-blank-map → opens a "create VS" panel with the clicked lat/lon pre-filled.
    - Drag handler on VS markers → optimistic local update then PATCH; revert on error.
@@ -86,7 +86,7 @@ The coordinator can initialize the event (one-time wizard), see a map of their r
 
 - `GET /api/event`, `PUT /api/event`.
 - `GET /api/vs`, `POST /api/vs`, `GET /api/vs/{id}`, `PATCH /api/vs/{id}`, `DELETE /api/vs/{id}`, `POST /api/vs/{id}/photo`.
-- `GET /tiles/{name}.pmtiles` (byte-range).
+- `GET /tiles/{region}.pmtiles` (byte-range).
 - `POST /api/tiles/download`, `GET /api/tiles/download/status`.
 
 ## Frontend surface

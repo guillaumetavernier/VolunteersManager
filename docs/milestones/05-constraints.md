@@ -68,7 +68,7 @@ A pure-function warning engine that, given the current event state, produces a s
 3. **`internal/domain/constraints/engine.go`** — `Compute(state EventState) []Warning`. Runs each kind's checker in turn, concatenates, sorts by ID for determinism.
 4. **Per-kind files** — one per warning kind, with table-driven tests:
    - `double_booking.go` — pairwise overlap on a volunteer's assignments.
-   - `role_mismatch.go` — `volunteer.role_types ∩ mission.role_type == ∅`.
+   - `role_mismatch.go` — `mission.role_type ∉ volunteer.role_types` (`role_type` is a single string on the mission, list on the volunteer).
    - `availability_violation.go` — mission window not inside any availability window.
    - `excessive_duty.go` — total hours/day > threshold (default 10h, from settings).
    - `no_break.go` — assignments run >6h with no gap (configurable).
@@ -78,6 +78,10 @@ A pure-function warning engine that, given the current event state, produces a s
 6. **`internal/server/middleware.go`** — `WithConstraintRecompute` wraps mutation handlers:
    - On 2xx response, load the full state, run `Compute`, write the new warning set to the `warnings` table (transactional `DELETE FROM warnings; INSERT ...`), compute diff against previous IDs, attach `{warnings: {added, removed}}` to the response.
    - On error, no recompute (state unchanged).
+   - **Response shape is a breaking change to M01–M04 endpoints.** The middleware wraps the existing handler's `200/201` body as `{data: <existing body>, warnings: {added: [...], removed: [...]}}`. Three application rules:
+     1. Only mutations that go through `WithConstraintRecompute` get wrapped — pure-read endpoints (`GET /api/...`) are untouched.
+     2. **Retrofit all M01–M04 mutation handlers** to register with the middleware. The frontend's TanStack Query mutation hooks need to unwrap `data` on success. Touch every existing `useMutation` in M01–M04 features.
+     3. Some mutations (event upsert, settings update, photo upload, CSV commit, GPX upload) **can** affect warnings (e.g., adding a volunteer who has no phone). All mutations go through the middleware; only the read endpoints opt out.
 7. **State loader** — `internal/domain/constraints/state.go` reads everything the engine needs in a single transaction. Initially a naive "load all" approach; if it's slow at the 100-volunteer / 200-mission scale, profile and narrow.
 8. **`GET /api/warnings`** — returns the current warning set.
 9. **Frontend `web/src/features/warnings/`**:
@@ -120,6 +124,8 @@ A pure-function warning engine that, given the current event state, produces a s
 - **Performance under realistic load.** Spec targets <100 ms per recompute on 100 vols / 200 missions / 50 trips. Measure early with a fixture-generator script; if naïve full-recompute exceeds budget, profile before optimizing. Common wins: avoid loading photos/notes; precompute a volunteer→assignments index once per call.
 - **Warning ID stability across schema changes.** If we rename a `WarningKind` enum value later, IDs change → frontend animations look wrong. Treat the enum strings as part of the public contract; never rename in place, only deprecate + add.
 - **Localized messages.** Messages are FR for v1 (per locked decision). The engine produces the message; if i18n is added later, refactor to emit a message *key* + args instead.
+- **Free-text role_types cascade.** `role_mismatch` warnings fire on case/spelling mismatches between `volunteer.role_types` and `mission.role_type`. With no canonical roles table (M03 decision), typos here are common. M03 mitigates with autocomplete suggestions from existing role_types; if false positives become loud, consider case-insensitive comparison in this check.
+- **Mutation-response shape is a fan-out breaking change.** Every M01–M04 mutation handler and its frontend hook needs adjustment in this milestone. Budget the retrofit explicitly; it's larger than the engine itself.
 
 ## Acceptance criteria
 

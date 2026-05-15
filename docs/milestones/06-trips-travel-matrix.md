@@ -61,7 +61,16 @@ The coordinator can build vehicle trips that ferry volunteers between VS, with m
        trip_id         INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
        sequence        INTEGER NOT NULL,
        vs_id           INTEGER NOT NULL REFERENCES vs(id) ON DELETE RESTRICT,
-       time            TEXT NOT NULL,
+       time            TEXT NOT NULL,                  -- ISO datetime. Semantics: this is the
+                                                       -- DEPARTURE time from this stop. For the
+                                                       -- final stop, departure = arrival (no
+                                                       -- further leg). For the first stop,
+                                                       -- departure is when the vehicle leaves.
+                                                       -- Arrival at stop[n] (n > 0) is derived
+                                                       -- as stop[n].time MINUS the leg duration
+                                                       -- (matrix or manual). Constraint checks
+                                                       -- (stranded, insufficient_travel) read
+                                                       -- this convention.
        leg_time_source TEXT NOT NULL DEFAULT 'auto',  -- auto | manual
        UNIQUE(trip_id, sequence)
    );
@@ -77,7 +86,7 @@ The coordinator can build vehicle trips that ferry volunteers between VS, with m
 2. **`internal/routing/`**:
    - `haversine.go` — `Distance(a, b LatLon) float64` in meters.
    - `matrix.go` — `RecomputeMatrix(vs []VS, settings Settings)` fills missing cells with `source=fallback`; preserves `source=manual` rows.
-   - `client.go` — placeholder interface `Provider` with one no-op implementation (`HaversineOnly`). Future ORS/OSRM plugs in here.
+   - `client.go` — `Provider` interface; v1 ships exactly one implementation, `HaversineOnly`, hardcoded in the wiring (`internal/server/server.go` constructs `HaversineOnly{}` and passes it to `RecomputeMatrix`). ORS / OSRM clients are explicitly **not** built in v1 — the interface exists only so the later swap doesn't ripple. No registry, no env-driven selection, no constructor variation.
    - Default speeds from settings: drive 40 km/h, walk 5 km/h (configurable per [`../07-open-questions.md`](../07-open-questions.md) §5).
 3. **Matrix recompute triggers**: VS create/update/delete fires a goroutine recompute. New cells `source=fallback`; existing `source=manual` rows untouched.
 4. **`internal/features/trip/`**:
@@ -96,7 +105,7 @@ The coordinator can build vehicle trips that ferry volunteers between VS, with m
    - `capacity.go` — per-leg passenger count > `car.seats`.
    - `driver_double_book.go` — driver assigned to a mission during the trip window.
    - `passenger_double_book.go` — volunteer on two simultaneous trips, or a trip + mission overlap.
-   - `board_alight_consistency.go` — every boarder must alight at a later stop on the same trip.
+   - `board_alight_consistency.go` — covers both directions of `docs/02-spec.md` §3.2 "boarding logic error": a volunteer who boards but never alights, **and** a volunteer who alights at stop M but boards at stop N > M (alight-before-board). One check, two failure modes; report distinct warning sub-kinds via the `Message` field if needed.
 7. **Frontend `web/src/features/trip/`**:
    - `TripList` page — grouped by day.
    - `TripEditor` — the most complex screen in the app. Three-column layout:
@@ -139,8 +148,8 @@ The coordinator can build vehicle trips that ferry volunteers between VS, with m
 ## Risks
 
 - **Per-leg time UX.** Coordinators may want to chain manual edits; ensure each edit only switches its own leg to manual, not subsequent ones. Subsequent legs still auto-fill from the previous leg's (potentially manual) time + matrix.
-- **Trip on day boundary.** A trip's `day` is a label; stops have full datetimes. A trip with stops at 23:50 and 00:20 is valid. The timeline (M07) must render this correctly (see [`../07-open-questions.md`](../07-open-questions.md) §12).
-- **Cascade deletes.** A trip deletion is straightforward; deleting a volunteer who is a driver should be prevented (`ON DELETE RESTRICT`) with a clear error message.
+- **Trip on day boundary.** A trip's `day` integer = the day the trip **starts** (the date matching `stop[0].time`). Stops on subsequent calendar dates are valid and identified by their full datetime. A trip starting day 2 at 23:50 with `stop[1].time` on day 3 at 00:20 has `trips.day = 2`. The timeline (M07) reads stop datetimes, not `trips.day`, for rendering. This resolves [`../07-open-questions.md`](../07-open-questions.md) §12.
+- **Cascade deletes via `ON DELETE RESTRICT`.** Deleting a volunteer who is a driver, or a car used by a trip, will be refused by SQLite. The API translates this into **409 with `{dependents: {trips: [<ids>]}}`** so the UI can show a cascade-confirmation dialog. The same pattern as M01's VS-delete and M03's volunteer-hard-delete.
 
 ## Acceptance criteria
 

@@ -82,7 +82,7 @@ A hand-rolled timeline view with a draggable time cursor and play/pause/speed co
 
 - **Frame-budget regressions.** Adding any per-frame work (logging, expensive selectors) can tank performance. Lint rule: no `console.*` in `useFrame`-style callbacks; explicit profiling marker per render.
 - **GPX interpolation accuracy.** The runner is parameterized by *time* but moves along *distance*. Use cumulative distance as the lookup key; binary search on it. Avoid linearly scanning the GPX.
-- **Cross-midnight trips.** Make sure both the timeline rendering and `carPosition`/`volunteerPosition` handle a stop with `time` on day N+1. Test fixture required.
+- **Cross-midnight trips.** Make sure both the timeline rendering and `carPosition`/`volunteerPosition` handle a stop with `time` on day N+1. Test fixture required. The convention (settled in M06 "Risks > Trip on day boundary"): `trips.day` is the **start** day; stop `time` fields are full datetimes and may fall on later calendar dates. The timeline reads stop datetimes, never `trips.day`.
 
 ## Acceptance criteria
 
