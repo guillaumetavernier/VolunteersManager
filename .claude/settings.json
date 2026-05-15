@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/harness/check.sh:*)",
+      "Bash(./scripts/harness/check.sh)",
+      "Bash(python3 scripts/harness/lint_docs.py:*)",
+      "Bash(python3 scripts/harness/lint_docs.py)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\n── VolunteersManager harness ──\\nRead CLAUDE.md and .harness/STATE.md before any work.\\nCurrent state:\\n' && head -16 .harness/STATE.md && printf '\\nLocked decisions: docs/milestones/README.md → \"Locked decisions\"\\nRun ./scripts/harness/check.sh before finishing.\\n──\\n'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/harness/check.sh --quiet || { echo; echo '⚠️  Harness check failed before stop. Fix the issues above before declaring done.'; exit 2; }"
+          }
+        ]
+      }
+    ]
+  }
+}
