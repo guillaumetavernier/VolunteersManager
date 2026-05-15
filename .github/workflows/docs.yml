@@ -32,5 +32,8 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
         if: hashFiles('pnpm-lock.yaml') != ''
+      - name: install web deps
+        run: pnpm install --frozen-lockfile
+        if: hashFiles('pnpm-lock.yaml') != ''
       - name: harness
         run: ./scripts/harness/check.sh

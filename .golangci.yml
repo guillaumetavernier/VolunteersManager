@@ -1,17 +1,14 @@
-# Minimal golangci-lint config; expanded as the codebase grows.
+# Minimal golangci-lint v2 config; expanded as the codebase grows.
+version: "2"
+
 run:
   timeout: 5m
-  go: "1.25"
 
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - govet
     - ineffassign
     - staticcheck
     - unused
-    - gosimple
-
-issues:
-  exclude-use-default: false

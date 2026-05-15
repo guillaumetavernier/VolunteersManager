@@ -30,9 +30,9 @@ jobs:
           version: "latest"
           install-go: false
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
-          version: v1.61
+          version: latest
 
   web:
     name: web (${{ matrix.os }})
