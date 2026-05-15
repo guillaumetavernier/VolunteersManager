@@ -7,6 +7,9 @@ import {
   useTileDownloadStatus,
 } from "@/features/event/hooks";
 import { MapView } from "@/features/map/MapView";
+import { RaceDetail } from "@/features/race/RaceDetail";
+import { RaceList } from "@/features/race/RaceList";
+import { matchRoute, useRoute } from "@/lib/router";
 import { queryClient } from "@/lib/queryClient";
 
 export default function App() {
@@ -31,23 +34,34 @@ function AppRouter() {
       <FullScreenStatus message="Event initialized without a tile region. Re-run the wizard or set settings.region manually." />
     );
   }
+  return <Routes region={region} />;
+}
+
+function Routes({ region }: { region: string }) {
+  const route = useRoute();
+
+  const raceMatch = matchRoute("/races/:id", route.path);
+  if (raceMatch && raceMatch.id) {
+    const id = Number(raceMatch.id);
+    if (Number.isFinite(id) && id > 0) {
+      return <RaceDetail raceID={id} />;
+    }
+  }
+  if (matchRoute("/races", route.path)) {
+    return <RaceList />;
+  }
   return <MapShell region={region} />;
 }
 
 function MapShell({ region }: { region: string }) {
-  // Once the event exists, the tile download may still be in progress. Poll
-  // and tell the user. The MapView mounts immediately so the UI is responsive,
-  // and the user sees the missing-tiles banner if the file isn't there yet.
   const status = useTileDownloadStatus(true);
   return (
     <>
       <MapView region={region} />
       {status.data?.state === "downloading" && (
-        <div className="pointer-events-none absolute bottom-4 left-4 rounded-md bg-slate-900/90 px-4 py-2 text-sm text-white shadow">
+        <div className="pointer-events-none absolute bottom-4 right-4 rounded-md bg-slate-900/90 px-4 py-2 text-sm text-white shadow">
           Downloading tiles… {fmtBytes(status.data.bytes_downloaded)}
-          {status.data.bytes_total > 0
-            ? ` / ${fmtBytes(status.data.bytes_total)}`
-            : ""}
+          {status.data.bytes_total > 0 ? ` / ${fmtBytes(status.data.bytes_total)}` : ""}
         </div>
       )}
     </>

@@ -12,6 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/event"
+	"github.com/guillaumetavernier/volunteersmanager/internal/features/race"
+	"github.com/guillaumetavernier/volunteersmanager/internal/features/racevs"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/vs"
 	"github.com/guillaumetavernier/volunteersmanager/internal/i18n"
 )
@@ -38,7 +40,20 @@ func New(cfg Config) (http.Handler, error) {
 
 	if cfg.DB != nil {
 		event.NewHandler(event.NewStore(cfg.DB)).Mount(r)
-		vs.NewHandler(vs.NewStore(cfg.DB), cfg.AssetDir).Mount(r)
+
+		raceStore := race.NewStore(cfg.DB)
+		raceSvc := race.NewService(cfg.DB)
+
+		vsHandler := vs.NewHandler(vs.NewStore(cfg.DB), cfg.AssetDir)
+		vsHandler.OnMove = func(id int64) {
+			if err := raceSvc.RecomputeForVS(id); err != nil {
+				cfg.Logger.Warn("recompute after VS move failed", "vs_id", id, "err", err)
+			}
+		}
+		vsHandler.Mount(r)
+
+		race.NewHandler(raceStore, raceSvc, cfg.AssetDir).Mount(r)
+		racevs.NewHandler(racevs.NewStore(cfg.DB), raceSvc).Mount(r)
 	}
 	if cfg.TileDir != "" {
 		NewTileService(cfg.TileDir, cfg.TileBaseURL).Mount(r)

@@ -4,10 +4,13 @@ import { PMTiles, Protocol } from "pmtiles";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
+import { navigate } from "@/lib/router";
 import { useVSList } from "@/features/vs/hooks";
 import { usePatchVS } from "@/features/vs/hooks";
 import type { VS } from "@/features/vs/api";
 import { VsEditPanel, makeDraft, type DraftVS } from "@/features/vs/VsEditPanel";
+import { useRaces } from "@/features/race/hooks";
+import { RacePolyline } from "@/features/race/RacePolylines";
 
 import { buildMapStyle } from "./style";
 
@@ -22,11 +25,15 @@ export function MapView({ region }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const markersRef = useRef<Map<number, Marker>>(new Map());
+  const [mapInstance, setMapInstance] = useState<MLMap | null>(null);
+  const [styleReady, setStyleReady] = useState(false);
   const [editing, setEditing] = useState<DraftVS | null>(null);
   const [tilesMissing, setTilesMissing] = useState(false);
+  const [raceVisibility, setRaceVisibility] = useState<Record<number, boolean>>({});
 
   const vsQuery = useVSList();
   const patch = usePatchVS();
+  const races = useRaces();
 
   // Register the pmtiles archive so MapLibre can read its directory in one round-trip.
   useEffect(() => {
@@ -49,7 +56,9 @@ export function MapView({ region }: Props) {
       zoom: 5,
     });
     mapRef.current = m;
+    setMapInstance(m);
     m.addControl(new maplibregl.NavigationControl(), "top-right");
+    m.on("load", () => setStyleReady(true));
 
     m.on("error", (e) => {
       const msg = String(e?.error?.message ?? "");
@@ -71,6 +80,8 @@ export function MapView({ region }: Props) {
       m.off("click", onClick);
       m.remove();
       mapRef.current = null;
+      setMapInstance(null);
+      setStyleReady(false);
     };
     // We intentionally rebuild only when style changes (region change).
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,19 +128,56 @@ export function MapView({ region }: Props) {
     setEditing(makeDraft(v));
   }
 
+  const visibleFor = (id: number) => raceVisibility[id] ?? true;
+
   return (
     <div className="relative h-screen w-screen">
       <div ref={containerRef} className="absolute inset-0" />
+      <nav className="absolute left-4 top-4 grid w-64 gap-2 rounded-md bg-white/95 p-3 text-sm shadow">
+        <div className="flex items-center justify-between">
+          <strong>Races</strong>
+          <button onClick={() => navigate("/races")} className="text-xs text-slate-600 underline">
+            Manage
+          </button>
+        </div>
+        {races.data && races.data.length === 0 && (
+          <p className="text-xs text-slate-500">No races yet.</p>
+        )}
+        <ul className="grid gap-1">
+          {races.data?.map((r) => (
+            <li key={r.id} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={visibleFor(r.id)}
+                onChange={(e) => setRaceVisibility((s) => ({ ...s, [r.id]: e.target.checked }))}
+                aria-label={`Toggle ${r.name}`}
+              />
+              <span
+                className="h-3 w-3 rounded-full border border-slate-300"
+                style={{ backgroundColor: r.color }}
+              />
+              <span>{r.name}</span>
+            </li>
+          ))}
+        </ul>
+      </nav>
       {tilesMissing && (
-        <div className="absolute left-4 top-4 max-w-md rounded-md bg-amber-100 p-4 text-sm text-amber-900 shadow">
+        <div className="absolute left-4 bottom-4 max-w-md rounded-md bg-amber-100 p-4 text-sm text-amber-900 shadow">
           <strong>Map tiles missing.</strong> The pmtiles archive for region{" "}
           <code>{region}</code> isn't available. Wait for the download to finish or copy it into
           the <code>tiles/</code> directory.
         </div>
       )}
-      {editing && (
-        <VsEditPanel draft={editing} onClose={() => setEditing(null)} />
-      )}
+      {races.data?.map((r) => (
+        <RacePolyline
+          key={r.id}
+          map={mapInstance}
+          styleReady={styleReady}
+          race={r}
+          visible={visibleFor(r.id)}
+        />
+      ))}
+      {editing && <VsEditPanel draft={editing} onClose={() => setEditing(null)} />}
     </div>
   );
 }

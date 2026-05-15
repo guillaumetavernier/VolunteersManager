@@ -3,7 +3,7 @@
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
 **Last updated:** 2026-05-16
-**Current milestone:** **[01-event-vs-map](../docs/milestones/01-event-vs-map.md)** (in_progress).
+**Current milestone:** **[02-races-gpx](../docs/milestones/02-races-gpx.md)** (in_progress).
 
 ## Status legend
 
@@ -17,8 +17,8 @@
 | #  | Slug                          | Status         | Notes |
 |----|-------------------------------|----------------|-------|
 | 00 | 00-scaffolding                | 🟢 completed   | All five CI checks green on PR #1. |
-| 01 | 01-event-vs-map               | 🟡 in_progress | Event + VS CRUD + Protomaps tile serving. |
-| 02 | 02-races-gpx                  | ⚪ not_started | |
+| 01 | 01-event-vs-map               | 🟡 in_progress | Event + VS CRUD + Protomaps tile serving. 3 boxes need browser/Playwright verification. |
+| 02 | 02-races-gpx                  | 🟡 in_progress | Races + GPX upload + projection + ordered VS list. |
 | 03 | 03-volunteers-cars-csv        | ⚪ not_started | |
 | 04 | 04-missions-assignments       | ⚪ not_started | Includes VS-delete cascade-confirm extension. |
 | 05 | 05-constraints                | ⚪ not_started | Response-shape change retrofits M01–M04 endpoints. |
@@ -50,7 +50,14 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 - [ ] `go test ./...` and `pnpm test` green; Playwright e2e green. _Go + Vitest green; Playwright still has no specs (deferred from M00 scaffold; will land as part of e2e pass)._
 
 ### 02-races-gpx
-_Not yet started._
+
+- [x] Create a race, set color + paces + start_time. (POST /api/races + PATCH covered; smoke-tested via curl)
+- [x] Upload a GPX (multi-segment, with elevation, ~2000 points). (parse_test asserts multi-segment flattening; handler smoke-test uploads + parses)
+- [x] Add 4 VS to the race's ordered list; auto-first-in/last-in populate. (PUT /api/races/{id}/vs triggers recompute; smoke-tested with arithmetic match: 166 m → 40 s @ 15 km/h)
+- [x] Override one VS's first-in; it persists across recomputes. (Replace preserves manual_first_in — covered in `TestRaceVS_ReplacePreservesManualOverrides`)
+- [ ] Map shows the GPX polyline in the race color. _GeoJSON endpoint + `RacePolyline` layer wired; needs browser verification with a real pmtiles archive._
+- [x] Move a VS on the map → projection + auto times recompute automatically. (VS PATCH lat/lon fires `RecomputeForVS`; smoke-tested east-move 166 m → 278 m + new auto times)
+- [ ] `go test ./...` and `pnpm test` green; Playwright e2e green. _Go (8 packages) + Vitest (7 files / 24 tests) green; Playwright still has no specs._
 
 ### 03-volunteers-cars-csv
 _Not yet started._

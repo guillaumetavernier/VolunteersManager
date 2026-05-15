@@ -19,13 +19,25 @@ const (
 	maxPhotoBytes = 10 * 1024 * 1024
 )
 
+// OnMove is fired after a VS row's lat/lon changes via PATCH or after a fresh
+// row is created. Wired by the server to the race recompute service; nil is a
+// no-op so the package stays independently testable.
+type OnMove func(vsID int64)
+
 type Handler struct {
 	Store    *Store
 	AssetDir string // absolute path to ./assets directory; photos go under <AssetDir>/vs/
+	OnMove   OnMove
 }
 
 func NewHandler(s *Store, assetDir string) *Handler {
 	return &Handler{Store: s, AssetDir: assetDir}
+}
+
+func (h *Handler) fireMove(id int64) {
+	if h.OnMove != nil {
+		h.OnMove(id)
+	}
 }
 
 func (h *Handler) Mount(r chi.Router) {
@@ -152,6 +164,9 @@ func (h *Handler) patch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
 		return
+	}
+	if p.Lat != nil || p.Lon != nil {
+		h.fireMove(id)
 	}
 	writeJSON(w, http.StatusOK, v)
 }
