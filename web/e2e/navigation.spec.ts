@@ -61,12 +61,8 @@ test("header pages reachable", async ({ page }) => {
   await expect(page.getByTestId("affectations-page")).toBeVisible();
 
   await page.getByTestId("header-ressources").click();
-  await page.getByRole("menuitem", { name: "Bénévoles" }).click();
   await expect(page).toHaveURL(/#\/ressources\/benevoles$/);
-  await expect(page.getByRole("menuitem", { name: "Bénévoles" })).toHaveCount(0);
-
-  await page.getByTestId("header-ressources").click();
-  await page.getByRole("menuitem", { name: "Véhicules" }).click();
+  await page.getByTestId("ressources-tab-vehicules").click();
   await expect(page).toHaveURL(/#\/ressources\/vehicules$/);
 
   await page.getByTestId("header-roadbooks").click();
