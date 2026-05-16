@@ -104,9 +104,9 @@ export function MapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [style]);
 
-  // Resize the map whenever the container changes — MapLibre caches container
-  // dimensions and otherwise renders markers at stale pixel positions, which
-  // looks like a constant screen-pixel offset (most visible at low zoom).
+  // MapLibre measures the container once at construction; on window resize
+  // or sidebar mount it needs an explicit map.resize() to refresh transform
+  // dimensions.
   useEffect(() => {
     const el = containerRef.current;
     const map = mapInstance;
@@ -182,8 +182,12 @@ export function MapView({
 }
 
 function markerClass(selected: boolean): string {
+  // `maplibregl-marker` is what MapLibre adds in its Marker constructor; it
+  // sets position:absolute + top/left:0. We then overwrite className on every
+  // selection change, so we have to include it here or the marker falls back
+  // to static flow and each one drifts by its flow Y (24 px per marker).
   const base =
-    "vs-marker grid h-6 w-6 -translate-y-3 place-items-center rounded-full border-2 text-xs font-semibold shadow";
+    "maplibregl-marker vs-marker grid h-6 w-6 place-items-center rounded-full border-2 text-xs font-semibold shadow";
   return selected
     ? `${base} border-yellow-400 bg-yellow-500 text-slate-900`
     : `${base} border-white bg-slate-900 text-white`;
