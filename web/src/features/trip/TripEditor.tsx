@@ -152,6 +152,24 @@ export function TripEditor({ id }: { id?: number }) {
   function addStop() {
     setStops((prev) => [...prev, { vs_id: 0, time: "", leg_time_source: "auto", board: [], alight: [] }]);
   }
+  function appendStopForVS(vsID: number) {
+    setStops((prev) =>
+      applyAutoFill([
+        ...prev,
+        { vs_id: vsID, time: "", leg_time_source: "auto", board: [], alight: [] },
+      ]),
+    );
+  }
+  useEffect(() => {
+    const onClick = (e: Event) => {
+      const ce = e as CustomEvent<{ id: number }>;
+      const vsID = ce.detail?.id;
+      if (typeof vsID === "number" && vsID > 0) appendStopForVS(vsID);
+    };
+    window.addEventListener("vm:trajets-vs-click", onClick as EventListener);
+    return () => window.removeEventListener("vm:trajets-vs-click", onClick as EventListener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   function removeStop(i: number) {
     setStops((prev) => applyAutoFill(prev.filter((_, idx) => idx !== i)));
   }
