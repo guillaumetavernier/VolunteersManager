@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { navigate } from "@/lib/router";
 import { useCars } from "@/features/car/hooks";
 import { useMatrix } from "@/features/travelMatrix/hooks";
@@ -254,10 +257,10 @@ export function TripEditor({ id }: { id?: number }) {
         <h1 className="text-2xl font-semibold">
           {isNew ? "Nouveau trajet" : `Trajet n°${id}`}
         </h1>
-        <nav className="flex items-center gap-3 text-sm">
-          <button onClick={() => navigate("/trips")} className="underline">
+        <nav className="flex items-center gap-2 text-sm">
+          <Button variant="link" size="sm" onClick={() => navigate("/trips")}>
             Retour
-          </button>
+          </Button>
         </nav>
       </header>
       {error && <p role="alert" className="mb-3 text-sm text-red-600">{error}</p>}
@@ -265,8 +268,7 @@ export function TripEditor({ id }: { id?: number }) {
         <section className="space-y-3" aria-label="Métadonnées du trajet">
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Jour</span>
-            <input
-              className="input"
+            <Input
               type="number"
               min={1}
               value={day}
@@ -277,7 +279,7 @@ export function TripEditor({ id }: { id?: number }) {
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Conducteur</span>
             <select
-              className="input"
+              className="input w-full"
               value={driverID}
               onChange={(e) => setDriverID(Number(e.target.value))}
               aria-label="Conducteur"
@@ -293,7 +295,7 @@ export function TripEditor({ id }: { id?: number }) {
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Véhicule</span>
             <select
-              className="input"
+              className="input w-full"
               value={carID}
               onChange={(e) => setCarID(Number(e.target.value))}
               aria-label="Véhicule"
@@ -309,7 +311,7 @@ export function TripEditor({ id }: { id?: number }) {
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Mode</span>
             <select
-              className="input"
+              className="input w-full"
               value={mode}
               onChange={(e) => setMode(e.target.value as "drive" | "walk")}
               aria-label="Mode"
@@ -320,8 +322,7 @@ export function TripEditor({ id }: { id?: number }) {
           </label>
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Notes</span>
-            <textarea
-              className="input"
+            <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
@@ -337,7 +338,7 @@ export function TripEditor({ id }: { id?: number }) {
                   <label className="grid gap-1 text-sm">
                     <span>Arrêt {i + 1} · VS</span>
                     <select
-                      className="input"
+                      className="input w-full"
                       value={st.vs_id}
                       onChange={(e) => setStopVS(i, Number(e.target.value))}
                       aria-label={`VS arrêt ${i + 1}`}
@@ -350,8 +351,7 @@ export function TripEditor({ id }: { id?: number }) {
                   </label>
                   <label className="grid gap-1 text-sm">
                     <span>Heure</span>
-                    <input
-                      className="input"
+                    <Input
                       type="text"
                       value={st.time}
                       onChange={(e) => setStopTime(i, e.target.value)}
@@ -423,13 +423,15 @@ export function TripEditor({ id }: { id?: number }) {
               </li>
             ))}
           </ol>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={addStop}
-            className="mt-2 rounded-md border border-slate-300 px-3 py-1 text-sm"
+            className="mt-2"
           >
             + Ajouter un arrêt
-          </button>
+          </Button>
         </section>
 
         <aside aria-label="Validation" data-testid="warnings">
@@ -452,20 +454,17 @@ export function TripEditor({ id }: { id?: number }) {
         </aside>
       </div>
       <footer className="mt-6 flex items-center gap-3">
-        <button
-          onClick={onSave}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white"
-          data-testid="save-trip"
-        >
+        <Button onClick={onSave} data-testid="save-trip">
           {isNew ? "Créer" : "Enregistrer"}
-        </button>
+        </Button>
         {!isNew && (
-          <button
+          <Button
+            variant="outline"
             onClick={onDelete}
-            className="rounded-md border border-red-300 px-4 py-2 text-sm text-red-700"
+            className="border-red-300 text-red-700 hover:bg-red-50 hover:text-red-700"
           >
             Supprimer
-          </button>
+          </Button>
         )}
       </footer>
     </main>

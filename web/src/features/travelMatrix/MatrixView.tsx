@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { navigate } from "@/lib/router";
 import { useVSList } from "@/features/vs/hooks";
 import { useMatrix, usePatchCell, useRecomputeMatrix, type MatrixCell } from "./hooks";
@@ -55,20 +56,20 @@ export function MatrixView() {
     <main className="mx-auto max-w-5xl p-6">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Matrice de trajets</h1>
-        <nav className="flex items-center gap-3 text-sm">
-          <button onClick={() => navigate("/trips")} className="underline">
+        <nav className="flex items-center gap-2 text-sm">
+          <Button variant="link" size="sm" onClick={() => navigate("/trips")}>
             Trajets
-          </button>
-          <button onClick={() => navigate("/")} className="underline">
+          </Button>
+          <Button variant="link" size="sm" onClick={() => navigate("/")}>
             Carte
-          </button>
+          </Button>
         </nav>
       </header>
       <div className="mb-4 flex items-center gap-3 text-sm">
         <label className="flex items-center gap-2">
           <span>Mode</span>
           <select
-            className="input"
+            className="input w-full"
             value={mode}
             onChange={(e) => setMode(e.target.value as TravelMode)}
             aria-label="Mode"
@@ -77,20 +78,21 @@ export function MatrixView() {
             <option value="walk">Marche</option>
           </select>
         </label>
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => recompute.mutate()}
-          className="rounded-md border border-slate-300 px-3 py-1 text-sm"
           data-testid="recompute-matrix"
         >
           Recalculer
-        </button>
+        </Button>
       </div>
       {matrix.isLoading && <p>Chargement…</p>}
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse text-sm" data-testid="matrix-table">
           <thead>
             <tr>
-              <th className="border border-slate-200 bg-slate-50 px-2 py-1 text-left">De / Vers</th>
+              <th className="border border-slate-200 bg-slate-50 px-2 py-1 text-left">Depuis / Vers</th>
               {vsList.map((v) => (
                 <th key={v.id} className="border border-slate-200 bg-slate-50 px-2 py-1 text-left">
                   {v.name}
