@@ -68,7 +68,7 @@ function AppRouter() {
 
 function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-screen flex-col">
       <header
         className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 py-2 text-sm shadow-sm"
         data-testid="app-header"
@@ -92,7 +92,7 @@ function AppShell({ children }: { children: ReactNode }) {
         </nav>
         <GlobalIssueCounter />
       </header>
-      <main className="flex-1">{children}</main>
+      <main className="relative flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }
@@ -183,7 +183,7 @@ function MapShell({ region }: { region: string }) {
     <>
       <MapView region={region} />
       {stack.length === 0 && (
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-16 z-10">
           <Button
             data-testid="map-drawer-open-races"
             variant="default"

@@ -15,7 +15,7 @@ export function TimelinePage({ region }: Props) {
     );
   }
   return (
-    <div className="flex h-[calc(100vh-44px)] flex-col">
+    <div className="flex h-full flex-col">
       <TimelineControls data={data} />
       <div className="flex-1">
         <TimelineMap region={region} data={data} />

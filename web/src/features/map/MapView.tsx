@@ -153,7 +153,7 @@ export function MapView({ region }: Props) {
   const visibleFor = (id: number) => raceVisibility[id] ?? true;
 
   return (
-    <div className="relative h-screen w-screen">
+    <div className="relative h-full w-full">
       <div ref={containerRef} className="absolute inset-0" />
       <nav className="absolute left-4 top-4 grid w-64 gap-2 rounded-md bg-white/95 p-3 text-sm shadow">
         <div className="flex items-center justify-between">
