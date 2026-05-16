@@ -43,7 +43,7 @@ export function MissionsGrid() {
             data-day-tab={d}
             onClick={() => setDay(d)}
             className={`rounded-md px-3 py-1 text-sm ${
-              d === day ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"
+              d === day ? "bg-primary text-primary-foreground" : "bg-slate-100 text-slate-700"
             }`}
           >
             Jour {d}

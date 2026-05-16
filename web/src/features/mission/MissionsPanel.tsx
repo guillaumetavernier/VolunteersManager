@@ -9,6 +9,8 @@ import { toast } from "@/lib/toast";
 import { VolunteerDragItem } from "@/features/assignment/VolunteerDragItem";
 import { useCreateAssignment } from "@/features/assignment/hooks";
 
+import { Input } from "@/components/ui/input";
+
 import { useMissionsForVS } from "./hooks";
 import { MissionCard } from "./MissionCard";
 import { MissionForm } from "./MissionForm";
@@ -83,7 +85,7 @@ export function MissionsPanel({ vs, onClose }: Props) {
               data-day-tab={d}
               onClick={() => setDay(d)}
               className={`rounded-md px-3 py-1 text-xs ${
-                d === day ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"
+                d === day ? "bg-primary text-primary-foreground" : "bg-slate-100 text-slate-700"
               }`}
             >
               J{d}
@@ -117,8 +119,8 @@ export function MissionsPanel({ vs, onClose }: Props) {
           </div>
           <div className="grid h-fit min-w-0 gap-2 rounded-md border border-slate-200 p-2" data-volunteer-pool>
             <h3 className="text-xs font-semibold uppercase text-slate-500">Bénévoles</h3>
-            <input
-              className="input w-full"
+            <Input
+              className="w-full"
               placeholder="Rechercher…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}

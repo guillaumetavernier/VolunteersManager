@@ -2,6 +2,9 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useRoleTypes } from "@/features/volunteer/hooks";
 import { useRaces } from "@/features/race/hooks";
 import { useCreateMission, usePatchMission } from "./hooks";
@@ -70,14 +73,14 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
     <form onSubmit={form.handleSubmit(onSubmit)} className="grid min-w-0 gap-3 rounded-md border border-slate-200 p-3 text-sm" data-mission-form>
       <div className="grid grid-cols-3 gap-2">
         <Field label="Jour" error={form.formState.errors.day?.message}>
-          <input className="input w-full min-w-0" type="number" min={1} {...form.register("day")} aria-label="Jour" />
+          <Input className="w-full min-w-0" type="number" min={1} {...form.register("day")} aria-label="Jour" />
         </Field>
         <Field label="Effectif" error={form.formState.errors.headcount?.message}>
-          <input className="input w-full min-w-0" type="number" min={1} {...form.register("headcount")} aria-label="Effectif" />
+          <Input className="w-full min-w-0" type="number" min={1} {...form.register("headcount")} aria-label="Effectif" />
         </Field>
         <Field label="Rôle" error={form.formState.errors.role_type?.message}>
-          <input
-            className="input w-full min-w-0"
+          <Input
+            className="w-full min-w-0"
             list="mission-role-types"
             {...form.register("role_type")}
             aria-label="Rôle"
@@ -91,17 +94,17 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
       </div>
       <div className="grid grid-cols-2 gap-2">
         <Field label="Début" error={form.formState.errors.start_time?.message}>
-          <input className="input w-full min-w-0" type="datetime-local" {...form.register("start_time")} aria-label="Début" />
+          <Input className="w-full min-w-0" type="datetime-local" {...form.register("start_time")} aria-label="Début" />
         </Field>
         <Field label="Fin" error={form.formState.errors.end_time?.message}>
-          <input className="input w-full min-w-0" type="datetime-local" {...form.register("end_time")} aria-label="Fin" />
+          <Input className="w-full min-w-0" type="datetime-local" {...form.register("end_time")} aria-label="Fin" />
         </Field>
       </div>
       <Field label="Titre">
-        <input className="input w-full" {...form.register("title")} />
+        <Input className="w-full" {...form.register("title")} />
       </Field>
       <Field label="Description">
-        <textarea className="input min-h-16 w-full" {...form.register("description")} />
+        <Textarea className="min-h-16 w-full" {...form.register("description")} />
       </Field>
       <Field label="Courses associées">
         <Controller
@@ -121,7 +124,7 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
                       )
                     }
                     className={`rounded-full border px-3 py-1 text-xs ${
-                      active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300 bg-white"
+                      active ? "border-primary bg-primary text-primary-foreground" : "border-slate-300 bg-white"
                     }`}
                   >
                     <span
@@ -145,13 +148,9 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
             Annuler
           </button>
         )}
-        <button
-          type="submit"
-          className="rounded-md bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
-          disabled={create.isPending || patch.isPending}
-        >
+        <Button type="submit" disabled={create.isPending || patch.isPending}>
           {existing ? "Enregistrer" : "Créer la mission"}
-        </button>
+        </Button>
       </div>
     </form>
   );
