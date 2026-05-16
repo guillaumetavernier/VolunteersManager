@@ -124,7 +124,7 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
     >
       <header className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">{isNew ? "Nouveau point bénévole" : form.name}</h2>
-        <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
+        <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Fermer">
           ×
         </button>
       </header>
@@ -152,7 +152,7 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
       )}
       <form className="grid gap-3" onSubmit={onSubmit}>
         <label className="grid gap-1 text-sm">
-          <span className="font-medium">Name</span>
+          <span className="font-medium">Nom</span>
           <Input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -196,7 +196,7 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
         </label>
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Photo</span>
-          <input ref={fileRef} className="text-sm" type="file" accept="image/jpeg,image/png" />
+          <input ref={fileRef} aria-label="Photo" className="text-sm" type="file" accept="image/jpeg,image/png" />
         </label>
         {form.photo_path && (
           <img
@@ -218,14 +218,14 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
               onClick={onDelete}
               className="text-red-700 hover:bg-red-50 hover:text-red-700"
             >
-              Delete
+              Supprimer
             </Button>
           )}
           <Button
             type="submit"
             disabled={create.isPending || patch.isPending}
           >
-            {isNew ? "Create" : "Save"}
+            {isNew ? "Créer" : "Enregistrer"}
           </Button>
         </div>
       </form>
