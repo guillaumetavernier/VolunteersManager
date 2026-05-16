@@ -55,6 +55,12 @@ tidy:
 check:
 	./scripts/harness/check.sh
 
+.PHONY: bench
+bench:
+	$(GO) run ./scripts/bench_constraints.go
+	$(GO) run ./scripts/bench_roadbook.go
+	node scripts/bench_timeline.mjs
+
 .PHONY: clean
 clean:
 	rm -rf dist web/dist

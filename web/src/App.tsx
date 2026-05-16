@@ -22,6 +22,8 @@ import { MatrixView } from "@/features/travelMatrix/MatrixView";
 import { TimelinePage } from "@/features/timeline/TimelinePage";
 import { GenerateRoadbooksPage } from "@/features/roadbook/GenerateRoadbooksPage";
 import { RoadbookSettingsPage } from "@/features/roadbook/RoadbookSettingsPage";
+import { ArchivePage } from "@/features/archive/ArchivePage";
+import { BackupSettingsPage } from "@/features/archive/BackupSettingsPage";
 import { GlobalIssueCounter } from "@/features/warnings/GlobalIssueCounter";
 import { IssuesPanel } from "@/features/warnings/IssuesPanel";
 import { matchRoute, useRoute } from "@/lib/router";
@@ -99,6 +101,12 @@ function AppShell({ children }: { children: ReactNode }) {
           <button onClick={() => (window.location.hash = "/settings/roadbook")} className="underline">
             Paramètres
           </button>
+          <button onClick={() => (window.location.hash = "/settings/archive")} className="underline">
+            Archive
+          </button>
+          <button onClick={() => (window.location.hash = "/settings/backup")} className="underline">
+            Sauvegarde
+          </button>
         </nav>
         <GlobalIssueCounter />
       </header>
@@ -170,6 +178,12 @@ function Routes({ region }: { region: string }) {
   }
   if (path === "/settings/roadbook") {
     return <RoadbookSettingsPage />;
+  }
+  if (path === "/settings/archive") {
+    return <ArchivePage />;
+  }
+  if (path === "/settings/backup") {
+    return <BackupSettingsPage />;
   }
   if (path === "/roadbooks") {
     return <GenerateRoadbooksPage />;

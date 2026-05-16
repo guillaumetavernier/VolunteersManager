@@ -3,6 +3,8 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -46,7 +48,17 @@ func run() error {
 
 	logger := newLogger(*logLevel)
 
-	st, err := store.Open(filepath.Join(*dataDir, "event.db"))
+	dbPath := filepath.Join(*dataDir, "event.db")
+	backupsDir := filepath.Join(*dataDir, "backups")
+	if enabled, err := backupEnabled(dbPath); err == nil && enabled {
+		if dst, err := server.EnsureDailyBackup(dbPath, backupsDir, time.Now()); err != nil {
+			logger.Warn("daily backup failed", "err", err)
+		} else if dst != "" {
+			logger.Info("daily backup ready", "path", dst)
+		}
+	}
+
+	st, err := store.Open(dbPath)
 	if err != nil {
 		return err
 	}
@@ -79,6 +91,10 @@ func run() error {
 	if err := os.MkdirAll(exportDir, 0o755); err != nil {
 		return err
 	}
+	uploadDir := filepath.Join(*dataDir, "imports")
+	if err := os.MkdirAll(uploadDir, 0o755); err != nil {
+		return err
+	}
 	if err := roadbookfeature.SweepPreviews(context.Background(), exportDir, time.Hour, time.Now()); err != nil {
 		logger.Warn("preview sweep failed", "err", err)
 	}
@@ -89,6 +105,7 @@ func run() error {
 		DB:            st.DB,
 		AssetDir:      assetDir,
 		ExportDir:     exportDir,
+		UploadDir:     uploadDir,
 		TileDir:       tileDir,
 		TileBaseURL:   *tileBaseURL,
 		FrontendProxy: *frontendProxy,
@@ -144,6 +161,44 @@ func newLogger(level string) *slog.Logger {
 		lvl = slog.LevelInfo
 	}
 	return slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: lvl}))
+}
+
+// backupEnabled reads events.settings JSON and returns the value of
+// settings.backup.daily. Missing rows, missing keys or unreadable DBs yield
+// false; daily backup is opt-in.
+func backupEnabled(dbPath string) (bool, error) {
+	if _, err := os.Stat(dbPath); err != nil {
+		return false, nil
+	}
+	dsn := fmt.Sprintf("file:%s?_pragma=foreign_keys(1)", dbPath)
+	db, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = db.Close() }()
+	var settings string
+	row := db.QueryRow(`SELECT settings FROM events WHERE id = 1`)
+	if err := row.Scan(&settings); err != nil {
+		return false, nil
+	}
+	if settings == "" {
+		return false, nil
+	}
+	var top map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(settings), &top); err != nil {
+		return false, nil
+	}
+	raw, ok := top["backup"]
+	if !ok {
+		return false, nil
+	}
+	var b struct {
+		Daily bool `json:"daily"`
+	}
+	if err := json.Unmarshal(raw, &b); err != nil {
+		return false, nil
+	}
+	return b.Daily, nil
 }
 
 func openURL(logger *slog.Logger, url string) {

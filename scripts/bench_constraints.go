@@ -1,7 +1,8 @@
 //go:build ignore
 
-// bench_constraints generates a 100-volunteer / 200-mission fixture, runs the
-// constraint engine, and asserts the elapsed time is below 100ms. Run with:
+// bench_constraints generates a 100-volunteer / 200-mission / 50-trip fixture,
+// runs the constraint engine 1000 times, and asserts that p95 stays below
+// 100ms. Run with:
 //
 //	go run ./scripts/bench_constraints.go
 package main
@@ -10,6 +11,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/guillaumetavernier/volunteersmanager/internal/domain/constraints"
@@ -20,7 +22,8 @@ func main() {
 		nVols     = 100
 		nMissions = 200
 		nAssigns  = 400
-		budgetMs  = 100
+		iters     = 1000
+		p95Budget = 100 * time.Millisecond
 	)
 
 	rng := rand.New(rand.NewSource(42))
@@ -28,7 +31,6 @@ func main() {
 
 	vols := make([]constraints.Volunteer, 0, nVols)
 	for i := 1; i <= nVols; i++ {
-		// 80% have role types; 90% have a phone; everyone has full availability
 		var rs []string
 		if rng.Float64() < 0.8 {
 			rs = []string{roles[rng.Intn(len(roles))]}
@@ -82,23 +84,30 @@ func main() {
 		Settings:    constraints.DefaultSettings(),
 	}
 
-	// Warm-up + measure
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		_ = constraints.Compute(state)
 	}
-	const iters = 10
-	start := time.Now()
+
+	samples := make([]time.Duration, 0, iters)
+	var total time.Duration
 	var lastN int
 	for i := 0; i < iters; i++ {
+		t0 := time.Now()
 		ws := constraints.Compute(state)
+		dt := time.Since(t0)
+		samples = append(samples, dt)
+		total += dt
 		lastN = len(ws)
 	}
-	avg := time.Since(start) / iters
+	sort.Slice(samples, func(i, j int) bool { return samples[i] < samples[j] })
+	mean := total / time.Duration(iters)
+	p95 := samples[(iters*95)/100]
+	p99 := samples[(iters*99)/100]
 
-	fmt.Printf("volunteers=%d missions=%d assignments=%d warnings=%d avg=%v\n",
-		nVols, nMissions, nAssigns, lastN, avg)
-	if avg > time.Duration(budgetMs)*time.Millisecond {
-		fmt.Fprintf(os.Stderr, "BUDGET EXCEEDED: avg=%v > %dms\n", avg, budgetMs)
+	fmt.Printf("volunteers=%d missions=%d assignments=%d warnings=%d iters=%d mean=%v p95=%v p99=%v\n",
+		nVols, nMissions, nAssigns, lastN, iters, mean, p95, p99)
+	if p95 > p95Budget {
+		fmt.Fprintf(os.Stderr, "BUDGET EXCEEDED: p95=%v > %v\n", p95, p95Budget)
 		os.Exit(1)
 	}
 }

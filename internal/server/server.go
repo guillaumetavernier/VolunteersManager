@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/guillaumetavernier/volunteersmanager/internal/csv"
+	archivefeature "github.com/guillaumetavernier/volunteersmanager/internal/features/archive"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/assignment"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/car"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/event"
@@ -34,6 +35,7 @@ type Config struct {
 	DB            *sql.DB
 	AssetDir      string // where photo uploads land
 	ExportDir     string // where roadbook PDFs land (typically <data-dir>/exports)
+	UploadDir     string // where imported archive DBs land (typically <data-dir>/imports)
 	TileDir       string // where pmtiles files live
 	TileBaseURL   string // upstream prefix for downloads; empty disables remote fetch
 	FrontendProxy string // when non-empty, "/" is proxied to this URL (dev only)
@@ -139,6 +141,9 @@ func New(cfg Config) (http.Handler, error) {
 		routing.NewHandler(cfg.DB, routingProvider).Mount(r)
 		if cfg.ExportDir != "" {
 			roadbookfeature.NewHandler(cfg.DB, eventStore, cfg.AssetDir, cfg.ExportDir).Mount(r)
+		}
+		if cfg.UploadDir != "" {
+			archivefeature.NewHandler(cfg.DB, eventStore, cfg.AssetDir, cfg.UploadDir).Mount(r)
 		}
 	}
 	if cfg.TileDir != "" {

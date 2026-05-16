@@ -1,15 +1,101 @@
-# Release pipeline. Stub for M00 — populated in M09.
 name: release
 
 on:
   push:
     tags: ["v*"]
 
+permissions:
+  contents: write
+
 jobs:
   build:
-    name: cross-compile (stub)
+    name: build (${{ matrix.target.goos }}-${{ matrix.target.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { goos: linux,   goarch: amd64, ext: "" }
+          - { goos: linux,   goarch: arm64, ext: "" }
+          - { goos: darwin,  goarch: amd64, ext: "" }
+          - { goos: darwin,  goarch: arm64, ext: "" }
+          - { goos: windows, goarch: amd64, ext: ".exe" }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache: true
+
+      - name: install frontend deps
+        run: pnpm install --frozen-lockfile
+
+      - name: build frontend
+        run: pnpm --filter ./web build
+
+      - name: build binary
+        env:
+          GOOS: ${{ matrix.target.goos }}
+          GOARCH: ${{ matrix.target.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          mkdir -p artifact
+          out="artifact/volunteers${{ matrix.target.ext }}"
+          go build \
+            -trimpath \
+            -ldflags="-s -w -X main.version=${GITHUB_REF_NAME}" \
+            -o "$out" \
+            ./cmd/volunteers
+
+      - name: stage artifact
+        id: stage
+        run: |
+          name="volunteers_${GITHUB_REF_NAME}_${{ matrix.target.goos }}_${{ matrix.target.goarch }}"
+          mkdir -p "dist/$name"
+          cp "artifact/volunteers${{ matrix.target.ext }}" "dist/$name/"
+          cp README.md LICENSE "dist/$name/"
+          cd dist
+          if [ "${{ matrix.target.goos }}" = "windows" ]; then
+            zip -r "$name.zip" "$name"
+            echo "asset=dist/$name.zip" >> "$GITHUB_OUTPUT"
+          else
+            tar -czf "$name.tar.gz" "$name"
+            echo "asset=dist/$name.tar.gz" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: volunteers-${{ matrix.target.goos }}-${{ matrix.target.goarch }}
+          path: ${{ steps.stage.outputs.asset }}
+
+  release:
+    name: publish github release
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: stub
-        run: echo "Release cross-compilation will be wired up in M09."
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: list assets
+        run: ls -la dist
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
