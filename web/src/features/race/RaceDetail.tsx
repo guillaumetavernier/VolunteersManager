@@ -14,13 +14,11 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { navigate } from "@/lib/router";
 import { useVSList } from "@/features/vs/hooks";
 import type { VS } from "@/features/vs/api";
 
 import type { Race, RaceVSEntry } from "./api";
 
-const RACES_PATH = "/races";
 import {
   useDeleteRaceGPX,
   useOverrideRaceVSTimes,
@@ -44,35 +42,21 @@ export function RaceDetail({ raceID, onBack }: Props) {
   if (race.error)
     return (
       <main className="p-6 text-sm text-red-700">
-        Race not found.{" "}
-        <button className="underline" onClick={() => (onBack ? onBack() : navigate(RACES_PATH))}>
-          Back to list
-        </button>
+        Course introuvable.{" "}
+        {onBack && (
+          <button className="underline" onClick={onBack}>
+            Retour
+          </button>
+        )}
       </main>
     );
   if (!race.data) return null;
-  return <Inner race={race.data} raceID={raceID} onBack={onBack} />;
+  return <Inner race={race.data} raceID={raceID} />;
 }
 
-function Inner({ race, raceID, onBack }: { race: Race; raceID: number; onBack?: () => void }) {
+function Inner({ race, raceID }: { race: Race; raceID: number }) {
   return (
     <main className="mx-auto max-w-4xl p-6">
-      <header className="mb-6 flex items-center justify-between">
-        {onBack ? (
-          <button onClick={onBack} className="text-sm text-slate-600 underline">
-            ← Retour
-          </button>
-        ) : (
-          <>
-            <button onClick={() => navigate(RACES_PATH)} className="text-sm text-slate-600 underline">
-              ← All races
-            </button>
-            <button onClick={() => navigate("/")} className="text-sm text-slate-600 underline">
-              Map
-            </button>
-          </>
-        )}
-      </header>
       <RaceForm race={race} />
       <GPXSection raceID={raceID} />
       <VSListSection raceID={raceID} />

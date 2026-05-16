@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { navigate } from "@/lib/router";
 import { useArchiveVolunteer, useVolunteers } from "./hooks";
 import { VolunteerForm } from "./VolunteerForm";
@@ -36,16 +37,16 @@ export function VolunteerList({ onSelect }: VolunteerListProps = {}) {
     <main className="mx-auto max-w-5xl p-6">
       <header className="mb-6 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Bénévoles</h1>
-        <nav className="flex gap-3 text-sm text-slate-600">
-          <button onClick={() => navigate("/volunteers/import")} className="underline">
+        <nav className="flex items-center gap-1">
+          <Button variant="link" size="sm" onClick={() => navigate("/volunteers/import")}>
             Importer un CSV
-          </button>
-          <a className="underline" href="/api/volunteers/template.csv">
-            Modèle
-          </a>
-          <a className="underline" href="/api/volunteers/export.csv">
-            Exporter
-          </a>
+          </Button>
+          <Button variant="link" size="sm" asChild>
+            <a href="/api/volunteers/template.csv">Modèle</a>
+          </Button>
+          <Button variant="link" size="sm" asChild>
+            <a href="/api/volunteers/export.csv">Exporter</a>
+          </Button>
         </nav>
       </header>
       <div className="mb-4 flex flex-wrap items-center gap-3">
