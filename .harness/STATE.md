@@ -26,7 +26,7 @@
 | 07 | 07-timeline                   | 🟢 completed   | Canvas timeline + per-frame MapLibre sources; bench 0.009 ms/frame; 12 Playwright tests + 84 Vitest tests green. |
 | 08 | 08-roadbook                   | 🟢 completed   | All acceptance criteria pass; mini-map shipped force-off per locked v1 decision (stub `ErrMiniMapNotImplemented`). |
 | 09 | 09-archive-polish             | 🟢 completed   | All acceptance criteria pass except the deploy-time tag-push check; harness + Playwright e2e green. |
-| 10 | 10-navigation-rework          | 🟢 completed   | Map-is-home toolbar shipped; AppShell + MapWorkspace + four tool sidebars; legacy MapDrawer/PbEditPanel/MissionsPanel removed; 22 Playwright tests + 87 Vitest tests green. |
+| 10 | 10-navigation-rework          | 🟢 completed   | Map-is-home toolbar shipped; AppShell + MapWorkspace + four tool sidebars; legacy MapDrawer/PbEditPanel/MissionsPanel removed; 30 Playwright tests + 87 Vitest tests green. |
 
 ## Acceptance criteria — per-milestone checklist
 
@@ -150,7 +150,7 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 - [x] `web/src/features/map/MapDrawer.tsx`, `web/src/features/vs/PbEditPanel.tsx`, `web/src/features/mission/MissionsPanel.tsx` deleted.
 - [x] `grep -r "map-drawer\|Ouvrir le panneau\|PbEditPanel\|MissionsPanel" web/src` returns no matches.
 - [x] `pnpm tsc -b --noEmit` clean.
-- [x] All Playwright specs green (22 tests in 9 specs); new `e2e/navigation.spec.ts` (7 sub-tests) passes.
+- [x] All Playwright specs green (30 tests in 9 specs); new `e2e/navigation.spec.ts` (10 sub-tests) passes.
 - [x] `./scripts/harness/check.sh` green.
 
 ## Blockers
