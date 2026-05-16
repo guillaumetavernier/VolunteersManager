@@ -170,9 +170,10 @@ func LoadState(ctx context.Context, db *sql.DB) (EventState, error) {
 						_ = prows.Close()
 						return state, err
 					}
-					if action == "board" {
+					switch action {
+					case "board":
 						boardByStop[stopID] = append(boardByStop[stopID], volID)
-					} else if action == "alight" {
+					case "alight":
 						alightByStop[stopID] = append(alightByStop[stopID], volID)
 					}
 				}

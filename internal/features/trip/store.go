@@ -137,9 +137,10 @@ func (s *Store) loadStopsInto(trips []Trip, idx map[int64]int, ids []int64) erro
 			return err
 		}
 		if sp, ok := stopByID[stopID]; ok {
-			if action == "board" {
+			switch action {
+			case "board":
 				sp.Board = append(sp.Board, volID)
-			} else if action == "alight" {
+			case "alight":
 				sp.Alight = append(sp.Alight, volID)
 			}
 		}

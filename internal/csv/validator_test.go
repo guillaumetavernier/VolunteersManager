@@ -44,10 +44,9 @@ func TestValidate_RequiresFirstLastPhone(t *testing.T) {
 }
 
 func TestValidate_NormalizesPhoneAndRoles(t *testing.T) {
-	body := "Prénom;Nom;Téléphone;Rôles\nMarie;Dupont;06 11 11 11 11;Ravitaillement;Accueil\n"
-	// The semicolons inside the role column won't be split by the CSV parser
-	// because they're the delimiter — instead, use a pipe in the field.
-	body = "Prénom;Nom;Téléphone;Rôles\nMarie;Dupont;06 11 11 11 11;Ravitaillement|Accueil\n"
+	// Semicolons inside the role column would be split by the CSV parser
+	// (they're the delimiter) — use a pipe in the field instead.
+	body := "Prénom;Nom;Téléphone;Rôles\nMarie;Dupont;06 11 11 11 11;Ravitaillement|Accueil\n"
 	p, _ := Parse(strings.NewReader(body))
 	rows := Validate(p, AutoMap(p.Headers), "FR")
 	if len(rows) != 1 || len(rows[0].Errors) != 0 {
