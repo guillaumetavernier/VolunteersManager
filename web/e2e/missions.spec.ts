@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ensureEventInitialized, resetState, waitForMap } from "./helpers";
+import { ensureEventInitialized, resetState, unwrap, waitForMap } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
 
@@ -17,7 +17,7 @@ test("VS missions: create 3, drag-assign, 409 on dup, grid view, cascade-delete"
     data: { name: "Refuge Nord", lat: 48.86, lon: 2.34 },
   });
   expect(vsRes.ok()).toBe(true);
-  const vs = await vsRes.json();
+  const vs = await unwrap<{ id: number }>(vsRes);
 
   // Seed a volunteer with a role that matches the missions.
   const volRes = await request.post("/api/volunteers", {
@@ -30,7 +30,7 @@ test("VS missions: create 3, drag-assign, 409 on dup, grid view, cascade-delete"
     },
   });
   expect(volRes.ok()).toBe(true);
-  const vol = await volRes.json();
+  const vol = await unwrap<{ id: number }>(volRes);
 
   // Open the missions panel for that VS through the map → marker click → VS panel → "Missions" button.
   await page.goto("/");
@@ -122,9 +122,9 @@ test("race-delete scrubs mission tagged_race_ids", async ({ request }) => {
   const vsRes = await request.post("/api/vs", {
     data: { name: "Aid", lat: 48.86, lon: 2.34 },
   });
-  const vs = await vsRes.json();
+  const vs = await unwrap<{ id: number }>(vsRes);
   const raceRes = await request.post("/api/races", { data: { name: "Trail" } });
-  const race = await raceRes.json();
+  const race = await unwrap<{ id: number }>(raceRes);
   const mRes = await request.post(`/api/vs/${vs.id}/missions`, {
     data: {
       day: 1,
@@ -136,7 +136,7 @@ test("race-delete scrubs mission tagged_race_ids", async ({ request }) => {
     },
   });
   expect(mRes.ok()).toBe(true);
-  const m = await mRes.json();
+  const m = await unwrap<{ id: number; tagged_race_ids: number[] }>(mRes);
   expect(m.tagged_race_ids).toContain(race.id);
 
   // Delete the race.

@@ -1,4 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 
 import { EventInitWizard } from "@/features/event/EventInitWizard";
 import {
@@ -14,9 +15,14 @@ import { VolunteerDetail } from "@/features/volunteer/VolunteerDetail";
 import { CsvImportWizard } from "@/features/volunteer/CsvImportWizard";
 import { CarList } from "@/features/car/CarList";
 import { MissionsGrid } from "@/features/mission/MissionsGrid";
+import { GlobalIssueCounter } from "@/features/warnings/GlobalIssueCounter";
+import { IssuesPanel } from "@/features/warnings/IssuesPanel";
 import { matchRoute, useRoute } from "@/lib/router";
 import { queryClient } from "@/lib/queryClient";
+import { installWarningsBridge } from "@/lib/mutationResponse";
 import { ToastViewport } from "@/lib/toast";
+
+installWarningsBridge(queryClient);
 
 export default function App() {
   return (
@@ -41,7 +47,42 @@ function AppRouter() {
       <FullScreenStatus message="Event initialized without a tile region. Re-run the wizard or set settings.region manually." />
     );
   }
-  return <Routes region={region} />;
+  return (
+    <AppShell>
+      <Routes region={region} />
+    </AppShell>
+  );
+}
+
+function AppShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <header
+        className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 py-2 text-sm shadow-sm"
+        data-testid="app-header"
+      >
+        <nav className="flex items-center gap-3">
+          <button onClick={() => (window.location.hash = "/")} className="font-semibold">
+            Carte
+          </button>
+          <button onClick={() => (window.location.hash = "/races")} className="underline">
+            Courses
+          </button>
+          <button onClick={() => (window.location.hash = "/volunteers")} className="underline">
+            Bénévoles
+          </button>
+          <button onClick={() => (window.location.hash = "/cars")} className="underline">
+            Véhicules
+          </button>
+          <button onClick={() => (window.location.hash = "/missions/grid")} className="underline">
+            Grille
+          </button>
+        </nav>
+        <GlobalIssueCounter />
+      </header>
+      <main className="flex-1">{children}</main>
+    </div>
+  );
 }
 
 function Routes({ region }: { region: string }) {
@@ -76,6 +117,9 @@ function Routes({ region }: { region: string }) {
   if (matchRoute("/missions/grid", route.path)) {
     return <MissionsGrid />;
   }
+  if (matchRoute("/issues", route.path)) {
+    return <IssuesPanel />;
+  }
   return <MapShell region={region} />;
 }
 
@@ -84,7 +128,7 @@ function MapShell({ region }: { region: string }) {
   return (
     <>
       <MapView region={region} />
-      <nav className="absolute top-4 right-4 z-10 flex gap-2 rounded-md bg-white/90 px-3 py-2 text-sm shadow">
+      <nav className="absolute top-4 right-4 z-10 flex items-center gap-2 rounded-md bg-white/90 px-3 py-2 text-sm shadow">
         <button onClick={() => (window.location.hash = "/races")} className="underline">
           Courses
         </button>

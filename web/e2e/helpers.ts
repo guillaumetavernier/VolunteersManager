@@ -1,4 +1,14 @@
-import { expect, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type APIResponse, type Page } from "@playwright/test";
+
+// unwrap reads a response body and strips the M05 `{data, warnings}` envelope
+// when the server wraps a mutation response.
+export async function unwrap<T = unknown>(res: APIResponse): Promise<T> {
+  const body = await res.json();
+  if (body && typeof body === "object" && !Array.isArray(body) && "data" in body && "warnings" in body) {
+    return (body as { data: T }).data;
+  }
+  return body as T;
+}
 
 // Reset DB between tests by deleting races and VS through the API. The event
 // row stays put because it's load-bearing (the wizard would re-appear without it).

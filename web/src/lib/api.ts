@@ -26,7 +26,50 @@ export async function apiFetch<T>(
   if (!res.ok) {
     throw new ApiError(res.status, body, `${res.status} ${res.statusText}`);
   }
+  return unwrapMutationResponse<T>(body);
+}
+
+// unwrapMutationResponse handles the M05 `{data, warnings}` envelope produced
+// by mutation routes. It hands the warnings diff to the registered observer
+// (the warnings cache) and returns the bare entity. Non-wrapped bodies pass
+// through unchanged so this works transparently for read endpoints too.
+function unwrapMutationResponse<T>(body: unknown): T {
+  if (body && typeof body === "object" && !Array.isArray(body)) {
+    const b = body as Record<string, unknown>;
+    if ("data" in b && "warnings" in b) {
+      const observer = warningsObserver;
+      if (observer) {
+        try {
+          observer(b.warnings as WarningsDiff);
+        } catch {
+          // observer must never break the mutation
+        }
+      }
+      return b.data as T;
+    }
+  }
   return body as T;
+}
+
+export interface WarningEnvelope {
+  id: string;
+  kind: string;
+  severity: string;
+  message: string;
+  entities: Array<{ type: string; id: number }>;
+}
+
+export interface WarningsDiff {
+  added: WarningEnvelope[];
+  removed: string[];
+  unchanged: number;
+}
+
+type WarningsObserver = (diff: WarningsDiff) => void;
+let warningsObserver: WarningsObserver | null = null;
+
+export function setWarningsObserver(fn: WarningsObserver | null) {
+  warningsObserver = fn;
 }
 
 function isFormBody(body: BodyInit | null | undefined): boolean {

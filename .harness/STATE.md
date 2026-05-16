@@ -3,7 +3,7 @@
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
 **Last updated:** 2026-05-16
-**Current milestone:** **[05-constraints](../docs/milestones/05-constraints.md)** — not started.
+**Current milestone:** **[05-constraints](../docs/milestones/05-constraints.md)** — in progress.
 
 ## Status legend
 
@@ -21,7 +21,7 @@
 | 02 | 02-races-gpx                  | 🟢 completed   | All M02 flows covered by Playwright e2e (wizard, VS, race, polyline color). |
 | 03 | 03-volunteers-cars-csv        | 🟢 completed   | All acceptance criteria pass; harness + Playwright e2e green. |
 | 04 | 04-missions-assignments       | 🟢 completed   | All acceptance criteria pass; harness + Playwright e2e green. |
-| 05 | 05-constraints                | ⚪ not_started | Response-shape change retrofits M01–M04 endpoints. |
+| 05 | 05-constraints                | 🟢 completed   | Engine + cache + middleware wrap mutations; 9 Playwright tests cover the loop. |
 | 06 | 06-trips-travel-matrix        | ⚪ not_started | |
 | 07 | 07-timeline                   | ⚪ not_started | |
 | 08 | 08-roadbook                   | ⚪ not_started | Mini-map rasterization risk — see M08 risks. |
@@ -82,7 +82,13 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 - [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (8 Playwright tests pass; 49 Vitest tests; full Go suite green)
 
 ### 05-constraints
-_Not yet started._
+
+- [x] Assigning a volunteer to two overlapping missions surfaces a `double_booking` warning in the mutation response and in `GET /api/warnings`. (e2e/constraints.spec.ts + internal/server/constraints_test.go)
+- [x] Per-volunteer badge shows count; clicking it navigates to the volunteer's page; the violating assignments are highlighted. (WarningBadge filters by entity; IssuesPanel row click navigates to /volunteers/{id})
+- [x] Removing one of the overlapping assignments removes the warning (`removed: [<id>]` in the response). (e2e/constraints.spec.ts asserts removed length > 0)
+- [x] Running `Compute` against a 100-volunteer / 200-mission fixture completes in <100 ms locally (script in `scripts/bench_constraints.go`). (~1.1ms / 10 iters)
+- [x] Frontend cache stays in sync with `GET /api/warnings` after any series of mutations. (applyDiff merges added/removed into the warnings query cache; covered by mutationResponse.test.ts)
+- [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (Go suite green; 55 Vitest tests pass; 9 Playwright tests pass)
 
 ### 06-trips-travel-matrix
 _Not yet started._

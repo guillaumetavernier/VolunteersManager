@@ -20,6 +20,7 @@ import (
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/racevs"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/volunteer"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/vs"
+	"github.com/guillaumetavernier/volunteersmanager/internal/features/warnings"
 	"github.com/guillaumetavernier/volunteersmanager/internal/i18n"
 )
 
@@ -40,10 +41,20 @@ func New(cfg Config) (http.Handler, error) {
 	r := chi.NewRouter()
 	r.Use(requestLogger(cfg.Logger))
 	r.Use(recoverer(cfg.Logger))
+	var warnStore *warnings.Store
+	if cfg.DB != nil {
+		warnStore = warnings.NewStore(cfg.DB)
+		// Scope constraint middleware to the /api subtree only. Non-/api paths
+		// (SPA fallback, /tiles/*.pmtiles, /assets/vs/*) must not trigger
+		// LoadState/Compute.
+		r.Use(apiOnly(constraintMiddleware(cfg.DB, warnStore, cfg.Logger)))
+	}
 
 	r.Get("/healthz", healthz)
 
 	if cfg.DB != nil {
+		warnings.NewHandler(warnStore).Mount(r)
+
 		eventStore := event.NewStore(cfg.DB)
 		event.NewHandler(eventStore).Mount(r)
 

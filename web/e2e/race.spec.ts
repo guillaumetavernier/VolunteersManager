@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ensureEventInitialized, expectLineLayer, resetState, waitForMap } from "./helpers";
+import { ensureEventInitialized, expectLineLayer, resetState, unwrap, waitForMap } from "./helpers";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,7 +22,7 @@ test("create race, upload GPX, add VS in order, override one time, see polyline 
     data: { name: "Midpoint", lat: 48.8584, lon: 2.296 },
   });
   expect(vsRes.ok()).toBe(true);
-  const vs = await vsRes.json();
+  const vs = await unwrap<{ id: number }>(vsRes);
 
   // Go to the races list and create a race.
   await page.goto("/#/races");
