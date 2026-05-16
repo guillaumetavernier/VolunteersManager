@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 import { useWarnings } from "./hooks";
 import type { EntityRef, Warning, WarningKind } from "./api";
 
@@ -43,12 +45,15 @@ export function IssuesPanel() {
     <main className="mx-auto max-w-3xl p-6">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Problèmes ({ws.length})</h1>
-        <button
+        <Button
+          type="button"
+          variant="link"
+          size="sm"
           onClick={() => (window.location.hash = "/")}
-          className="text-sm underline"
+          className="h-auto px-0 text-sm"
         >
           Retour
-        </button>
+        </Button>
       </header>
       {ws.length === 0 && (
         <p className="text-slate-600">Aucun problème détecté.</p>

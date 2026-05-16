@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 import { topSeverity, useWarnings } from "./hooks";
 
 const SEVERITY_CLASS: Record<string, string> = {
@@ -11,26 +13,31 @@ export function GlobalIssueCounter() {
   const ws = data ?? [];
   if (ws.length === 0) {
     return (
-      <button
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
         onClick={() => (window.location.hash = "/issues")}
-        className="rounded-full bg-slate-200 px-3 py-1 text-xs text-slate-700"
+        className="h-auto rounded-full bg-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-slate-300"
         data-testid="global-issue-counter"
         data-count="0"
       >
         Aucun problème
-      </button>
+      </Button>
     );
   }
   const sev = topSeverity(ws) ?? "info";
   const cls = SEVERITY_CLASS[sev] ?? SEVERITY_CLASS.info;
   return (
-    <button
+    <Button
+      type="button"
+      size="sm"
       onClick={() => (window.location.hash = "/issues")}
-      className={`rounded-full px-3 py-1 text-xs font-semibold ${cls}`}
+      className={`h-auto rounded-full px-3 py-1 text-xs font-semibold ${cls}`}
       data-testid="global-issue-counter"
       data-count={ws.length}
     >
       {ws.length} problème{ws.length > 1 ? "s" : ""}
-    </button>
+    </Button>
   );
 }

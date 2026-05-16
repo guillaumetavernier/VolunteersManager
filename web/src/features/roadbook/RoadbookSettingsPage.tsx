@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { putEvent } from "@/features/event/api";
 import { useEvent } from "@/features/event/hooks";
 import { useVolunteers } from "@/features/volunteer/hooks";
@@ -132,30 +135,42 @@ export function RoadbookSettingsPage() {
         <header className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Roadbook — paramètres</h1>
           <nav className="flex gap-3 text-sm text-slate-600">
-            <button onClick={() => navigate("/roadbooks")} className="underline">
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={() => navigate("/roadbooks")}
+              className="h-auto px-0"
+            >
               Génération
-            </button>
-            <button onClick={() => navigate("/")} className="underline">
+            </Button>
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="h-auto px-0"
+            >
               Carte
-            </button>
+            </Button>
           </nav>
         </header>
 
         <label className="block">
           <span className="text-sm font-medium">Couleur principale</span>
-          <input
+          <Input
             type="color"
             data-testid="primary-color"
             value={settings.primary_color}
             onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-            className="mt-1 h-10 w-20 border"
+            className="mt-1 h-10 w-20 p-1"
           />
         </label>
 
         <label className="block">
           <span className="text-sm font-medium">Texte d'en-tête</span>
-          <textarea
-            className="input mt-1 w-full"
+          <Textarea
+            className="mt-1 min-h-[80px]"
             rows={3}
             value={settings.header_text}
             onChange={(e) => setSettings({ ...settings, header_text: e.target.value })}
@@ -164,8 +179,8 @@ export function RoadbookSettingsPage() {
 
         <label className="block">
           <span className="text-sm font-medium">Texte de pied de page</span>
-          <textarea
-            className="input mt-1 w-full"
+          <Textarea
+            className="mt-1 min-h-[60px]"
             rows={2}
             value={settings.footer_text}
             onChange={(e) => setSettings({ ...settings, footer_text: e.target.value })}
@@ -175,16 +190,16 @@ export function RoadbookSettingsPage() {
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="text-sm font-medium">Nom du coordinateur</span>
-            <input
-              className="input mt-1 w-full"
+            <Input
+              className="mt-1"
               value={coordinatorName}
               onChange={(e) => setCoordinatorName(e.target.value)}
             />
           </label>
           <label className="block">
             <span className="text-sm font-medium">Téléphone</span>
-            <input
-              className="input mt-1 w-full"
+            <Input
+              className="mt-1"
               value={coordinatorPhone}
               onChange={(e) => setCoordinatorPhone(e.target.value)}
               placeholder="+33…"
@@ -195,12 +210,12 @@ export function RoadbookSettingsPage() {
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="text-sm font-medium">Logo (PNG/JPEG, &lt; 5 Mo)</span>
-            <input type="file" accept="image/png,image/jpeg" onChange={onLogoChange} className="mt-1" />
+            <Input type="file" accept="image/png,image/jpeg" onChange={onLogoChange} className="mt-1" />
             {ev.data.logo_path && <p className="mt-1 text-xs text-slate-500">{ev.data.logo_path}</p>}
           </label>
           <label className="block">
             <span className="text-sm font-medium">Sponsor (PNG/JPEG, &lt; 5 Mo)</span>
-            <input type="file" accept="image/png,image/jpeg" onChange={onSponsorChange} className="mt-1" />
+            <Input type="file" accept="image/png,image/jpeg" onChange={onSponsorChange} className="mt-1" />
             {ev.data.sponsor_path && <p className="mt-1 text-xs text-slate-500">{ev.data.sponsor_path}</p>}
           </label>
         </div>
@@ -219,22 +234,26 @@ export function RoadbookSettingsPage() {
                   <span>{SECTION_LABELS[k]}</span>
                 </label>
                 <span className="flex gap-1">
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     aria-label={`Monter ${k}`}
-                    className="rounded border px-2 text-xs"
+                    className="h-auto px-2 py-0.5 text-xs"
                     onClick={() => moveSection(k, -1)}
                   >
                     ↑
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     aria-label={`Descendre ${k}`}
-                    className="rounded border px-2 text-xs"
+                    className="h-auto px-2 py-0.5 text-xs"
                     onClick={() => moveSection(k, 1)}
                   >
                     ↓
-                  </button>
+                  </Button>
                 </span>
               </li>
             ))}
@@ -247,48 +266,56 @@ export function RoadbookSettingsPage() {
         </label>
 
         <div className="flex items-center gap-3">
-          <button
+          <Button
+            type="button"
             onClick={save}
             disabled={busy}
-            className="rounded bg-slate-900 px-4 py-2 text-white"
             data-testid="save-settings"
           >
             Enregistrer
-          </button>
+          </Button>
           {error && <span className="text-sm text-red-600">{error}</span>}
         </div>
 
         <section className="mt-6 border-t border-slate-200 pt-4" data-testid="autres-outils">
           <h2 className="mb-2 text-lg font-medium">Autres outils</h2>
           <nav className="flex flex-wrap gap-3 text-sm">
-            <button
+            <Button
               type="button"
+              variant="link"
+              size="sm"
               onClick={() => navigate("/trips")}
-              className="text-primary underline-offset-4 hover:underline"
+              className="h-auto px-0"
             >
               Trajets
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="link"
+              size="sm"
               onClick={() => navigate("/transport-needs")}
-              className="text-primary underline-offset-4 hover:underline"
+              className="h-auto px-0"
             >
               Besoins transport
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="link"
+              size="sm"
               onClick={() => navigate("/travel-times")}
-              className="text-primary underline-offset-4 hover:underline"
+              className="h-auto px-0"
             >
               Matrice temps
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="link"
+              size="sm"
               onClick={() => navigate("/settings/archive")}
-              className="text-primary underline-offset-4 hover:underline"
+              className="h-auto px-0"
             >
               Archive
-            </button>
+            </Button>
           </nav>
         </section>
       </section>
