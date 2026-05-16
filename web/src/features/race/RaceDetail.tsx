@@ -58,7 +58,7 @@ export function RaceDetail({ raceID, onBack }: Props) {
 
 function Inner({ race, raceID }: { race: Race; raceID: number }) {
   return (
-    <div className="grid gap-4 p-3">
+    <div className="grid min-w-0 gap-4 p-3">
       <RaceForm race={race} />
       <GPXSection raceID={raceID} />
       <VSListSection raceID={raceID} />
@@ -117,7 +117,7 @@ function RaceForm({ race }: { race: Race }) {
           />
         </label>
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Allure tête (km/h)</span>
           <Input
@@ -136,7 +136,7 @@ function RaceForm({ race }: { race: Race }) {
             onChange={(e) => setForm({ ...form, tail_pace: Number(e.target.value) })}
           />
         </label>
-        <label className="grid gap-1 text-sm">
+        <label className="col-span-2 grid gap-1 text-sm">
           <span className="font-medium">Heure de départ</span>
           <Input
             type="datetime-local"
@@ -181,9 +181,14 @@ function GPXSection({ raceID }: { raceID: number }) {
   return (
     <section className="mb-8 grid gap-3 rounded-md border border-slate-200 p-4">
       <h2 className="text-lg font-semibold">Fichiers GPX</h2>
-      <div className="flex items-center gap-2">
-        <input ref={fileRef} type="file" accept=".gpx,application/gpx+xml,application/xml" className="text-sm" />
-        <label className="text-sm text-slate-600">
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".gpx,application/gpx+xml,application/xml"
+          className="min-w-0 max-w-full text-sm"
+        />
+        <label className="flex items-center text-sm text-slate-600">
           Jour&nbsp;
           <Input className="w-16" type="number" min={1} value={day} onChange={(e) => setDay(e.target.value)} />
         </label>
@@ -199,14 +204,14 @@ function GPXSection({ raceID }: { raceID: number }) {
       {gpx.data && gpx.data.length === 0 && <p className="text-sm text-slate-500">Aucun GPX importé pour l'instant.</p>}
       <ul className="divide-y divide-slate-200 text-sm">
         {gpx.data?.map((g) => (
-          <li key={g.id} className="flex items-center justify-between py-2">
-            <span>
+          <li key={g.id} className="flex items-center justify-between gap-2 py-2">
+            <span className="min-w-0 flex-1 truncate">
               <code>{g.file_path.split("/").pop()}</code>
               {" — "}
               {(g.total_distance_m / 1000).toFixed(2)} km
               {g.day != null && ` · jour ${g.day}`}
             </span>
-            <button onClick={() => del.mutate(g.id)} className="text-red-700 hover:underline">
+            <button onClick={() => del.mutate(g.id)} className="shrink-0 text-red-700 hover:underline">
               Supprimer
             </button>
           </li>
@@ -321,7 +326,7 @@ function SortableRow({
     <li
       ref={setNodeRef}
       style={style}
-      className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-md border border-slate-200 bg-white p-3"
+      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-slate-200 bg-white p-3"
     >
       <button
         {...attributes}
@@ -340,7 +345,7 @@ function SortableRow({
             </span>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="grid gap-2 text-xs">
           <TimeEditor
             label="premier passage"
             auto={entry.auto_first_in}
