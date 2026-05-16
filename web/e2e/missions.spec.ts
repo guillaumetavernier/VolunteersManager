@@ -32,11 +32,12 @@ test("VS missions: create 3, drag-assign, 409 on dup, grid view, cascade-delete"
   expect(volRes.ok()).toBe(true);
   const vol = await unwrap<{ id: number }>(volRes);
 
-  // Open the missions panel for that VS through the map → marker click → VS panel → "Missions" button.
-  await page.goto("/");
+  // Open the VS sidebar via the VS tool. Click the marker → detail frame →
+  // "Missions" button pushes the missions frame.
+  await page.goto("/#/vs");
   await waitForMap(page);
   await page.locator(`[data-vs-name="Refuge Nord"]`).click();
-  await expect(page.getByLabel(`Modifier le PB Refuge Nord`)).toBeVisible();
+  await expect(page).toHaveURL(/#\/vs\/\d+/);
   await page.locator('[data-action="open-missions"]').click();
   await expect(page.locator("[data-missions-panel]")).toBeVisible();
 
@@ -96,17 +97,18 @@ test("VS missions: create 3, drag-assign, 409 on dup, grid view, cascade-delete"
   await expect(page.locator("[data-mission-id]")).toHaveCount(3);
   await expect(page.locator("[data-mission-id]").first().locator("[data-staffing-badge]")).toHaveText("1/1");
 
-  // Grid view renders the chip.
-  await page.goto("/#/missions/grid");
+  // Affectations page renders the chip.
+  await page.goto("/#/affectations");
   await expect(page.locator("[data-missions-grid]")).toBeVisible();
   await expect(page.locator("[data-mission-chip]").first()).toBeVisible();
 
   // Cascade-delete: back to VS, attempt delete → confirmation dialog → cascade.
-  await page.goto("/");
+  await page.goto("/#/vs");
   await waitForMap(page);
   await page.locator(`[data-vs-name="Refuge Nord"]`).click();
+  await expect(page).toHaveURL(/#\/vs\/\d+/);
   page.once("dialog", (d) => d.accept());
-  await page.getByRole("button", { name: /^delete$/i }).click();
+  await page.getByRole("button", { name: /supprimer/i }).first().click();
   await expect(page.locator("[data-cascade-confirm]")).toBeVisible();
   await page.locator('[data-action="confirm-cascade-delete"]').click();
 

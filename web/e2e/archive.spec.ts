@@ -14,7 +14,8 @@ test("export an archive zip via the settings page", async ({ page, request }) =>
     await request.post("/api/vs", { data: { name: "VS-Archive", lat: 48.0, lon: 2.0 } }),
   );
 
-  await page.goto("/#/settings/archive");
+  await page.goto("/#/parametres");
+  await page.getByTestId("settings-tab-donnees").click();
   await expect(page.getByTestId("archive-page")).toBeVisible();
 
   const link = page.getByTestId("export-archive");
@@ -40,7 +41,8 @@ test("import an archive .zip and surface the new DB path", async ({ page, reques
   const zipBytes = await exportRes.body();
   expect(zipBytes.length).toBeGreaterThan(64);
 
-  await page.goto("/#/settings/archive");
+  await page.goto("/#/parametres");
+  await page.getByTestId("settings-tab-donnees").click();
   await expect(page.getByTestId("archive-page")).toBeVisible();
 
   const upload = page.getByTestId("import-archive");
@@ -57,7 +59,8 @@ test("import an archive .zip and surface the new DB path", async ({ page, reques
 });
 
 test("toggle the daily backup setting and persist", async ({ page }) => {
-  await page.goto("/#/settings/backup");
+  await page.goto("/#/parametres");
+  await page.getByTestId("settings-tab-donnees").click();
   await expect(page.getByTestId("backup-settings")).toBeVisible();
   const toggle = page.getByTestId("daily-backup-toggle").locator("input[type=checkbox]");
   if (!(await toggle.isChecked())) {
@@ -66,6 +69,7 @@ test("toggle the daily backup setting and persist", async ({ page }) => {
   await page.getByTestId("save-backup").click();
 
   await page.reload();
+  await page.getByTestId("settings-tab-donnees").click();
   await expect(page.getByTestId("backup-settings")).toBeVisible();
   await expect(page.getByTestId("daily-backup-toggle").locator("input[type=checkbox]")).toBeChecked();
 });

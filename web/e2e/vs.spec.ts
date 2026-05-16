@@ -8,11 +8,12 @@ test.beforeEach(async ({ request }) => {
   await resetState(request);
 });
 
-test("click-empty-map opens VS create panel; submit persists; drag updates DB", async ({
+test("click-empty-map opens VS create draft; submit persists; drag updates DB", async ({
   page,
   request,
 }) => {
-  await page.goto("/");
+  // The VS tool must be active for empty-click → draft. Go straight to /#/vs.
+  await page.goto("/#/vs");
   await waitForMap(page);
 
   // Click roughly in the middle of the map canvas.
@@ -24,21 +25,21 @@ test("click-empty-map opens VS create panel; submit persists; drag updates DB", 
   const cy = box.y + box.height / 2;
   await page.mouse.click(cx, cy);
 
-  // The PB create panel appears with the clicked coords pre-filled.
+  // The PB create sidebar frame appears with the clicked coords pre-filled.
   await expect(page.getByLabel("Créer un PB")).toBeVisible();
-  await page.getByLabel("Name").fill("Refuge");
-  await page.getByRole("button", { name: /^create$/i }).click();
-  await expect(page.getByLabel("Créer un PB")).toBeHidden();
+  await page.getByLabel("Nom").fill("Refuge");
+  await page.getByRole("button", { name: /^créer$/i }).click();
 
   // The new VS round-trips in the API.
+  await expect
+    .poll(async () => (await (await request.get("/api/vs")).json()).length)
+    .toBe(1);
   const xs = await (await request.get("/api/vs")).json();
-  expect(xs).toHaveLength(1);
   const created = xs[0];
   expect(created.name).toBe("Refuge");
 
-  // A MapLibre Marker DOM element has appeared. Drag it diagonally and confirm
-  // the PATCH lands. We can't target by aria-label because MapLibre rewrites
-  // it on every marker; use the data-vs-name attribute the MapView sets.
+  // A MapLibre Marker DOM element appears. Drag it diagonally and confirm
+  // the PATCH lands.
   const markerSelector = `[data-vs-name="Refuge"]`;
   await expect(page.locator(markerSelector)).toBeVisible({ timeout: 10_000 });
   const m = await page.locator(markerSelector).boundingBox();

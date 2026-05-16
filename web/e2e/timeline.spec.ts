@@ -107,7 +107,7 @@ test("timeline renders bars, plays, scrubs, sub-race zooms, race toggle hides ba
   });
   expect(tripRes.ok()).toBe(true);
 
-  await page.goto("/#/timeline");
+  await page.goto("/#/chronologie");
 
   // Wait for timeline canvas + map.
   await page.getByTestId("timeline-canvas").waitFor({ state: "visible" });

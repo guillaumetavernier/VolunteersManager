@@ -47,7 +47,7 @@ test("CSV import: 50 rows + 5 duplicates → counts → commit → list shows 50
   await fs.writeFile(tmpPath, csv, "utf-8");
 
   // Drive the wizard UI.
-  await page.goto("/#/volunteers/import");
+  await page.goto("/#/ressources/benevoles/import");
   await page.locator('input[type="file"]').setInputFiles(tmpPath);
 
   // Mapping step shows the auto-detected mapping. Submit it.
@@ -73,7 +73,7 @@ test("Form-create volunteer; archive removes from default list; reappears with s
   page,
   request,
 }) => {
-  await page.goto("/#/volunteers");
+  await page.goto("/#/ressources/benevoles");
   await page.getByRole("button", { name: /^nouveau bénévole$/i }).click();
   await page.getByLabel("Prénom", { exact: true }).fill("Sophie");
   await page.getByLabel("Nom", { exact: true }).fill("Bernard");
@@ -107,7 +107,7 @@ test("Form-create car; default driver picker only lists can_drive volunteers", a
     data: { first_name: "Bob", last_name: "Passenger", phone: "+33611111112", can_drive: false },
   });
 
-  await page.goto("/#/cars");
+  await page.goto("/#/ressources/vehicules");
   const driverSelect = page.getByLabel("Conducteur par défaut");
   await expect(driverSelect.locator("option", { hasText: "Alice Driver" })).toHaveCount(1);
   await expect(driverSelect.locator("option", { hasText: "Bob Passenger" })).toHaveCount(0);

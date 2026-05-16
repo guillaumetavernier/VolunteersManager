@@ -24,12 +24,14 @@ test("create race, upload GPX, add VS in order, override one time, see polyline 
   expect(vsRes.ok()).toBe(true);
   const vs = await unwrap<{ id: number }>(vsRes);
 
-  // Go to the races list and create a race.
-  await page.goto("/#/races");
+  // Go to the Courses tool and create a race in the sidebar.
+  await page.goto("/#/courses");
+  await waitForMap(page);
   await page.getByPlaceholder("Nom de la nouvelle course").fill("42km");
-  await page.getByRole("button", { name: /ajouter une course/i }).click();
+  await page.getByRole("button", { name: /^ajouter$/i }).click();
+  await expect(page).toHaveURL(/#\/courses\/\d+/);
 
-  // We navigate to /races/{id}; the form is visible.
+  // We navigate to /courses/{id}; the form is visible.
   await expect(page.getByRole("heading", { name: /paramètres de la course/i })).toBeVisible();
 
   // Set a recognisable color, paces, start time.
@@ -103,7 +105,7 @@ test("create race, upload GPX, add VS in order, override one time, see polyline 
 
   // Map shows the GPX polyline in race color. Visit the map shell, wait for
   // the map to load, and inspect the MapLibre layer state.
-  await page.goto("/");
+  await page.goto("/#/courses");
   await waitForMap(page);
   await expect.poll(async () => {
     return await page.evaluate((id) => {

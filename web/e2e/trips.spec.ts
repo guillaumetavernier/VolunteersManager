@@ -122,12 +122,16 @@ test("transport-need surfaces, trip covers it, stranded warning clears", async (
   expect(manualCell.source).toBe("manual");
   expect(manualCell.seconds).toBe(9999);
 
-  // UI smoke: TransportNeedsList renders the (now empty) needs view.
-  await page.goto("/#/transport-needs");
-  await expect(page.getByRole("heading", { name: /besoins/i })).toBeVisible();
+  // UI smoke: switch to the Besoins workspace mode in the Trajets sidebar.
+  await page.goto("/#/trajets");
+  await page.locator('[data-trajets-mode="besoins"]').click();
+  await expect(page.locator('[data-trajets-mode="besoins"]')).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
 
-  // UI: TripList shows the created trip.
-  await page.goto("/#/trips");
+  // Switch back to trips and assert the created trip is listed.
+  await page.locator('[data-trajets-mode="trips"]').click();
   await expect(page.locator(`[data-trip-id]`).first()).toBeVisible();
 });
 

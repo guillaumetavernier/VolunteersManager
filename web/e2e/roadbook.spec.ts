@@ -40,7 +40,7 @@ test("configure roadbook → generate → download a per-volunteer PDF", async (
   });
 
   // Tweak settings on the page and toggle sponsor off.
-  await page.goto("/#/settings/roadbook");
+  await page.goto("/#/roadbooks/parametres");
   await expect(page.getByTestId("roadbook-settings")).toBeVisible();
   await page.getByTestId("primary-color").fill("#10b981");
   // Sponsor row visibility toggle.
