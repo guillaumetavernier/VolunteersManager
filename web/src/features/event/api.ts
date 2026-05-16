@@ -8,6 +8,10 @@ export interface Event {
   timezone: string;
   country_code: string;
   settings: string;
+  logo_path: string | null;
+  sponsor_path: string | null;
+  coordinator_name: string | null;
+  coordinator_phone: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -19,6 +23,8 @@ export interface EventInput {
   timezone?: string;
   country_code?: string;
   settings?: string;
+  coordinator_name?: string | null;
+  coordinator_phone?: string | null;
   region?: string; // not persisted on the server as a column; the wizard folds it into settings.
 }
 

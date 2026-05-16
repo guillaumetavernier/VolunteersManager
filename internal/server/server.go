@@ -19,6 +19,7 @@ import (
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/mission"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/race"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/racevs"
+	roadbookfeature "github.com/guillaumetavernier/volunteersmanager/internal/features/roadbook"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/trip"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/volunteer"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/vs"
@@ -32,6 +33,7 @@ type Config struct {
 	I18n          *i18n.Catalog
 	DB            *sql.DB
 	AssetDir      string // where photo uploads land
+	ExportDir     string // where roadbook PDFs land (typically <data-dir>/exports)
 	TileDir       string // where pmtiles files live
 	TileBaseURL   string // upstream prefix for downloads; empty disables remote fetch
 	FrontendProxy string // when non-empty, "/" is proxied to this URL (dev only)
@@ -59,7 +61,9 @@ func New(cfg Config) (http.Handler, error) {
 		warnings.NewHandler(warnStore).Mount(r)
 
 		eventStore := event.NewStore(cfg.DB)
-		event.NewHandler(eventStore).Mount(r)
+		eventHandler := event.NewHandler(eventStore)
+		eventHandler.AssetDir = cfg.AssetDir
+		eventHandler.Mount(r)
 
 		raceStore := race.NewStore(cfg.DB)
 		raceSvc := race.NewService(cfg.DB)
@@ -133,6 +137,9 @@ func New(cfg Config) (http.Handler, error) {
 		assignment.NewHandler(assignment.NewStore(cfg.DB)).Mount(r)
 		trip.NewHandler(tripStore, cfg.DB).Mount(r)
 		routing.NewHandler(cfg.DB, routingProvider).Mount(r)
+		if cfg.ExportDir != "" {
+			roadbookfeature.NewHandler(cfg.DB, eventStore, cfg.AssetDir, cfg.ExportDir).Mount(r)
+		}
 	}
 	if cfg.TileDir != "" {
 		NewTileService(cfg.TileDir, cfg.TileBaseURL).Mount(r)

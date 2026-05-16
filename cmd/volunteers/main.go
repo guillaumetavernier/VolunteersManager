@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	roadbookfeature "github.com/guillaumetavernier/volunteersmanager/internal/features/roadbook"
 	"github.com/guillaumetavernier/volunteersmanager/internal/i18n"
 	"github.com/guillaumetavernier/volunteersmanager/internal/server"
 	"github.com/guillaumetavernier/volunteersmanager/internal/store"
@@ -74,12 +75,20 @@ func run() error {
 	if err := os.MkdirAll(assetDir, 0o755); err != nil {
 		return err
 	}
+	exportDir := filepath.Join(*dataDir, "exports")
+	if err := os.MkdirAll(exportDir, 0o755); err != nil {
+		return err
+	}
+	if err := roadbookfeature.SweepPreviews(context.Background(), exportDir, time.Hour, time.Now()); err != nil {
+		logger.Warn("preview sweep failed", "err", err)
+	}
 
 	handler, err := server.New(server.Config{
 		Logger:        logger,
 		I18n:          cat,
 		DB:            st.DB,
 		AssetDir:      assetDir,
+		ExportDir:     exportDir,
 		TileDir:       tileDir,
 		TileBaseURL:   *tileBaseURL,
 		FrontendProxy: *frontendProxy,

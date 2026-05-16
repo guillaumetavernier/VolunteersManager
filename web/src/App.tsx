@@ -20,6 +20,8 @@ import { TripEditor } from "@/features/trip/TripEditor";
 import { TransportNeedsList } from "@/features/trip/TransportNeedsList";
 import { MatrixView } from "@/features/travelMatrix/MatrixView";
 import { TimelinePage } from "@/features/timeline/TimelinePage";
+import { GenerateRoadbooksPage } from "@/features/roadbook/GenerateRoadbooksPage";
+import { RoadbookSettingsPage } from "@/features/roadbook/RoadbookSettingsPage";
 import { GlobalIssueCounter } from "@/features/warnings/GlobalIssueCounter";
 import { IssuesPanel } from "@/features/warnings/IssuesPanel";
 import { matchRoute, useRoute } from "@/lib/router";
@@ -91,6 +93,12 @@ function AppShell({ children }: { children: ReactNode }) {
           <button onClick={() => (window.location.hash = "/timeline")} className="underline">
             Chronologie
           </button>
+          <button onClick={() => (window.location.hash = "/roadbooks")} className="underline">
+            Roadbooks
+          </button>
+          <button onClick={() => (window.location.hash = "/settings/roadbook")} className="underline">
+            Paramètres
+          </button>
         </nav>
         <GlobalIssueCounter />
       </header>
@@ -159,6 +167,12 @@ function Routes({ region }: { region: string }) {
   }
   if (path === "/timeline") {
     return <TimelinePage region={region} />;
+  }
+  if (path === "/settings/roadbook") {
+    return <RoadbookSettingsPage />;
+  }
+  if (path === "/roadbooks") {
+    return <GenerateRoadbooksPage />;
   }
   if (matchRoute("/issues", route.path)) {
     return <IssuesPanel />;

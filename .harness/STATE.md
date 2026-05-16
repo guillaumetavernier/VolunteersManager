@@ -3,7 +3,7 @@
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
 **Last updated:** 2026-05-16
-**Current milestone:** **[07-timeline](../docs/milestones/07-timeline.md)** — in progress.
+**Current milestone:** **[08-roadbook](../docs/milestones/08-roadbook.md)** — in progress.
 
 ## Status legend
 
@@ -24,7 +24,7 @@
 | 05 | 05-constraints                | 🟢 completed   | Engine + cache + middleware wrap mutations; 9 Playwright tests cover the loop. |
 | 06 | 06-trips-travel-matrix        | 🟢 completed   | All acceptance criteria pass; harness + Playwright e2e green. |
 | 07 | 07-timeline                   | 🟢 completed   | Canvas timeline + per-frame MapLibre sources; bench 0.009 ms/frame; 12 Playwright tests + 84 Vitest tests green. |
-| 08 | 08-roadbook                   | ⚪ not_started | Mini-map rasterization risk — see M08 risks. |
+| 08 | 08-roadbook                   | 🟢 completed   | All acceptance criteria pass; mini-map shipped force-off per locked v1 decision (stub `ErrMiniMapNotImplemented`). |
 | 09 | 09-archive-polish             | ⚪ not_started | |
 
 ## Acceptance criteria — per-milestone checklist
@@ -112,7 +112,17 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 - [x] `pnpm test` and Playwright e2e green. (84 Vitest tests; 12 Playwright tests; harness pass.)
 
 ### 08-roadbook
-_Not yet started._
+
+- [x] Generate roadbooks for the fixture event; per-volunteer PDFs and the master appear on disk. (handlers_test.go + e2e/roadbook.spec.ts download a non-empty PDF starting with `%PDF-`)
+- [x] Open one PDF; verify header (logo + event name), per-day timeline blocks, co-staff phone numbers, footer with full VS reference. (RenderVolunteer composes Header/Day/Footer/VSReference sections; gather_test.go asserts co-staff includes phone)
+- [x] Re-generate without data changes; PDF bytes are identical (golden test green). (`TestGolden_VolunteerOne` + `TestRenderVolunteer_DeterministicBytes` + 10× concurrent run all pass — gofpdf catalog-sort + fixed Creation/Mod dates)
+- [x] Driver volunteer's PDF includes their trip itinerary. (`TestBuildVolunteerData_DriverHasTripBlock` + render outputs "Trajet (conducteur)" block)
+- [x] Master PDF includes per-volunteer sections + a grid sheet. (`TestRenderMaster_DeterministicBytes` + addGridSheet)
+- [x] Settings page: change primary color → preview iframe reflects it → generate → PDF reflects it. (RoadbookSettingsPage debounced preview; `TestRenderVolunteer_PrimaryColorChangesOutput`)
+- [x] Toggle off `sponsor` and `general_info` sections → re-generated PDF omits them. (`TestRenderVolunteer_SponsorToggleStripsBytes`; e2e toggles sponsor visibility before generating)
+- [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (full harness pass; 13 Playwright tests pass; 87 Vitest tests; full Go suite green)
+
+> Mini-map: shipped force-off in v1 per locked decision. `RenderMiniMap` is a stub returning `ErrMiniMapNotImplemented`; the settings toggle is grayed out with a tooltip.
 
 ### 09-archive-polish
 _Not yet started._
