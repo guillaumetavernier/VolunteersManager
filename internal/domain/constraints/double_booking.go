@@ -13,10 +13,6 @@ func doubleBooking(_ EventState, idx *index) []Warning {
 		if len(assigns) < 2 {
 			continue
 		}
-		type pair struct {
-			a, b   Assignment
-			am, bm Mission
-		}
 		// resolve to mission intervals
 		type ami struct {
 			a     Assignment

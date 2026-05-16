@@ -37,16 +37,6 @@ func buildConfig() *entity.Config {
 		Build()
 }
 
-// buildLandscapeConfig is used by the master grid sheet.
-func buildLandscapeConfig() *entity.Config {
-	return config.NewBuilder().
-		WithCreationDate(deterministicEpoch).
-		WithAuthor("VolunteersManager", false).
-		WithCreator("VolunteersManager", false).
-		WithDefaultFont(&props.Font{Family: fontfamily.Helvetica, Size: 7, Style: fontstyle.Normal, Color: &props.BlackColor}).
-		Build()
-}
-
 // colorFromHex parses "#rrggbb" (case insensitive) to a maroto props.Color.
 // Falls back to a tasteful blue on parse error.
 func colorFromHex(hex string) *props.Color {
@@ -61,19 +51,3 @@ func colorFromHex(hex string) *props.Color {
 	return &props.Color{Red: r, Green: g, Blue: b}
 }
 
-// safeFilename keeps deterministic, filesystem-friendly characters only.
-func safeFilename(s string) string {
-	var b strings.Builder
-	for _, r := range strings.ToLower(strings.TrimSpace(s)) {
-		switch {
-		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
-			b.WriteRune(r)
-		case r == ' ' || r == '_' || r == '-':
-			b.WriteByte('_')
-		}
-	}
-	if b.Len() == 0 {
-		return "x"
-	}
-	return b.String()
-}
