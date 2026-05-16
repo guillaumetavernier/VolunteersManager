@@ -1,4 +1,5 @@
 import { ChevronDown, Settings } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -7,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { navigate } from "@/lib/router";
+import { navigate, useRoute } from "@/lib/router";
 import { recallTool, toolRoot } from "./routes";
 import { WarningsSlideOver } from "./WarningsSlideOver";
 
@@ -16,6 +17,11 @@ interface Props {
 }
 
 export function Header({ isMap }: Props) {
+  const route = useRoute();
+  const [ressourcesOpen, setRessourcesOpen] = useState(false);
+  useEffect(() => {
+    setRessourcesOpen(false);
+  }, [route.path]);
   return (
     <header
       className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 py-2 text-sm shadow-sm"
@@ -40,7 +46,7 @@ export function Header({ isMap }: Props) {
         >
           Affectations
         </Button>
-        <DropdownMenu>
+        <DropdownMenu open={ressourcesOpen} onOpenChange={setRessourcesOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" data-testid="header-ressources">
               Ressources <ChevronDown className="ml-1 h-4 w-4" />
