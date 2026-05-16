@@ -104,6 +104,18 @@ export function MapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [style]);
 
+  // Resize the map whenever the container changes — MapLibre caches container
+  // dimensions and otherwise renders markers at stale pixel positions, which
+  // looks like a constant screen-pixel offset (most visible at low zoom).
+  useEffect(() => {
+    const el = containerRef.current;
+    const map = mapInstance;
+    if (!el || !map) return;
+    const ro = new ResizeObserver(() => map.resize());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [mapInstance]);
+
   // Sync VS markers with the list.
   useEffect(() => {
     const map = mapInstance;
