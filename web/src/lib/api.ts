@@ -13,7 +13,11 @@ export async function apiFetch<T>(
   init: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(init.headers);
-  if (init.body && !headers.has("Content-Type")) {
+  // Only set application/json when the caller didn't pre-set a header AND the
+  // body isn't a structured form (FormData/URLSearchParams/Blob). The browser
+  // needs to set the multipart Content-Type with its own boundary; forcing
+  // application/json there silently breaks file uploads (HTTP 413 / 422).
+  if (init.body && !headers.has("Content-Type") && !isFormBody(init.body)) {
     headers.set("Content-Type", "application/json");
   }
   const res = await fetch(path, { ...init, headers });
@@ -23,6 +27,15 @@ export async function apiFetch<T>(
     throw new ApiError(res.status, body, `${res.status} ${res.statusText}`);
   }
   return body as T;
+}
+
+function isFormBody(body: BodyInit | null | undefined): boolean {
+  return (
+    body instanceof FormData ||
+    body instanceof URLSearchParams ||
+    body instanceof Blob ||
+    (typeof ReadableStream !== "undefined" && body instanceof ReadableStream)
+  );
 }
 
 function safeJSON(text: string): unknown {

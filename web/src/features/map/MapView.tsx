@@ -57,8 +57,19 @@ export function MapView({ region }: Props) {
     });
     mapRef.current = m;
     setMapInstance(m);
+    // Exposed for Playwright e2e specs that inspect sources/layers. Cheap to
+    // leave on in dev; helps debugging too.
+    (window as unknown as { __map?: MLMap }).__map = m;
     m.addControl(new maplibregl.NavigationControl(), "top-right");
+    // 'load' would also work, but it waits for all basemap tiles. When the
+    // pmtiles archive is missing the basemap never resolves, and we still
+    // want to render the GPX polylines and VS markers on top.
+    const markStyleReady = () => {
+      if (m.isStyleLoaded()) setStyleReady(true);
+    };
+    m.on("styledata", markStyleReady);
     m.on("load", () => setStyleReady(true));
+    markStyleReady();
 
     m.on("error", (e) => {
       const msg = String(e?.error?.message ?? "");
@@ -100,7 +111,11 @@ export function MapView({ region }: Props) {
         const el = document.createElement("button");
         el.className =
           "vs-marker grid h-6 w-6 -translate-y-3 place-items-center rounded-full border-2 border-white bg-slate-900 text-xs font-semibold text-white shadow";
-        el.setAttribute("aria-label", `VS ${v.name}`);
+        // MapLibre v4's Marker constructor unconditionally rewrites aria-label
+        // to "Map marker"; we use a data-* attribute instead so tests and
+        // tooling can target a specific VS.
+        el.setAttribute("data-vs-name", v.name);
+        el.title = `VS ${v.name}`;
         marker = new maplibregl.Marker({ element: el, draggable: true })
           .setLngLat([v.lon, v.lat])
           .addTo(map);

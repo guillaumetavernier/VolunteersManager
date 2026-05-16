@@ -60,3 +60,30 @@ jobs:
         run: pnpm --filter web test --run
       - name: build
         run: pnpm --filter web build
+
+  e2e:
+    name: playwright (ubuntu-latest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: install deps
+        run: pnpm install --frozen-lockfile
+      - name: install chromium
+        run: pnpm --filter web exec playwright install --with-deps chromium
+      - name: build binary (frontend + go)
+        run: ./scripts/build.sh
+      - name: playwright
+        run: pnpm --filter web test:e2e

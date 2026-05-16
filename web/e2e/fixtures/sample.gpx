@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="vm-e2e" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>e2e-track</name>
+    <trkseg>
+      <trkpt lat="48.8584" lon="2.2940"><ele>35</ele></trkpt>
+      <trkpt lat="48.8584" lon="2.2950"><ele>35</ele></trkpt>
+      <trkpt lat="48.8584" lon="2.2960"><ele>35</ele></trkpt>
+      <trkpt lat="48.8584" lon="2.2970"><ele>35</ele></trkpt>
+      <trkpt lat="48.8584" lon="2.2980"><ele>35</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

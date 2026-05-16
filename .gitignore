@@ -29,3 +29,8 @@ tiles/
 
 # TypeScript build cache
 *.tsbuildinfo
+
+# Playwright local artefacts
+.e2e-data/
+web/test-results/
+web/playwright-report/

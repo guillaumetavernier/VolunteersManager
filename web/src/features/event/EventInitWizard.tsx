@@ -2,7 +2,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { t } from "@/lib/i18n";
 import { useInitializeEvent } from "./hooks";
 
 const REGIONS = [
@@ -48,7 +47,7 @@ export function EventInitWizard() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-6 p-6">
-      <h1 className="text-2xl font-semibold">{t("wizard.title") || "Initialize event"}</h1>
+      <h1 className="text-2xl font-semibold">Initialize event</h1>
       <form className="grid gap-4" onSubmit={onSubmit} aria-label="event-init">
         <Field label="Event name" error={form.formState.errors.name?.message}>
           <input className="input" {...form.register("name")} />

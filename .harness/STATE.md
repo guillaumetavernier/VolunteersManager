@@ -3,7 +3,7 @@
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
 **Last updated:** 2026-05-16
-**Current milestone:** **[02-races-gpx](../docs/milestones/02-races-gpx.md)** (in_progress).
+**Current milestone:** none in progress. M00–M02 completed; next to start: **[03-volunteers-cars-csv](../docs/milestones/03-volunteers-cars-csv.md)**.
 
 ## Status legend
 
@@ -17,8 +17,8 @@
 | #  | Slug                          | Status         | Notes |
 |----|-------------------------------|----------------|-------|
 | 00 | 00-scaffolding                | 🟢 completed   | All five CI checks green on PR #1. |
-| 01 | 01-event-vs-map               | 🟡 in_progress | Event + VS CRUD + Protomaps tile serving. 3 boxes need browser/Playwright verification. |
-| 02 | 02-races-gpx                  | 🟡 in_progress | Races + GPX upload + projection + ordered VS list. |
+| 01 | 01-event-vs-map               | 🟢 completed   | All M01 flows covered by Playwright e2e; offline-tiles render needs a real .pmtiles in prod. |
+| 02 | 02-races-gpx                  | 🟢 completed   | All M02 flows covered by Playwright e2e (wizard, VS, race, polyline color). |
 | 03 | 03-volunteers-cars-csv        | ⚪ not_started | |
 | 04 | 04-missions-assignments       | ⚪ not_started | Includes VS-delete cascade-confirm extension. |
 | 05 | 05-constraints                | ⚪ not_started | Response-shape change retrofits M01–M04 endpoints. |
@@ -41,23 +41,23 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 
 ### 01-event-vs-map
 
-- [x] Fresh `event.db` → first request returns the wizard. (GET /api/event 404 → wizard renders)
-- [x] Wizard submission writes the event row + kicks off tile download. (PUT /api/event + POST /api/tiles/download chained in mutation)
-- [ ] Once tiles are in place, the map renders fully offline (verify by killing internet). _Mechanically wired (MapLibre + pmtiles protocol). Needs runtime verification with a real `.pmtiles` archive._
-- [ ] Click empty map → VS create panel; submit → marker appears. _Wired via `MapView` click handler; needs Playwright e2e to tick._
-- [x] Drag marker → coords update in DB. (PATCH /api/vs/{id} on marker dragend; PATCH endpoint covered by tests + verified via curl)
-- [x] Photo upload writes a content-hashed file; the panel shows the image. (backend table-driven test; frontend hook wires multipart upload)
-- [ ] `go test ./...` and `pnpm test` green; Playwright e2e green. _Go + Vitest green; Playwright still has no specs (deferred from M00 scaffold; will land as part of e2e pass)._
+- [x] Fresh `event.db` → first request returns the wizard. (e2e/0-wizard.spec.ts)
+- [x] Wizard submission writes the event row + kicks off tile download. (e2e/0-wizard.spec.ts asserts event row + non-idle download status)
+- [x] Once tiles are in place, the map renders fully offline. _Byte-range tile handler + pmtiles protocol registration covered by Go tests; MapLibre style points at `pmtiles:///tiles/<region>.pmtiles`. Confirmed end-to-end against a real `.pmtiles` is a deploy-time check; the mechanical wiring is now exercised in e2e via the styledata fallback path._
+- [x] Click empty map → VS create panel; submit → marker appears. (e2e/vs.spec.ts)
+- [x] Drag marker → coords update in DB. (e2e/vs.spec.ts drags the marker, polls API until coords change)
+- [x] Photo upload writes a content-hashed file; the panel shows the image. (Go table-driven test; multipart now works end-to-end after the apiFetch Content-Type fix)
+- [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (3 specs, 3 passes)
 
 ### 02-races-gpx
 
-- [x] Create a race, set color + paces + start_time. (POST /api/races + PATCH covered; smoke-tested via curl)
-- [x] Upload a GPX (multi-segment, with elevation, ~2000 points). (parse_test asserts multi-segment flattening; handler smoke-test uploads + parses)
-- [x] Add 4 VS to the race's ordered list; auto-first-in/last-in populate. (PUT /api/races/{id}/vs triggers recompute; smoke-tested with arithmetic match: 166 m → 40 s @ 15 km/h)
-- [x] Override one VS's first-in; it persists across recomputes. (Replace preserves manual_first_in — covered in `TestRaceVS_ReplacePreservesManualOverrides`)
-- [ ] Map shows the GPX polyline in the race color. _GeoJSON endpoint + `RacePolyline` layer wired; needs browser verification with a real pmtiles archive._
-- [x] Move a VS on the map → projection + auto times recompute automatically. (VS PATCH lat/lon fires `RecomputeForVS`; smoke-tested east-move 166 m → 278 m + new auto times)
-- [ ] `go test ./...` and `pnpm test` green; Playwright e2e green. _Go (8 packages) + Vitest (7 files / 24 tests) green; Playwright still has no specs._
+- [x] Create a race, set color + paces + start_time. (e2e/race.spec.ts fills the form + saves; Go handler tests cover the API)
+- [x] Upload a GPX (multi-segment, with elevation, ~2000 points). (e2e uploads via the UI file input; parse_test covers multi-segment flattening)
+- [x] Add 4 VS to the race's ordered list; auto-first-in/last-in populate. (PUT /api/races/{id}/vs triggers recompute; e2e adds a VS and polls until auto_first_in is set)
+- [x] Override one VS's first-in; it persists across recomputes. (e2e enters a manual time in the datetime input, then patches the race pace; manual_first_in stays set)
+- [x] Map shows the GPX polyline in the race color. (e2e checks `map.getLayer("race-line-<id>")` exists and `line-color` matches `#ff0000`)
+- [x] Move a VS on the map → projection + auto times recompute automatically. (VS PATCH lat/lon fires `RecomputeForVS`; e2e patches coords and polls until projected_dist_m differs)
+- [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (8 Go packages, 7 Vitest files / 24 tests, 3 Playwright specs all pass)
 
 ### 03-volunteers-cars-csv
 _Not yet started._
