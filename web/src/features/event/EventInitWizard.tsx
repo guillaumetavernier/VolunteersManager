@@ -2,6 +2,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
 import { useInitializeEvent } from "./hooks";
 
 const REGIONS = [
@@ -50,26 +53,29 @@ export function EventInitWizard() {
       <h1 className="text-2xl font-semibold">Initialize event</h1>
       <form className="grid gap-4" onSubmit={onSubmit} aria-label="event-init">
         <Field label="Event name" error={form.formState.errors.name?.message}>
-          <input className="input" {...form.register("name")} />
+          <Input {...form.register("name")} />
         </Field>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Start date" error={form.formState.errors.start_date?.message}>
-            <input type="date" className="input" {...form.register("start_date")} />
+            <Input type="date" {...form.register("start_date")} />
           </Field>
           <Field label="End date" error={form.formState.errors.end_date?.message}>
-            <input type="date" className="input" {...form.register("end_date")} />
+            <Input type="date" {...form.register("end_date")} />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Timezone" error={form.formState.errors.timezone?.message}>
-            <input className="input" {...form.register("timezone")} />
+            <Input {...form.register("timezone")} />
           </Field>
           <Field label="Country code" error={form.formState.errors.country_code?.message}>
-            <input className="input" maxLength={2} {...form.register("country_code")} />
+            <Input maxLength={2} {...form.register("country_code")} />
           </Field>
         </div>
         <Field label="Map region (for tile download)" error={form.formState.errors.region?.message}>
-          <select className="input" {...form.register("region")}>
+          <select
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            {...form.register("region")}
+          >
             {REGIONS.map((r) => (
               <option key={r} value={r}>
                 {r}
@@ -77,13 +83,9 @@ export function EventInitWizard() {
             ))}
           </select>
         </Field>
-        <button
-          type="submit"
-          className="rounded-md bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
-          disabled={init.isPending}
-        >
+        <Button type="submit" disabled={init.isPending}>
           {init.isPending ? "Saving…" : "Create event"}
-        </button>
+        </Button>
         {init.isError && (
           <p role="alert" className="text-sm text-red-600">
             {(init.error as Error).message}

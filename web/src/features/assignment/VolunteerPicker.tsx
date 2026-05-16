@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { Input } from "@/components/ui/input";
 import { useVolunteers } from "@/features/volunteer/hooks";
 import { useMissions } from "@/features/mission/hooks";
 import type { Mission } from "@/features/mission/api";
@@ -63,7 +64,7 @@ export function VolunteerPicker({ mission, assignedIDs, onClose }: Props) {
     <div
       role="dialog"
       aria-label="Choisir un bénévole"
-      className="fixed inset-0 z-30 grid place-items-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-30 grid place-items-center bg-black/40 p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -81,8 +82,8 @@ export function VolunteerPicker({ mission, assignedIDs, onClose }: Props) {
           </button>
         </header>
         <div className="flex items-center gap-3">
-          <input
-            className="input flex-1"
+          <Input
+            className="flex-1"
             placeholder="Rechercher un bénévole…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api";
 
 import {
@@ -150,8 +153,7 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
       <form className="grid gap-3" onSubmit={onSubmit}>
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Name</span>
-          <input
-            className="input"
+          <Input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
@@ -160,8 +162,7 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
         <div className="grid grid-cols-2 gap-3">
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Latitude</span>
-            <input
-              className="input"
+            <Input
               type="number"
               step="0.000001"
               value={form.lat}
@@ -170,8 +171,7 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
           </label>
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Longitude</span>
-            <input
-              className="input"
+            <Input
               type="number"
               step="0.000001"
               value={form.lon}
@@ -181,16 +181,15 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
         </div>
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Notes</span>
-          <textarea
-            className="input min-h-24"
+          <Textarea
+            className="min-h-24"
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
           />
         </label>
         <label className="grid gap-1 text-sm">
           <span className="font-medium">what3words</span>
-          <input
-            className="input"
+          <Input
             value={form.what3words}
             onChange={(e) => setForm({ ...form, what3words: e.target.value })}
           />
@@ -213,21 +212,21 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
         )}
         <div className="flex items-center justify-end gap-3">
           {!isNew && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={onDelete}
-              className="rounded-md px-3 py-2 text-sm text-red-700 hover:bg-red-50"
+              className="text-red-700 hover:bg-red-50 hover:text-red-700"
             >
               Delete
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="submit"
-            className="rounded-md bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
             disabled={create.isPending || patch.isPending}
           >
             {isNew ? "Create" : "Save"}
-          </button>
+          </Button>
         </div>
       </form>
       {pendingDeps && (
@@ -235,7 +234,7 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
           role="dialog"
           aria-label="Confirmer la suppression"
           data-cascade-confirm
-          className="fixed inset-0 z-30 grid place-items-center bg-slate-900/40 p-4"
+          className="fixed inset-0 z-30 grid place-items-center bg-black/40 p-4"
         >
           <div className="grid w-full max-w-md gap-3 rounded-md bg-white p-4 shadow-xl">
             <h3 className="text-lg font-semibold">Supprimer ce PB ?</h3>
@@ -245,19 +244,19 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
               Tout sera supprimé en cascade.
             </p>
             <div className="flex items-center justify-end gap-3">
-              <button
+              <Button
+                variant="link"
                 onClick={() => setPendingDeps(null)}
-                className="text-sm text-slate-600 underline"
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="destructive"
                 onClick={() => attemptDelete(true)}
-                className="rounded-md bg-rose-700 px-4 py-2 text-sm text-white"
                 data-action="confirm-cascade-delete"
               >
                 Tout supprimer
-              </button>
+              </Button>
             </div>
           </div>
         </div>
