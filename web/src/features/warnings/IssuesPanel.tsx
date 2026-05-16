@@ -11,6 +11,13 @@ const KIND_LABEL: Record<WarningKind, string> = {
   overstaffed: "Sur-staffé",
   unassigned: "Sans mission",
   missing_phone_with_assignments: "Téléphone manquant",
+  stranded: "Sans transport",
+  insufficient_travel: "Temps de trajet insuffisant",
+  capacity_exceeded: "Capacité dépassée",
+  driver_double_book: "Conducteur occupé",
+  passenger_double_book: "Passager occupé",
+  board_without_alight: "Monte sans descendre",
+  alight_before_board: "Descend avant de monter",
 };
 
 const SEVERITY_BADGE: Record<string, string> = {

@@ -15,6 +15,10 @@ import { VolunteerDetail } from "@/features/volunteer/VolunteerDetail";
 import { CsvImportWizard } from "@/features/volunteer/CsvImportWizard";
 import { CarList } from "@/features/car/CarList";
 import { MissionsGrid } from "@/features/mission/MissionsGrid";
+import { TripList } from "@/features/trip/TripList";
+import { TripEditor } from "@/features/trip/TripEditor";
+import { TransportNeedsList } from "@/features/trip/TransportNeedsList";
+import { MatrixView } from "@/features/travelMatrix/MatrixView";
 import { GlobalIssueCounter } from "@/features/warnings/GlobalIssueCounter";
 import { IssuesPanel } from "@/features/warnings/IssuesPanel";
 import { matchRoute, useRoute } from "@/lib/router";
@@ -77,6 +81,12 @@ function AppShell({ children }: { children: ReactNode }) {
           <button onClick={() => (window.location.hash = "/missions/grid")} className="underline">
             Grille
           </button>
+          <button onClick={() => (window.location.hash = "/trips")} className="underline">
+            Trajets
+          </button>
+          <button onClick={() => (window.location.hash = "/travel-times")} className="underline">
+            Matrice
+          </button>
         </nav>
         <GlobalIssueCounter />
       </header>
@@ -116,6 +126,32 @@ function Routes({ region }: { region: string }) {
   }
   if (matchRoute("/missions/grid", route.path)) {
     return <MissionsGrid />;
+  }
+  // Trip routes (order: most specific first; strip ?query from path for new).
+  const path = route.path.split("?")[0];
+  if (path === "/trips/new") {
+    return <TripEditor />;
+  }
+  const tripMatch = matchRoute("/trips/:id", path);
+  if (tripMatch && tripMatch.id) {
+    const id = Number(tripMatch.id);
+    if (Number.isFinite(id) && id > 0) {
+      return <TripEditor id={id} />;
+    }
+  }
+  if (path === "/trips") {
+    return <TripList />;
+  }
+  const tnMatch = matchRoute("/transport-needs/:day", path);
+  if (tnMatch && tnMatch.day) {
+    const d = Number(tnMatch.day);
+    return <TransportNeedsList day={Number.isFinite(d) ? d : undefined} />;
+  }
+  if (path === "/transport-needs") {
+    return <TransportNeedsList />;
+  }
+  if (path === "/travel-times") {
+    return <MatrixView />;
   }
   if (matchRoute("/issues", route.path)) {
     return <IssuesPanel />;

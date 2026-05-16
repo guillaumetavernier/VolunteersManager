@@ -2,6 +2,7 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"log/slog"
@@ -18,10 +19,12 @@ import (
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/mission"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/race"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/racevs"
+	"github.com/guillaumetavernier/volunteersmanager/internal/features/trip"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/volunteer"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/vs"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/warnings"
 	"github.com/guillaumetavernier/volunteersmanager/internal/i18n"
+	"github.com/guillaumetavernier/volunteersmanager/internal/routing"
 )
 
 type Config struct {
@@ -61,12 +64,26 @@ func New(cfg Config) (http.Handler, error) {
 		raceStore := race.NewStore(cfg.DB)
 		raceSvc := race.NewService(cfg.DB)
 		missionStore := mission.NewStore(cfg.DB)
+		tripStore := trip.NewStore(cfg.DB)
+		routingProvider := routing.HaversineOnly{Settings: routing.DefaultSettings()}
+		recomputeMatrix := func() {
+			ctx := context.Background()
+			vsList, err := routing.LoadVS(ctx, cfg.DB)
+			if err != nil {
+				cfg.Logger.Warn("matrix: load vs failed", "err", err)
+				return
+			}
+			if err := routing.RecomputeMatrix(ctx, cfg.DB, vsList, routingProvider); err != nil {
+				cfg.Logger.Warn("matrix: recompute failed", "err", err)
+			}
+		}
 
 		vsHandler := vs.NewHandler(vs.NewStore(cfg.DB), cfg.AssetDir)
 		vsHandler.OnMove = func(id int64) {
 			if err := raceSvc.RecomputeForVS(id); err != nil {
 				cfg.Logger.Warn("recompute after VS move failed", "vs_id", id, "err", err)
 			}
+			recomputeMatrix()
 		}
 		vsHandler.Dependents = func(id int64) (vs.Dependents, error) {
 			missions, err := missionStore.CountByVS(id)
@@ -77,7 +94,14 @@ func New(cfg Config) (http.Handler, error) {
 			if err != nil {
 				return vs.Dependents{}, err
 			}
-			return vs.Dependents{Missions: missions, Assignments: assignments}, nil
+			trips, err := tripStore.CountTripsByVS(id)
+			if err != nil {
+				return vs.Dependents{}, err
+			}
+			return vs.Dependents{Missions: missions, Assignments: assignments, Trips: trips}, nil
+		}
+		vsHandler.ForceCascade = func(id int64) error {
+			return tripStore.DeleteTripsByVS(id)
 		}
 		vsHandler.Mount(r)
 
@@ -93,12 +117,22 @@ func New(cfg Config) (http.Handler, error) {
 		racevs.NewHandler(racevs.NewStore(cfg.DB), raceSvc).Mount(r)
 
 		volStore := volunteer.NewStore(cfg.DB)
-		volunteer.NewHandler(volStore, eventStore).Mount(r)
-		car.NewHandler(car.NewStore(cfg.DB)).Mount(r)
+		volHandler := volunteer.NewHandler(volStore, eventStore)
+		volHandler.TripsForDriver = func(volunteerID int64) ([]int64, error) {
+			return tripStore.TripsByDriver(volunteerID)
+		}
+		volHandler.Mount(r)
+		carHandler := car.NewHandler(car.NewStore(cfg.DB))
+		carHandler.TripsForCar = func(carID int64) ([]int64, error) {
+			return tripStore.TripsByCar(carID)
+		}
+		carHandler.Mount(r)
 		csv.NewHandler(csv.NewSessionStore(cfg.DB), volStore, eventStore).Mount(r)
 
 		mission.NewHandler(missionStore).Mount(r)
 		assignment.NewHandler(assignment.NewStore(cfg.DB)).Mount(r)
+		trip.NewHandler(tripStore, cfg.DB).Mount(r)
+		routing.NewHandler(cfg.DB, routingProvider).Mount(r)
 	}
 	if cfg.TileDir != "" {
 		NewTileService(cfg.TileDir, cfg.TileBaseURL).Mount(r)

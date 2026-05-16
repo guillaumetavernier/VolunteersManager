@@ -209,3 +209,66 @@ func TestHandlers_DeleteWithDependents409AndForce(t *testing.T) {
 		t.Fatalf("force status = %d, want 204", rec.Code)
 	}
 }
+
+func TestHandlers_DeleteWithTripDependents409AndForceCascades(t *testing.T) {
+	h, r, _ := newTestHandler(t)
+	v := createVS(t, r, `{"name":"A","lat":45,"lon":6}`)
+	h.Dependents = func(id int64) (Dependents, error) {
+		return Dependents{Trips: 1}, nil
+	}
+
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/api/vs/"+itoa(v.ID), nil))
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d, want 409", rec.Code)
+	}
+	var ep errorPayload
+	if err := json.NewDecoder(rec.Body).Decode(&ep); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if ep.Code != "has_dependents" || ep.Dependents == nil || ep.Dependents.Trips != 1 {
+		t.Fatalf("payload = %+v", ep)
+	}
+
+	// With force=true and a ForceCascade wired up, the cascader runs and the
+	// VS delete then proceeds.
+	cascaded := false
+	h.ForceCascade = func(id int64) error {
+		cascaded = true
+		return nil
+	}
+	rec = httptest.NewRecorder()
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/api/vs/"+itoa(v.ID)+"?force=true", nil))
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("force status = %d, want 204; body=%s", rec.Code, rec.Body.String())
+	}
+	if !cascaded {
+		t.Fatalf("ForceCascade was not invoked")
+	}
+}
+
+func TestHandlers_DeleteSurfacesFKConstraintAs409(t *testing.T) {
+	h, r, _ := newTestHandler(t)
+	v := createVS(t, r, `{"name":"A","lat":45,"lon":6}`)
+	// No Dependents hook → pre-flight is skipped. Simulate the store returning
+	// an FK constraint by inserting a dependent row via raw SQL on the same DB.
+	if _, err := h.Store.DB.Exec(`CREATE TABLE blocking_ref (id INTEGER PRIMARY KEY, vs_id INTEGER NOT NULL REFERENCES vs(id) ON DELETE RESTRICT)`); err != nil {
+		t.Fatalf("create blocking table: %v", err)
+	}
+	if _, err := h.Store.DB.Exec(`INSERT INTO blocking_ref (vs_id) VALUES (?)`, v.ID); err != nil {
+		t.Fatalf("insert blocking row: %v", err)
+	}
+
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/api/vs/"+itoa(v.ID), nil))
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d, want 409; body=%s", rec.Code, rec.Body.String())
+	}
+	var ep errorPayload
+	if err := json.NewDecoder(rec.Body).Decode(&ep); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if ep.Code != "has_dependents" {
+		t.Fatalf("code = %q, want has_dependents", ep.Code)
+	}
+}

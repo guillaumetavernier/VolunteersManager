@@ -20,7 +20,8 @@ type CarDependent struct {
 
 // Dependents lists rows that block a hard delete.
 type Dependents struct {
-	Cars []CarDependent `json:"cars"`
+	Cars  []CarDependent `json:"cars"`
+	Trips []int64        `json:"trips,omitempty"`
 }
 
 // ErrHasDependents is returned when a hard delete would orphan related rows.

@@ -10,8 +10,18 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// TripsForCar returns the IDs of trips referencing the given car. Wired by
+// the server to trip.Store; nil treats the car as unreferenced.
+type TripsForCar func(carID int64) ([]int64, error)
+
 type Handler struct {
-	Store *Store
+	Store       *Store
+	TripsForCar TripsForCar
+}
+
+// Dependents lists rows that block a cascade-less delete.
+type Dependents struct {
+	Trips []int64 `json:"trips,omitempty"`
 }
 
 func NewHandler(s *Store) *Handler { return &Handler{Store: s} }
@@ -25,8 +35,9 @@ func (h *Handler) Mount(r chi.Router) {
 }
 
 type errorPayload struct {
-	Code    string `json:"code"`
-	Message string `json:"message,omitempty"`
+	Code       string      `json:"code"`
+	Message    string      `json:"message,omitempty"`
+	Dependents *Dependents `json:"dependents,omitempty"`
 }
 
 func (h *Handler) list(w http.ResponseWriter, _ *http.Request) {
@@ -110,6 +121,26 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(w, r)
 	if !ok {
 		return
+	}
+	force := r.URL.Query().Get("force") == "true"
+	if h.TripsForCar != nil {
+		tripIDs, err := h.TripsForCar(id)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
+			return
+		}
+		if len(tripIDs) > 0 {
+			if !force {
+				writeJSON(w, http.StatusConflict, errorPayload{Code: "has_dependents", Dependents: &Dependents{Trips: tripIDs}})
+				return
+			}
+			for _, tid := range tripIDs {
+				if _, err := h.Store.DB.Exec(`DELETE FROM trips WHERE id = ?`, tid); err != nil {
+					writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
+					return
+				}
+			}
+		}
 	}
 	if err := h.Store.Delete(id); err != nil {
 		if errors.Is(err, ErrNotFound) {

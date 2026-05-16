@@ -15,21 +15,23 @@ type Store struct {
 
 // Open opens (or creates) the SQLite file at path and applies the pragmas the
 // rest of the app relies on. The caller owns the lifetime; call Close on shutdown.
+//
+// PRAGMAs in SQLite are per-connection, so we encode them in the DSN — that
+// way every connection in database/sql's pool inherits them on first use.
+// Without this, a stray pool connection with foreign_keys=OFF can let DELETE
+// orphan child rows (the M06 trip_stops flake reproduced this exactly).
 func Open(path string) (*Store, error) {
-	db, err := sql.Open("sqlite", path)
+	dsn := fmt.Sprintf("file:%s?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)", path)
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("store: open %q: %w", path, err)
 	}
-	pragmas := []string{
-		"PRAGMA journal_mode=WAL",
-		"PRAGMA foreign_keys=ON",
-		"PRAGMA synchronous=NORMAL",
-	}
-	for _, p := range pragmas {
-		if _, err := db.Exec(p); err != nil {
-			_ = db.Close()
-			return nil, fmt.Errorf("store: %s: %w", p, err)
-		}
+	// Sanity-check the file by issuing the same pragmas. With the DSN form
+	// above they're already applied per-connection; this also surfaces an
+	// unreachable path early.
+	if _, err := db.Exec("PRAGMA foreign_keys=ON"); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("store: PRAGMA foreign_keys: %w", err)
 	}
 	return &Store{DB: db, Path: path}, nil
 }

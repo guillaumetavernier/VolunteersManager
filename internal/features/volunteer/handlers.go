@@ -13,9 +13,14 @@ import (
 	"github.com/guillaumetavernier/volunteersmanager/internal/phone"
 )
 
+// TripsForDriver returns the IDs of trips that name the volunteer as driver.
+// Wired by the server to trip.Store; nil treats the volunteer as unreferenced.
+type TripsForDriver func(volunteerID int64) ([]int64, error)
+
 type Handler struct {
-	Store  *Store
-	Events *event.Store
+	Store          *Store
+	Events         *event.Store
+	TripsForDriver TripsForDriver
 }
 
 func NewHandler(s *Store, events *event.Store) *Handler {
@@ -164,6 +169,28 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(http.StatusNoContent)
 		return
+	}
+	// Trip dependents are checked at the handler level (the store doesn't import
+	// trip). If !force and the volunteer drives some trips, return 409 with
+	// the trip ids. With force=true, the trips are deleted first.
+	if h.TripsForDriver != nil {
+		tripIDs, err := h.TripsForDriver(id)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
+			return
+		}
+		if len(tripIDs) > 0 {
+			if !force {
+				writeJSON(w, http.StatusConflict, errorPayload{Code: "has_dependents", Dependents: &Dependents{Trips: tripIDs}})
+				return
+			}
+			for _, tid := range tripIDs {
+				if _, err := h.Store.DB.Exec(`DELETE FROM trips WHERE id = ?`, tid); err != nil {
+					writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
+					return
+				}
+			}
+		}
 	}
 	if err := h.Store.HardDelete(id, force); err != nil {
 		var dep *ErrHasDependents

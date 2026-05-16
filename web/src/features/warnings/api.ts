@@ -11,9 +11,16 @@ export type WarningKind =
   | "understaffed"
   | "overstaffed"
   | "unassigned"
-  | "missing_phone_with_assignments";
+  | "missing_phone_with_assignments"
+  | "stranded"
+  | "insufficient_travel"
+  | "capacity_exceeded"
+  | "driver_double_book"
+  | "passenger_double_book"
+  | "board_without_alight"
+  | "alight_before_board";
 
-export type EntityType = "volunteer" | "mission" | "assignment";
+export type EntityType = "volunteer" | "mission" | "assignment" | "trip" | "trip_stop" | "car";
 
 export interface EntityRef {
   type: EntityType;

@@ -10,28 +10,48 @@ export async function unwrap<T = unknown>(res: APIResponse): Promise<T> {
   return body as T;
 }
 
-// Reset DB between tests by deleting races and VS through the API. The event
-// row stays put because it's load-bearing (the wizard would re-appear without it).
+// Reset DB between tests by deleting every dependent row before VS. The event
+// row stays put because it's load-bearing (the wizard would re-appear without
+// it). Every DELETE must succeed (2xx) or already be gone (404); anything else
+// (FK constraints, stale rows surviving silently) is bubbled up as a
+// descriptive error so the next test doesn't see leaked state.
 export async function resetState(api: APIRequestContext) {
-  const races = await api.get("/api/races");
-  if (races.ok()) {
-    const list = await races.json();
-    for (const r of list) await api.delete(`/api/races/${r.id}`);
+  // Order matters: trips reference cars + volunteers + VS via RESTRICT, so
+  // they go first. Trip stops + stop passengers cascade from trips. Then races
+  // (race_vs cascades), then cars (force-cascades trips, but they're already
+  // gone), then volunteers (hard delete), then VS (force-cascades trips, also
+  // already gone).
+  await deleteAll(api, "/api/trips", "id");
+  await deleteAll(api, "/api/races", "id");
+  await deleteAll(api, "/api/cars", "id", "?force=true");
+  await deleteAll(api, "/api/volunteers?archived=all", "id", "?hard=true&force=true");
+  await deleteAll(api, "/api/vs", "id", "?force=true");
+}
+
+async function deleteAll(
+  api: APIRequestContext,
+  listPath: string,
+  idKey: string,
+  query: string = "",
+) {
+  const res = await api.get(listPath);
+  if (!res.ok()) {
+    if (res.status() === 404) return;
+    const body = await res.text();
+    throw new Error(`resetState: GET ${listPath} -> ${res.status()} ${body}`);
   }
-  const cars = await api.get("/api/cars");
-  if (cars.ok()) {
-    const list = await cars.json();
-    for (const c of list) await api.delete(`/api/cars/${c.id}`);
-  }
-  const vols = await api.get("/api/volunteers?archived=all");
-  if (vols.ok()) {
-    const list = await vols.json();
-    for (const v of list) await api.delete(`/api/volunteers/${v.id}?hard=true&force=true`);
-  }
-  const vsList = await api.get("/api/vs");
-  if (vsList.ok()) {
-    const list = await vsList.json();
-    for (const v of list) await api.delete(`/api/vs/${v.id}?force=true`);
+  const list = (await res.json()) as Array<Record<string, unknown>>;
+  // Strip query from list path to get the base resource path.
+  const base = listPath.split("?")[0];
+  for (const item of list) {
+    const id = item[idKey];
+    const del = await api.delete(`${base}/${id}${query}`);
+    if (!del.ok() && del.status() !== 404) {
+      const body = await del.text();
+      throw new Error(
+        `resetState: DELETE ${base}/${id}${query} -> ${del.status()} ${body}`,
+      );
+    }
   }
 }
 

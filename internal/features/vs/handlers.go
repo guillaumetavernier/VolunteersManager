@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -33,13 +34,21 @@ type DependentCounter func(vsID int64) (Dependents, error)
 type Dependents struct {
 	Missions    int `json:"missions"`
 	Assignments int `json:"assignments"`
+	Trips       int `json:"trips"`
 }
 
+// ForceCascader is called when a delete request includes ?force=true. It must
+// remove every row that would otherwise block the VS delete via FK RESTRICT
+// (trips with stops at this VS, today). Missions/assignments cascade via
+// ON DELETE CASCADE so they don't need explicit cleanup. nil is a no-op.
+type ForceCascader func(vsID int64) error
+
 type Handler struct {
-	Store      *Store
-	AssetDir   string // absolute path to ./assets directory; photos go under <AssetDir>/vs/
-	OnMove     OnMove
-	Dependents DependentCounter
+	Store        *Store
+	AssetDir     string // absolute path to ./assets directory; photos go under <AssetDir>/vs/
+	OnMove       OnMove
+	Dependents   DependentCounter
+	ForceCascade ForceCascader
 }
 
 func NewHandler(s *Store, assetDir string) *Handler {
@@ -111,6 +120,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
 		return
 	}
+	h.fireMove(v.ID)
 	writeJSON(w, http.StatusCreated, v)
 }
 
@@ -196,8 +206,14 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
 			return
 		}
-		if dep.Missions > 0 || dep.Assignments > 0 {
+		if dep.Missions > 0 || dep.Assignments > 0 || dep.Trips > 0 {
 			writeJSON(w, http.StatusConflict, errorPayload{Code: "has_dependents", Dependents: &dep})
+			return
+		}
+	}
+	if force && h.ForceCascade != nil {
+		if err := h.ForceCascade(id); err != nil {
+			writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
 			return
 		}
 	}
@@ -206,10 +222,32 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusNotFound, errorPayload{Code: "not_found"})
 			return
 		}
+		// FK RESTRICT (e.g., a stray trip_stops row referencing this VS) surfaces
+		// here as a constraint error. Report it as a 409 with the dependents
+		// payload so callers can decide whether to retry with ?force=true.
+		if isFKConstraint(err) {
+			dep := Dependents{}
+			if h.Dependents != nil {
+				if d, derr := h.Dependents(id); derr == nil {
+					dep = d
+				}
+			}
+			writeJSON(w, http.StatusConflict, errorPayload{Code: "has_dependents", Dependents: &dep, Message: err.Error()})
+			return
+		}
 		writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
 		return
 	}
+	h.fireMove(id)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func isFKConstraint(err error) bool {
+	if err == nil {
+		return false
+	}
+	s := err.Error()
+	return strings.Contains(s, "FOREIGN KEY") || strings.Contains(s, "constraint failed")
 }
 
 func (h *Handler) uploadPhoto(w http.ResponseWriter, r *http.Request) {

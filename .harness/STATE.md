@@ -3,7 +3,7 @@
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
 **Last updated:** 2026-05-16
-**Current milestone:** **[05-constraints](../docs/milestones/05-constraints.md)** — in progress.
+**Current milestone:** **[06-trips-travel-matrix](../docs/milestones/06-trips-travel-matrix.md)** — in progress.
 
 ## Status legend
 
@@ -22,7 +22,7 @@
 | 03 | 03-volunteers-cars-csv        | 🟢 completed   | All acceptance criteria pass; harness + Playwright e2e green. |
 | 04 | 04-missions-assignments       | 🟢 completed   | All acceptance criteria pass; harness + Playwright e2e green. |
 | 05 | 05-constraints                | 🟢 completed   | Engine + cache + middleware wrap mutations; 9 Playwright tests cover the loop. |
-| 06 | 06-trips-travel-matrix        | ⚪ not_started | |
+| 06 | 06-trips-travel-matrix        | 🟢 completed   | All acceptance criteria pass; harness + Playwright e2e green. |
 | 07 | 07-timeline                   | ⚪ not_started | |
 | 08 | 08-roadbook                   | ⚪ not_started | Mini-map rasterization risk — see M08 risks. |
 | 09 | 09-archive-polish             | ⚪ not_started | |
@@ -91,7 +91,14 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 - [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (Go suite green; 55 Vitest tests pass; 9 Playwright tests pass)
 
 ### 06-trips-travel-matrix
-_Not yet started._
+
+- [x] Add 5 VS; the matrix populates with haversine-fallback values. (VS create fires `recomputeMatrix` synchronously; `internal/routing/matrix.go` writes one row per (from,to,mode) with `source=fallback`.)
+- [x] Edit one matrix cell manually → `source=manual` → recompute does not overwrite it. (`SetManual` + `RecomputeMatrix` UPSERT guarded by `WHERE source != 'manual'`; covered by `TestRecomputeMatrix_PreservesManual` and `e2e/trips.spec.ts`.)
+- [x] Two volunteers have consecutive missions at different VS → `transport-needs` lists them. (`GET /api/transport-needs?day=N` computes consecutive different-VS pairs, exercised by e2e.)
+- [x] Build a trip with 3 stops, 2 boarders at stop 0, alighting at stops 1 and 2; warnings about capacity exceeded surface visually if `car.seats < 2`. (e2e `capacity warning surfaces` + table-driven `TestCompute_CapacityExceeded`.)
+- [x] Override a leg's time → chip flips to "manual" → revert link restores auto. (TripEditor `setStopTime` flips to `manual`; `Restaurer auto` button in JSX calls `revertStopTime`.)
+- [x] Stranded-volunteer warning clears once the relevant trip is built. (e2e: `stranded` is true before the trip POST, false after; covered by `TestCompute_StrandedClearsWhenTripCovers`.)
+- [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (harness pass; 11 Playwright tests green.)
 
 ### 07-timeline
 _Not yet started._
