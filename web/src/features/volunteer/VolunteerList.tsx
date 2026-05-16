@@ -59,7 +59,7 @@ export function VolunteerList({ onSelect }: VolunteerListProps = {}) {
           aria-label="Rechercher"
         />
         <Input
-          className="w-48"
+          className="w-60"
           placeholder="Filtrer par rôle"
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}

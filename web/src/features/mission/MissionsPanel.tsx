@@ -63,7 +63,7 @@ export function MissionsPanel({ vs, onClose }: Props) {
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
       <aside
-        className="fixed right-0 top-0 z-20 flex h-full w-[min(36rem,100vw)] flex-col gap-3 overflow-y-auto border-l border-slate-200 bg-white p-4 shadow-xl"
+        className="fixed right-0 top-0 z-20 flex h-full w-[min(40rem,100vw)] flex-col gap-3 overflow-y-auto border-l border-slate-200 bg-white p-4 shadow-xl"
         aria-label={`Missions pour ${vs.name}`}
         data-missions-panel
       >
@@ -92,7 +92,7 @@ export function MissionsPanel({ vs, onClose }: Props) {
             </button>
           ))}
         </nav>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_240px]">
           <div className="grid min-w-0 gap-2">
             {(missions.data ?? []).map((m) => (
               <MissionCard key={m.id} mission={m} />

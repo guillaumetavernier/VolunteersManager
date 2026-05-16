@@ -40,7 +40,7 @@ export function MapDrawer({ stack, onPush, onPop, onSwitchTab, onClose }: MapDra
   return (
     <aside
       data-testid="map-drawer"
-      className="absolute right-0 top-0 z-10 flex h-full w-[480px] max-w-full flex-col border-l border-slate-200 bg-white shadow-lg"
+      className="absolute right-0 top-0 z-10 flex h-full w-[min(40rem,100vw)] flex-col border-l border-slate-200 bg-white shadow-lg"
     >
       <header className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
         {top.kind === "list" ? (
