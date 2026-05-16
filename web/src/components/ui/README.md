@@ -15,6 +15,7 @@ Hand-vendored from the canonical shadcn/ui v0 source on 2026-05-16, adapted to i
 - `tooltip.tsx`
 - `card.tsx` — `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter`.
 - `separator.tsx`
+- `dropdown-menu.tsx` — Radix `DropdownMenu` (vendored Slice 6).
 
 ## Notes for future slices
 

@@ -276,48 +276,6 @@ export function RoadbookSettingsPage() {
           </Button>
           {error && <span className="text-sm text-red-600">{error}</span>}
         </div>
-
-        <section className="mt-6 border-t border-slate-200 pt-4" data-testid="autres-outils">
-          <h2 className="mb-2 text-lg font-medium">Autres outils</h2>
-          <nav className="flex flex-wrap gap-3 text-sm">
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={() => navigate("/trips")}
-              className="h-auto px-0"
-            >
-              Trajets
-            </Button>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={() => navigate("/transport-needs")}
-              className="h-auto px-0"
-            >
-              Besoins transport
-            </Button>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={() => navigate("/travel-times")}
-              className="h-auto px-0"
-            >
-              Matrice temps
-            </Button>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={() => navigate("/settings/archive")}
-              className="h-auto px-0"
-            >
-              Archive
-            </Button>
-          </nav>
-        </section>
       </section>
 
       <section className="space-y-2">

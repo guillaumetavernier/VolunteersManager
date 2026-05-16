@@ -18,6 +18,13 @@ import { CarDetail } from "@/features/car/CarDetail";
 import { CarList } from "@/features/car/CarList";
 import { MissionsGrid } from "@/features/mission/MissionsGrid";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { TripList } from "@/features/trip/TripList";
 import { TripEditor } from "@/features/trip/TripEditor";
@@ -84,6 +91,27 @@ function AppShell({ children }: { children: ReactNode }) {
           <Button variant="ghost" onClick={() => (window.location.hash = "/roadbooks")}>
             Roadbooks
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost">
+                Logistique <ChevronDown className="ml-1 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onSelect={() => (window.location.hash = "/trips")}>
+                Trajets
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => (window.location.hash = "/transport-needs")}>
+                Besoins transport
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => (window.location.hash = "/travel-times")}>
+                Matrice temps
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => (window.location.hash = "/settings/archive")}>
+                Archive
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="ghost" onClick={() => (window.location.hash = "/settings/roadbook")}>
             Paramètres
           </Button>
