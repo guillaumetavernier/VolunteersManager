@@ -19,6 +19,7 @@ import { TripList } from "@/features/trip/TripList";
 import { TripEditor } from "@/features/trip/TripEditor";
 import { TransportNeedsList } from "@/features/trip/TransportNeedsList";
 import { MatrixView } from "@/features/travelMatrix/MatrixView";
+import { TimelinePage } from "@/features/timeline/TimelinePage";
 import { GlobalIssueCounter } from "@/features/warnings/GlobalIssueCounter";
 import { IssuesPanel } from "@/features/warnings/IssuesPanel";
 import { matchRoute, useRoute } from "@/lib/router";
@@ -87,6 +88,9 @@ function AppShell({ children }: { children: ReactNode }) {
           <button onClick={() => (window.location.hash = "/travel-times")} className="underline">
             Matrice
           </button>
+          <button onClick={() => (window.location.hash = "/timeline")} className="underline">
+            Chronologie
+          </button>
         </nav>
         <GlobalIssueCounter />
       </header>
@@ -152,6 +156,9 @@ function Routes({ region }: { region: string }) {
   }
   if (path === "/travel-times") {
     return <MatrixView />;
+  }
+  if (path === "/timeline") {
+    return <TimelinePage region={region} />;
   }
   if (matchRoute("/issues", route.path)) {
     return <IssuesPanel />;

@@ -3,7 +3,7 @@
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
 **Last updated:** 2026-05-16
-**Current milestone:** **[06-trips-travel-matrix](../docs/milestones/06-trips-travel-matrix.md)** — in progress.
+**Current milestone:** **[07-timeline](../docs/milestones/07-timeline.md)** — in progress.
 
 ## Status legend
 
@@ -23,7 +23,7 @@
 | 04 | 04-missions-assignments       | 🟢 completed   | All acceptance criteria pass; harness + Playwright e2e green. |
 | 05 | 05-constraints                | 🟢 completed   | Engine + cache + middleware wrap mutations; 9 Playwright tests cover the loop. |
 | 06 | 06-trips-travel-matrix        | 🟢 completed   | All acceptance criteria pass; harness + Playwright e2e green. |
-| 07 | 07-timeline                   | ⚪ not_started | |
+| 07 | 07-timeline                   | 🟢 completed   | Canvas timeline + per-frame MapLibre sources; bench 0.009 ms/frame; 12 Playwright tests + 84 Vitest tests green. |
 | 08 | 08-roadbook                   | ⚪ not_started | Mini-map rasterization risk — see M08 risks. |
 | 09 | 09-archive-polish             | ⚪ not_started | |
 
@@ -101,7 +101,15 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 - [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (harness pass; 11 Playwright tests green.)
 
 ### 07-timeline
-_Not yet started._
+
+- [x] Open the timeline; see front/tail bars per race, mission bars per VS, trip bars per car. (canvas-rendered rows in `TimelineView`; e2e navigates to `/#/timeline` and waits for `[data-testid=timeline-canvas]`.)
+- [x] Drag the cursor; map markers (runners, volunteers, cars) reposition in real time. (Canvas drag → `seek()`; RAF loop updates four MapLibre sources from `runnerFrontPosition` / `runnerTailPosition` / `volunteerPosition` / `carPosition`.)
+- [x] Play at 30x; cursor advances smoothly; map animations stay smooth. (RAF loop in `TimelineControls`; 30 fps throttle; bench reports avg ~0.01 ms/frame on the fixture.)
+- [x] Click a sub-race segment in the timeline; map zooms to that segment; other GPX dim. (`fitBounds` over the projected_dist range; `line-opacity` 0.15 on other race lines.)
+- [x] Toggle a race off; its bar and markers hide. (e2e clicks the race chip and asserts `tl-race-line-{id}` visibility flips to `none`.)
+- [x] A trip that crosses midnight renders correctly across the day boundary. (Vitest `cross-midnight` table case + e2e day picker scrub past midnight.)
+- [x] Performance bench script reports <16 ms/frame at 30x on the fixture. (`scripts/bench_timeline.mjs`: avg 0.009 ms/frame, p99 0.028 ms on 5 races / 50 VS / 200 missions / 30 trips.)
+- [x] `pnpm test` and Playwright e2e green. (84 Vitest tests; 12 Playwright tests; harness pass.)
 
 ### 08-roadbook
 _Not yet started._
