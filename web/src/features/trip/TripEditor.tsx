@@ -344,12 +344,12 @@ export function TripEditor({ id }: { id?: number }) {
               <li key={i} className="rounded-md border border-slate-200 p-3" data-stop-index={i}>
                 <div className="grid gap-2 md:grid-cols-[2fr_1fr_auto]">
                   <label className="grid gap-1 text-sm">
-                    <span>Arrêt {i + 1} · VS</span>
+                    <span>Arrêt {i + 1} · PB</span>
                     <select
                       className="input w-full"
                       value={st.vs_id}
                       onChange={(e) => setStopVS(i, Number(e.target.value))}
-                      aria-label={`VS arrêt ${i + 1}`}
+                      aria-label={`PB arrêt ${i + 1}`}
                     >
                       <option value={0}>— Choisir —</option>
                       {(vs.data ?? []).map((v) => (
@@ -360,10 +360,9 @@ export function TripEditor({ id }: { id?: number }) {
                   <label className="grid gap-1 text-sm">
                     <span>Heure</span>
                     <Input
-                      type="text"
+                      type="time"
                       value={st.time}
                       onChange={(e) => setStopTime(i, e.target.value)}
-                      placeholder="HH:MM"
                       aria-label={`Heure arrêt ${i + 1}`}
                       data-stop-time={i}
                     />
