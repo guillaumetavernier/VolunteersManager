@@ -4,6 +4,9 @@ import { z } from "zod";
 import { useEffect } from "react";
 
 import { ApiError } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useEvent } from "@/features/event/hooks";
 import { useVSList } from "@/features/vs/hooks";
 import { useCreateVolunteer, usePatchVolunteer } from "./hooks";
@@ -107,10 +110,10 @@ export function VolunteerForm({ existing, onSaved, onCancel }: Props) {
     <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
       <div className="grid grid-cols-2 gap-4">
         <Field label="Prénom" error={form.formState.errors.first_name?.message}>
-          <input className="input" {...form.register("first_name")} aria-label="Prénom" />
+          <Input {...form.register("first_name")} aria-label="Prénom" />
         </Field>
         <Field label="Nom" error={form.formState.errors.last_name?.message}>
-          <input className="input" {...form.register("last_name")} aria-label="Nom" />
+          <Input {...form.register("last_name")} aria-label="Nom" />
         </Field>
       </div>
       <Field label="Téléphone" error={form.formState.errors.phone?.message}>
@@ -123,11 +126,11 @@ export function VolunteerForm({ existing, onSaved, onCancel }: Props) {
         />
       </Field>
       <Field label="Email" error={form.formState.errors.email?.message}>
-        <input className="input" type="email" {...form.register("email")} />
+        <Input type="email" {...form.register("email")} />
       </Field>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Contact d'urgence (nom)">
-          <input className="input" {...form.register("emergency_contact_name")} />
+          <Input {...form.register("emergency_contact_name")} />
         </Field>
         <Field label="Contact d'urgence (téléphone)">
           <Controller
@@ -140,10 +143,10 @@ export function VolunteerForm({ existing, onSaved, onCancel }: Props) {
         </Field>
       </div>
       <Field label="Infos générales">
-        <textarea className="input min-h-20" {...form.register("general_info")} />
+        <Textarea className="min-h-20" {...form.register("general_info")} />
       </Field>
       <Field label="Message personnalisable">
-        <textarea className="input min-h-20" {...form.register("customizable_message")} />
+        <Textarea className="min-h-20" {...form.register("customizable_message")} />
       </Field>
       <Field label="Rôles">
         <Controller
@@ -166,7 +169,7 @@ export function VolunteerForm({ existing, onSaved, onCancel }: Props) {
             control={form.control}
             render={({ field }) => (
               <select
-                className="input"
+                className="input w-full"
                 value={field.value ?? ""}
                 onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
               >
@@ -181,28 +184,24 @@ export function VolunteerForm({ existing, onSaved, onCancel }: Props) {
           />
         </Field>
         <Field label="Type de permis">
-          <input className="input" {...form.register("license_type")} placeholder="B, BE, C…" />
+          <Input {...form.register("license_type")} placeholder="B, BE, C…" />
         </Field>
       </div>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" {...form.register("can_drive")} /> Peut conduire
       </label>
       <Field label="Notes">
-        <textarea className="input min-h-20" {...form.register("notes")} />
+        <Textarea className="min-h-20" {...form.register("notes")} />
       </Field>
       <div className="flex items-center justify-end gap-3">
         {onCancel && (
-          <button type="button" onClick={onCancel} className="text-sm text-slate-600 underline">
+          <Button type="button" variant="link" onClick={onCancel}>
             Annuler
-          </button>
+          </Button>
         )}
-        <button
-          type="submit"
-          className="rounded-md bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
-          disabled={create.isPending || patch.isPending}
-        >
+        <Button type="submit" disabled={create.isPending || patch.isPending}>
           {existing ? "Enregistrer" : "Créer"}
-        </button>
+        </Button>
       </div>
       {(create.isError || patch.isError) && (
         <p role="alert" className="text-sm text-red-600">

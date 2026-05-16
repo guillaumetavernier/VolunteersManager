@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
+import { CarDetail } from "@/features/car/CarDetail";
 import { CarList } from "@/features/car/CarList";
+import { useCars } from "@/features/car/hooks";
 import { MissionsGrid } from "@/features/mission/MissionsGrid";
 import { RaceDetail } from "@/features/race/RaceDetail";
 import { RaceList } from "@/features/race/RaceList";
@@ -13,7 +15,8 @@ export type MapDrawerTab = "races" | "volunteers" | "cars" | "missions";
 export type DrawerFrame =
   | { kind: "list"; tab: MapDrawerTab }
   | { kind: "race"; id: number }
-  | { kind: "volunteer"; id: number };
+  | { kind: "volunteer"; id: number }
+  | { kind: "car"; id: number };
 
 export interface MapDrawerProps {
   stack: DrawerFrame[];
@@ -102,13 +105,16 @@ function Body({
   if (top.kind === "volunteer") {
     return <VolunteerDetail id={top.id} onBack={onPop} />;
   }
+  if (top.kind === "car") {
+    return <CarDetail id={top.id} onBack={onPop} />;
+  }
   switch (top.tab) {
     case "races":
       return <RaceList onSelect={(id) => onPush({ kind: "race", id })} />;
     case "volunteers":
       return <VolunteerList onSelect={(id) => onPush({ kind: "volunteer", id })} />;
     case "cars":
-      return <CarList />;
+      return <CarList onSelect={(id) => onPush({ kind: "car", id })} />;
     case "missions":
       return <MissionsGrid />;
   }
@@ -116,7 +122,8 @@ function Body({
 
 function Breadcrumb({ frame }: { frame: Exclude<DrawerFrame, { kind: "list" }> }) {
   if (frame.kind === "race") return <RaceCrumb id={frame.id} />;
-  return <VolunteerCrumb id={frame.id} />;
+  if (frame.kind === "volunteer") return <VolunteerCrumb id={frame.id} />;
+  return <CarCrumb id={frame.id} />;
 }
 
 function RaceCrumb({ id }: { id: number }) {
@@ -136,6 +143,16 @@ function VolunteerCrumb({ id }: { id: number }) {
   return (
     <span className="text-sm text-slate-700">
       Bénévoles / <strong>{label}</strong>
+    </span>
+  );
+}
+
+function CarCrumb({ id }: { id: number }) {
+  const cars = useCars();
+  const c = (cars.data ?? []).find((x) => x.id === id);
+  return (
+    <span className="text-sm text-slate-700">
+      Véhicules / <strong>{c?.name ?? `#${id}`}</strong>
     </span>
   );
 }
