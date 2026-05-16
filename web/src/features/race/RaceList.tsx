@@ -25,9 +25,17 @@ export function RaceList() {
     <main className="mx-auto max-w-3xl p-6">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Races</h1>
-        <button onClick={() => navigate("/")} className="text-sm text-slate-600 underline">
-          Back to map
-        </button>
+        <nav className="flex gap-3 text-sm text-slate-600">
+          <button onClick={() => navigate("/volunteers")} className="underline">
+            Bénévoles
+          </button>
+          <button onClick={() => navigate("/cars")} className="underline">
+            Véhicules
+          </button>
+          <button onClick={() => navigate("/")} className="underline">
+            Carte
+          </button>
+        </nav>
       </header>
       <form onSubmit={onCreate} className="mb-6 flex gap-2">
         <input

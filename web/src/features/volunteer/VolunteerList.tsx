@@ -1,0 +1,123 @@
+import { useMemo, useState } from "react";
+
+import { navigate } from "@/lib/router";
+import { useArchiveVolunteer, useVolunteers } from "./hooks";
+import { VolunteerForm } from "./VolunteerForm";
+import type { ArchivedFilter, Volunteer } from "./api";
+
+export function VolunteerList() {
+  const [showArchived, setShowArchived] = useState(false);
+  const filter: ArchivedFilter = showArchived ? "all" : "false";
+  const query = useVolunteers(filter);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [creating, setCreating] = useState(false);
+  const archive = useArchiveVolunteer();
+
+  const filtered = useMemo(() => {
+    const lo = search.toLowerCase();
+    const role = roleFilter.toLowerCase();
+    return (query.data ?? []).filter((v) => {
+      const matchesSearch =
+        !lo ||
+        v.first_name.toLowerCase().includes(lo) ||
+        v.last_name.toLowerCase().includes(lo) ||
+        (v.email ?? "").toLowerCase().includes(lo);
+      const matchesRole = !role || v.role_types.some((r) => r.toLowerCase().includes(role));
+      return matchesSearch && matchesRole;
+    });
+  }, [query.data, search, roleFilter]);
+
+  return (
+    <main className="mx-auto max-w-5xl p-6">
+      <header className="mb-6 flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold">Bénévoles</h1>
+        <nav className="flex gap-3 text-sm text-slate-600">
+          <button onClick={() => navigate("/volunteers/import")} className="underline">
+            Importer un CSV
+          </button>
+          <a className="underline" href="/api/volunteers/template.csv">
+            Modèle
+          </a>
+          <a className="underline" href="/api/volunteers/export.csv">
+            Exporter
+          </a>
+          <button onClick={() => navigate("/cars")} className="underline">
+            Véhicules
+          </button>
+          <button onClick={() => navigate("/")} className="underline">
+            Carte
+          </button>
+        </nav>
+      </header>
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <input
+          className="input flex-1"
+          placeholder="Rechercher (nom, prénom, email)"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          aria-label="Rechercher"
+        />
+        <input
+          className="input w-48"
+          placeholder="Filtrer par rôle"
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          aria-label="Filtrer par rôle"
+        />
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={showArchived}
+            onChange={(e) => setShowArchived(e.target.checked)}
+          />
+          Afficher les archivés
+        </label>
+        <button
+          onClick={() => setCreating(true)}
+          className="rounded-md bg-slate-900 px-3 py-2 text-sm text-white"
+        >
+          Nouveau bénévole
+        </button>
+      </div>
+      {creating && (
+        <section className="mb-6 rounded-md border border-slate-200 p-4">
+          <h2 className="mb-3 text-lg font-semibold">Nouveau bénévole</h2>
+          <VolunteerForm onCancel={() => setCreating(false)} onSaved={() => setCreating(false)} />
+        </section>
+      )}
+      {query.isLoading && <p>Chargement…</p>}
+      {!query.isLoading && filtered.length === 0 && (
+        <p className="text-sm text-slate-600">Aucun bénévole pour le moment.</p>
+      )}
+      <ul className="divide-y divide-slate-200" data-testid="volunteer-list">
+        {filtered.map((v) => (
+          <Row key={v.id} v={v} onArchive={() => archive.mutate(v.id)} />
+        ))}
+      </ul>
+    </main>
+  );
+}
+
+function Row({ v, onArchive }: { v: Volunteer; onArchive: () => void }) {
+  return (
+    <li className="flex items-center justify-between gap-3 py-3" data-volunteer-id={v.id}>
+      <button onClick={() => navigate(`/volunteers/${v.id}`)} className="flex flex-col items-start text-left">
+        <span className="font-medium">
+          {v.first_name} {v.last_name}{v.archived ? " (archivé)" : ""}
+        </span>
+        <span className="text-xs text-slate-500">
+          {v.phone}
+          {v.email ? ` · ${v.email}` : ""}
+          {v.role_types.length > 0 ? ` · ${v.role_types.join(", ")}` : ""}
+          {v.can_drive ? " · permis" : ""}
+        </span>
+      </button>
+      {!v.archived && (
+        <button onClick={onArchive} className="text-sm text-red-700 hover:underline">
+          Archiver
+        </button>
+      )}
+    </li>
+  );
+}

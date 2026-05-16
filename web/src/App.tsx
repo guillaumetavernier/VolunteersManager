@@ -9,6 +9,10 @@ import {
 import { MapView } from "@/features/map/MapView";
 import { RaceDetail } from "@/features/race/RaceDetail";
 import { RaceList } from "@/features/race/RaceList";
+import { VolunteerList } from "@/features/volunteer/VolunteerList";
+import { VolunteerDetail } from "@/features/volunteer/VolunteerDetail";
+import { CsvImportWizard } from "@/features/volunteer/CsvImportWizard";
+import { CarList } from "@/features/car/CarList";
 import { matchRoute, useRoute } from "@/lib/router";
 import { queryClient } from "@/lib/queryClient";
 
@@ -50,6 +54,22 @@ function Routes({ region }: { region: string }) {
   if (matchRoute("/races", route.path)) {
     return <RaceList />;
   }
+  if (matchRoute("/volunteers/import", route.path)) {
+    return <CsvImportWizard />;
+  }
+  const volMatch = matchRoute("/volunteers/:id", route.path);
+  if (volMatch && volMatch.id) {
+    const id = Number(volMatch.id);
+    if (Number.isFinite(id) && id > 0) {
+      return <VolunteerDetail id={id} />;
+    }
+  }
+  if (matchRoute("/volunteers", route.path)) {
+    return <VolunteerList />;
+  }
+  if (matchRoute("/cars", route.path)) {
+    return <CarList />;
+  }
   return <MapShell region={region} />;
 }
 
@@ -58,6 +78,17 @@ function MapShell({ region }: { region: string }) {
   return (
     <>
       <MapView region={region} />
+      <nav className="absolute top-4 right-4 z-10 flex gap-2 rounded-md bg-white/90 px-3 py-2 text-sm shadow">
+        <button onClick={() => (window.location.hash = "/races")} className="underline">
+          Courses
+        </button>
+        <button onClick={() => (window.location.hash = "/volunteers")} className="underline">
+          Bénévoles
+        </button>
+        <button onClick={() => (window.location.hash = "/cars")} className="underline">
+          Véhicules
+        </button>
+      </nav>
       {status.data?.state === "downloading" && (
         <div className="pointer-events-none absolute bottom-4 right-4 rounded-md bg-slate-900/90 px-4 py-2 text-sm text-white shadow">
           Downloading tiles… {fmtBytes(status.data.bytes_downloaded)}

@@ -8,6 +8,16 @@ export async function resetState(api: APIRequestContext) {
     const list = await races.json();
     for (const r of list) await api.delete(`/api/races/${r.id}`);
   }
+  const cars = await api.get("/api/cars");
+  if (cars.ok()) {
+    const list = await cars.json();
+    for (const c of list) await api.delete(`/api/cars/${c.id}`);
+  }
+  const vols = await api.get("/api/volunteers?archived=all");
+  if (vols.ok()) {
+    const list = await vols.json();
+    for (const v of list) await api.delete(`/api/volunteers/${v.id}?hard=true&force=true`);
+  }
   const vsList = await api.get("/api/vs");
   if (vsList.ok()) {
     const list = await vsList.json();

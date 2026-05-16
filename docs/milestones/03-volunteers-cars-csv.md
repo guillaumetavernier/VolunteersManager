@@ -124,13 +124,13 @@ The coordinator can populate the volunteer roster (form-by-form or via CSV impor
 
 ## Acceptance criteria
 
-- [ ] Form-create a volunteer with all fields; persists and re-renders correctly.
-- [ ] Archive a volunteer; they disappear from the default list view, return with "show archived".
-- [ ] Form-create a car; default driver dropdown filters to `can_drive` volunteers.
-- [ ] Import a CSV with 50 rows including 5 duplicates by name; preview shows correct new/update/ambiguous counts.
-- [ ] Resolve the ambiguities; commit; counts match what was promised.
-- [ ] Export to CSV → re-import the same file → 0 new, 50 updates, 0 ambiguous.
-- [ ] `go test ./...` and `pnpm test` green; Playwright e2e green.
+- [x] Form-create a volunteer with all fields; persists and re-renders correctly.
+- [x] Archive a volunteer; they disappear from the default list view, return with "show archived".
+- [x] Form-create a car; default driver dropdown filters to `can_drive` volunteers.
+- [x] Import a CSV with 50 rows including 5 duplicates by name; preview shows correct new/update/ambiguous counts.
+- [x] Resolve the ambiguities; commit; counts match what was promised.
+- [x] Export to CSV → re-import the same file → 0 new, 50 updates, 0 ambiguous.
+- [x] `go test ./...` and `pnpm test` green; Playwright e2e green.
 
 ## References
 

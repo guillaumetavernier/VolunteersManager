@@ -11,9 +11,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/guillaumetavernier/volunteersmanager/internal/csv"
+	"github.com/guillaumetavernier/volunteersmanager/internal/features/car"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/event"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/race"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/racevs"
+	"github.com/guillaumetavernier/volunteersmanager/internal/features/volunteer"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/vs"
 	"github.com/guillaumetavernier/volunteersmanager/internal/i18n"
 )
@@ -39,7 +42,8 @@ func New(cfg Config) (http.Handler, error) {
 	r.Get("/healthz", healthz)
 
 	if cfg.DB != nil {
-		event.NewHandler(event.NewStore(cfg.DB)).Mount(r)
+		eventStore := event.NewStore(cfg.DB)
+		event.NewHandler(eventStore).Mount(r)
 
 		raceStore := race.NewStore(cfg.DB)
 		raceSvc := race.NewService(cfg.DB)
@@ -54,6 +58,11 @@ func New(cfg Config) (http.Handler, error) {
 
 		race.NewHandler(raceStore, raceSvc, cfg.AssetDir).Mount(r)
 		racevs.NewHandler(racevs.NewStore(cfg.DB), raceSvc).Mount(r)
+
+		volStore := volunteer.NewStore(cfg.DB)
+		volunteer.NewHandler(volStore, eventStore).Mount(r)
+		car.NewHandler(car.NewStore(cfg.DB)).Mount(r)
+		csv.NewHandler(csv.NewSessionStore(cfg.DB), volStore, eventStore).Mount(r)
 	}
 	if cfg.TileDir != "" {
 		NewTileService(cfg.TileDir, cfg.TileBaseURL).Mount(r)

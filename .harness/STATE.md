@@ -3,7 +3,7 @@
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
 **Last updated:** 2026-05-16
-**Current milestone:** none in progress. M00–M02 completed; next to start: **[03-volunteers-cars-csv](../docs/milestones/03-volunteers-cars-csv.md)**.
+**Current milestone:** **[03-volunteers-cars-csv](../docs/milestones/03-volunteers-cars-csv.md)** — in progress.
 
 ## Status legend
 
@@ -19,7 +19,7 @@
 | 00 | 00-scaffolding                | 🟢 completed   | All five CI checks green on PR #1. |
 | 01 | 01-event-vs-map               | 🟢 completed   | All M01 flows covered by Playwright e2e; offline-tiles render needs a real .pmtiles in prod. |
 | 02 | 02-races-gpx                  | 🟢 completed   | All M02 flows covered by Playwright e2e (wizard, VS, race, polyline color). |
-| 03 | 03-volunteers-cars-csv        | ⚪ not_started | |
+| 03 | 03-volunteers-cars-csv        | 🟢 completed   | All acceptance criteria pass; harness + Playwright e2e green. |
 | 04 | 04-missions-assignments       | ⚪ not_started | Includes VS-delete cascade-confirm extension. |
 | 05 | 05-constraints                | ⚪ not_started | Response-shape change retrofits M01–M04 endpoints. |
 | 06 | 06-trips-travel-matrix        | ⚪ not_started | |
@@ -60,7 +60,14 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 - [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (8 Go packages, 7 Vitest files / 24 tests, 3 Playwright specs all pass)
 
 ### 03-volunteers-cars-csv
-_Not yet started._
+
+- [x] Form-create a volunteer with all fields; persists and re-renders correctly. (e2e/volunteers.spec.ts; VolunteerForm RHF+Zod)
+- [x] Archive a volunteer; they disappear from the default list view, return with "show archived". (e2e/volunteers.spec.ts toggles archived filter)
+- [x] Form-create a car; default driver dropdown filters to `can_drive` volunteers. (e2e/volunteers.spec.ts asserts non-driver excluded)
+- [x] Import a CSV with 50 rows including 5 duplicates by name; preview shows correct new/update/ambiguous counts. (Go handler test + Playwright e2e)
+- [x] Resolve the ambiguities; commit; counts match what was promised. (Go handler test `TestCSV_ResolveAmbiguous`)
+- [x] Export to CSV → re-import the same file → 0 new, 50 updates, 0 ambiguous. (Go test `TestCSV_ExportThenReImport_ZeroNew` + `TestCommit_RoundtripExportImport`)
+- [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (harness pass; 6 Playwright tests pass)
 
 ### 04-missions-assignments
 _Not yet started._
