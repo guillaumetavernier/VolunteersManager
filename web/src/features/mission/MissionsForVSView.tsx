@@ -17,12 +17,14 @@ import { MissionForm } from "./MissionForm";
 
 interface Props {
   vs: VS;
-  onClose: () => void;
 }
 
-export function MissionsPanel({ vs, onClose }: Props) {
+export function MissionsForVSView({ vs }: Props) {
   const ev = useEvent();
-  const totalDays = useMemo(() => dayCount(ev.data?.start_date, ev.data?.end_date), [ev.data]);
+  const totalDays = useMemo(
+    () => dayCount(ev.data?.start_date, ev.data?.end_date),
+    [ev.data],
+  );
   const [day, setDay] = useState(1);
   const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState("");
@@ -30,13 +32,17 @@ export function MissionsPanel({ vs, onClose }: Props) {
   const vols = useVolunteers("false");
   const create = useCreateAssignment();
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+  );
 
   const filteredVols = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = vols.data ?? [];
     if (!q) return list;
-    return list.filter((v) => `${v.first_name} ${v.last_name}`.toLowerCase().includes(q));
+    return list.filter((v) =>
+      `${v.first_name} ${v.last_name}`.toLowerCase().includes(q),
+    );
   }, [vols.data, query]);
 
   async function onDragEnd(e: DragEndEvent) {
@@ -62,20 +68,11 @@ export function MissionsPanel({ vs, onClose }: Props) {
 
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-      <aside
-        className="fixed right-0 top-0 z-20 flex h-full w-[min(40rem,100vw)] flex-col gap-3 overflow-y-auto border-l border-slate-200 bg-white p-4 shadow-xl"
+      <div
+        className="grid gap-3 p-3"
         aria-label={`Missions pour ${vs.name}`}
         data-missions-panel
       >
-        <header className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">{vs.name}</h2>
-            <p className="text-xs text-slate-500">Missions par jour</p>
-          </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-900" aria-label="Fermer">
-            ×
-          </button>
-        </header>
         <nav className="flex flex-wrap gap-1" role="tablist" aria-label="Jours">
           {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => (
             <button
@@ -85,15 +82,17 @@ export function MissionsPanel({ vs, onClose }: Props) {
               data-day-tab={d}
               onClick={() => setDay(d)}
               className={`rounded-md px-3 py-1 text-xs ${
-                d === day ? "bg-primary text-primary-foreground" : "bg-slate-100 text-slate-700"
+                d === day
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-slate-100 text-slate-700"
               }`}
             >
               J{d}
             </button>
           ))}
         </nav>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_240px]">
-          <div className="grid min-w-0 gap-2">
+        <div className="grid gap-3">
+          <section className="grid min-w-0 gap-2">
             {(missions.data ?? []).map((m) => (
               <MissionCard key={m.id} mission={m} />
             ))}
@@ -116,8 +115,11 @@ export function MissionsPanel({ vs, onClose }: Props) {
                 onCancel={() => setAdding(false)}
               />
             )}
-          </div>
-          <div className="grid h-fit min-w-0 gap-2 rounded-md border border-slate-200 p-2" data-volunteer-pool>
+          </section>
+          <section
+            className="grid h-fit min-w-0 gap-2 rounded-md border border-slate-200 p-2"
+            data-volunteer-pool
+          >
             <h3 className="text-xs font-semibold uppercase text-slate-500">Bénévoles</h3>
             <Input
               className="w-full"
@@ -126,14 +128,14 @@ export function MissionsPanel({ vs, onClose }: Props) {
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Rechercher un bénévole"
             />
-            <div className="grid max-h-[60vh] gap-1 overflow-y-auto">
+            <div className="grid max-h-[40vh] gap-1 overflow-y-auto">
               {filteredVols.map((v) => (
                 <VolunteerDragItem key={v.id} volunteer={v} />
               ))}
             </div>
-          </div>
+          </section>
         </div>
-      </aside>
+      </div>
     </DndContext>
   );
 }

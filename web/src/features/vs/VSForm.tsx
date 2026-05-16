@@ -37,14 +37,18 @@ export function makeDraft(v?: VS | null, fallback?: { lat: number; lon: number }
 
 interface Props {
   draft: DraftVS;
-  onClose: () => void;
-  onOpenMissions?: (v: VS) => void;
+  onSaved?: (v: VS) => void;
+  onDeleted?: () => void;
+  onCancel?: () => void;
 }
 
-export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
+export function VSForm({ draft, onSaved, onDeleted, onCancel }: Props) {
   const [form, setForm] = useState<DraftVS>(draft);
   const [error, setError] = useState<string | null>(null);
-  const [pendingDeps, setPendingDeps] = useState<{ missions: number; assignments: number } | null>(null);
+  const [pendingDeps, setPendingDeps] = useState<{
+    missions: number;
+    assignments: number;
+  } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Re-sync when the parent swaps to a different VS without unmounting.
@@ -61,8 +65,9 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
     e.preventDefault();
     setError(null);
     try {
+      let result: VS;
       if (isNew) {
-        const created = await create.mutateAsync({
+        result = await create.mutateAsync({
           name: form.name,
           lat: form.lat,
           lon: form.lon,
@@ -70,10 +75,10 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
           what3words: form.what3words || null,
         });
         if (fileRef.current?.files?.[0]) {
-          await upload.mutateAsync({ id: created.id, file: fileRef.current.files[0] });
+          await upload.mutateAsync({ id: result.id, file: fileRef.current.files[0] });
         }
       } else {
-        await patch.mutateAsync({
+        result = await patch.mutateAsync({
           id: form.id!,
           patch: {
             name: form.name,
@@ -87,7 +92,7 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
           await upload.mutateAsync({ id: form.id!, file: fileRef.current.files[0] });
         }
       }
-      onClose();
+      onSaved?.(result);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -98,10 +103,12 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
     try {
       await del.mutateAsync({ id: form.id, force });
       setPendingDeps(null);
-      onClose();
+      onDeleted?.();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        const body = err.body as { dependents?: { missions: number; assignments: number } } | null;
+        const body = err.body as {
+          dependents?: { missions: number; assignments: number };
+        } | null;
         if (body?.dependents) {
           setPendingDeps(body.dependents);
           return;
@@ -118,38 +125,12 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
   }
 
   return (
-    <aside
-      className="fixed right-0 top-0 z-20 flex h-full w-96 flex-col gap-4 overflow-y-auto border-l border-slate-200 bg-white p-6 shadow-lg"
+    <div
+      className="grid gap-4 p-4"
       aria-label={isNew ? "Créer un PB" : `Modifier le PB ${form.name}`}
+      data-vs-form
+      data-vs-form-mode={isNew ? "create" : "edit"}
     >
-      <header className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{isNew ? "Nouveau point bénévole" : form.name}</h2>
-        <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Fermer">
-          ×
-        </button>
-      </header>
-      {!isNew && onOpenMissions && (
-        <button
-          type="button"
-          onClick={() =>
-            onOpenMissions({
-              id: form.id!,
-              name: form.name,
-              lat: form.lat,
-              lon: form.lon,
-              notes: form.notes || null,
-              photo_path: form.photo_path,
-              what3words: form.what3words || null,
-              created_at: "",
-              updated_at: "",
-            })
-          }
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50"
-          data-action="open-missions"
-        >
-          Missions à ce PB
-        </button>
-      )}
       <form className="grid gap-3" onSubmit={onSubmit}>
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Nom</span>
@@ -196,7 +177,13 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
         </label>
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Photo</span>
-          <input ref={fileRef} aria-label="Photo" className="text-sm" type="file" accept="image/jpeg,image/png" />
+          <input
+            ref={fileRef}
+            aria-label="Photo"
+            className="text-sm"
+            type="file"
+            accept="image/jpeg,image/png"
+          />
         </label>
         {form.photo_path && (
           <img
@@ -210,7 +197,12 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
             {error}
           </p>
         )}
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          {onCancel && (
+            <Button type="button" variant="link" size="sm" onClick={onCancel}>
+              Annuler
+            </Button>
+          )}
           {!isNew && (
             <Button
               type="button"
@@ -221,10 +213,7 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
               Supprimer
             </Button>
           )}
-          <Button
-            type="submit"
-            disabled={create.isPending || patch.isPending}
-          >
+          <Button type="submit" disabled={create.isPending || patch.isPending}>
             {isNew ? "Créer" : "Enregistrer"}
           </Button>
         </div>
@@ -239,15 +228,13 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
           <div className="grid w-full max-w-md gap-3 rounded-md bg-white p-4 shadow-xl">
             <h3 className="text-lg font-semibold">Supprimer ce PB ?</h3>
             <p className="text-sm text-slate-700">
-              Ce PB a {pendingDeps.missions} mission{pendingDeps.missions === 1 ? "" : "s"} et
-              {" "}{pendingDeps.assignments} affectation{pendingDeps.assignments === 1 ? "" : "s"}.
-              Tout sera supprimé en cascade.
+              Ce PB a {pendingDeps.missions} mission
+              {pendingDeps.missions === 1 ? "" : "s"} et{" "}
+              {pendingDeps.assignments} affectation
+              {pendingDeps.assignments === 1 ? "" : "s"}. Tout sera supprimé en cascade.
             </p>
             <div className="flex items-center justify-end gap-3">
-              <Button
-                variant="link"
-                onClick={() => setPendingDeps(null)}
-              >
+              <Button variant="link" onClick={() => setPendingDeps(null)}>
                 Annuler
               </Button>
               <Button
@@ -261,6 +248,6 @@ export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
           </div>
         </div>
       )}
-    </aside>
+    </div>
   );
 }
