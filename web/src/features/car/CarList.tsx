@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { navigate } from "@/lib/router";
 import { useVolunteers } from "@/features/volunteer/hooks";
 import { useCars, useCreateCar, useDeleteCar } from "./hooks";
 
@@ -37,10 +36,6 @@ export function CarList() {
     <main className="mx-auto max-w-3xl p-6">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Véhicules</h1>
-        <nav className="flex gap-3 text-sm text-slate-600">
-          <button onClick={() => navigate("/volunteers")} className="underline">Bénévoles</button>
-          <button onClick={() => navigate("/")} className="underline">Carte</button>
-        </nav>
       </header>
       <form onSubmit={onCreate} className="mb-6 grid grid-cols-[2fr_80px_1fr_auto] items-end gap-3">
         <label className="grid gap-1 text-sm">

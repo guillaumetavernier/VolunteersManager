@@ -3,11 +3,20 @@ import { useState } from "react";
 import { navigate } from "@/lib/router";
 import { useCreateRace, useDeleteRace, useRaces } from "./hooks";
 
-export function RaceList() {
+interface RaceListProps {
+  onSelect?: (id: number) => void;
+}
+
+export function RaceList({ onSelect }: RaceListProps = {}) {
   const races = useRaces();
   const create = useCreateRace();
   const del = useDeleteRace();
   const [name, setName] = useState("");
+
+  function goToRace(id: number) {
+    if (onSelect) onSelect(id);
+    else navigate(`/races/${id}`);
+  }
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -15,7 +24,7 @@ export function RaceList() {
     try {
       const r = await create.mutateAsync({ name: name.trim() });
       setName("");
-      navigate(`/races/${r.id}`);
+      goToRace(r.id);
     } catch {
       // Surfaced by mutation error below.
     }
@@ -25,17 +34,6 @@ export function RaceList() {
     <main className="mx-auto max-w-3xl p-6">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Races</h1>
-        <nav className="flex gap-3 text-sm text-slate-600">
-          <button onClick={() => navigate("/volunteers")} className="underline">
-            Bénévoles
-          </button>
-          <button onClick={() => navigate("/cars")} className="underline">
-            Véhicules
-          </button>
-          <button onClick={() => navigate("/")} className="underline">
-            Carte
-          </button>
-        </nav>
       </header>
       <form onSubmit={onCreate} className="mb-6 flex gap-2">
         <input
@@ -61,7 +59,7 @@ export function RaceList() {
         {races.data?.map((r) => (
           <li key={r.id} className="flex items-center justify-between py-3">
             <button
-              onClick={() => navigate(`/races/${r.id}`)}
+              onClick={() => goToRace(r.id)}
               className="flex items-center gap-3 text-left"
             >
               <span

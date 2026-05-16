@@ -19,6 +19,8 @@ import { useVSList } from "@/features/vs/hooks";
 import type { VS } from "@/features/vs/api";
 
 import type { Race, RaceVSEntry } from "./api";
+
+const RACES_PATH = "/races";
 import {
   useDeleteRaceGPX,
   useOverrideRaceVSTimes,
@@ -33,34 +35,43 @@ import {
 
 interface Props {
   raceID: number;
+  onBack?: () => void;
 }
 
-export function RaceDetail({ raceID }: Props) {
+export function RaceDetail({ raceID, onBack }: Props) {
   const race = useRace(raceID);
   if (race.isLoading) return <main className="p-6">Loading…</main>;
   if (race.error)
     return (
       <main className="p-6 text-sm text-red-700">
         Race not found.{" "}
-        <button className="underline" onClick={() => navigate("/races")}>
+        <button className="underline" onClick={() => (onBack ? onBack() : navigate(RACES_PATH))}>
           Back to list
         </button>
       </main>
     );
   if (!race.data) return null;
-  return <Inner race={race.data} raceID={raceID} />;
+  return <Inner race={race.data} raceID={raceID} onBack={onBack} />;
 }
 
-function Inner({ race, raceID }: { race: Race; raceID: number }) {
+function Inner({ race, raceID, onBack }: { race: Race; raceID: number; onBack?: () => void }) {
   return (
     <main className="mx-auto max-w-4xl p-6">
       <header className="mb-6 flex items-center justify-between">
-        <button onClick={() => navigate("/races")} className="text-sm text-slate-600 underline">
-          ← All races
-        </button>
-        <button onClick={() => navigate("/")} className="text-sm text-slate-600 underline">
-          Map
-        </button>
+        {onBack ? (
+          <button onClick={onBack} className="text-sm text-slate-600 underline">
+            ← Retour
+          </button>
+        ) : (
+          <>
+            <button onClick={() => navigate(RACES_PATH)} className="text-sm text-slate-600 underline">
+              ← All races
+            </button>
+            <button onClick={() => navigate("/")} className="text-sm text-slate-600 underline">
+              Map
+            </button>
+          </>
+        )}
       </header>
       <RaceForm race={race} />
       <GPXSection raceID={raceID} />

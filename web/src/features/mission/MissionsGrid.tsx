@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 
-import { navigate } from "@/lib/router";
 import { useEvent } from "@/features/event/hooks";
 import { useVSList } from "@/features/vs/hooks";
 
@@ -34,10 +33,6 @@ export function MissionsGrid() {
     <main className="mx-auto max-w-[1500px] p-4">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Grille des missions</h1>
-        <nav className="flex gap-3 text-sm text-slate-600">
-          <button onClick={() => navigate("/")} className="underline">Carte</button>
-          <button onClick={() => navigate("/volunteers")} className="underline">Bénévoles</button>
-        </nav>
       </header>
       <nav className="mb-4 flex gap-2" role="tablist" aria-label="Jours">
         {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => (

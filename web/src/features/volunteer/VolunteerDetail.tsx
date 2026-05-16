@@ -8,7 +8,9 @@ import { useVSList } from "@/features/vs/hooks";
 import { useVolunteer } from "./hooks";
 import { VolunteerForm } from "./VolunteerForm";
 
-export function VolunteerDetail({ id }: { id: number }) {
+const VOLS_PATH = "/volunteers";
+
+export function VolunteerDetail({ id, onBack }: { id: number; onBack?: () => void }) {
   const q = useVolunteer(id);
   const assignments = useAssignmentsForVolunteer(id);
   const missions = useMissions();
@@ -19,7 +21,7 @@ export function VolunteerDetail({ id }: { id: number }) {
     return (
       <main className="p-6 text-sm text-red-700">
         Introuvable.{" "}
-        <button className="underline" onClick={() => navigate("/volunteers")}>
+        <button className="underline" onClick={() => (onBack ? onBack() : navigate(VOLS_PATH))}>
           Retour à la liste
         </button>
       </main>
@@ -37,7 +39,10 @@ export function VolunteerDetail({ id }: { id: number }) {
   return (
     <main className="mx-auto max-w-3xl p-6">
       <header className="mb-4 flex items-center justify-between">
-        <button onClick={() => navigate("/volunteers")} className="text-sm text-slate-600 underline">
+        <button
+          onClick={() => (onBack ? onBack() : navigate(VOLS_PATH))}
+          className="text-sm text-slate-600 underline"
+        >
           ← Tous les bénévoles
         </button>
       </header>
@@ -64,7 +69,7 @@ export function VolunteerDetail({ id }: { id: number }) {
           })}
         </ul>
       </section>
-      <VolunteerForm existing={q.data} onSaved={() => navigate("/volunteers")} />
+      <VolunteerForm existing={q.data} onSaved={() => navigate(VOLS_PATH)} />
     </main>
   );
 }

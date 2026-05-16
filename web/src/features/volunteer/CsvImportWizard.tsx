@@ -12,6 +12,8 @@ import {
   type UploadResponse,
 } from "./csvApi";
 
+const VOLS_PATH = "/volunteers";
+
 type Step = "upload" | "map" | "preview" | "commit" | "done";
 
 export function CsvImportWizard() {
@@ -91,7 +93,7 @@ export function CsvImportWizard() {
     <main className="mx-auto max-w-4xl p-6">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Import CSV bénévoles</h1>
-        <button onClick={() => navigate("/volunteers")} className="text-sm text-slate-600 underline">
+        <button onClick={() => navigate(VOLS_PATH)} className="text-sm text-slate-600 underline">
           Annuler
         </button>
       </header>
@@ -260,7 +262,7 @@ export function CsvImportWizard() {
         <section className="grid gap-2 rounded-md border border-green-200 bg-green-50 p-4 text-sm">
           <p>Import terminé&nbsp;: {committed.inserted} créés, {committed.updated} mis à jour, {committed.skipped} ignorés.</p>
           <div>
-            <button onClick={() => navigate("/volunteers")} className="text-sm text-slate-700 underline">
+            <button onClick={() => navigate(VOLS_PATH)} className="text-sm text-slate-700 underline">
               Retour aux bénévoles
             </button>
           </div>

@@ -5,7 +5,11 @@ import { useArchiveVolunteer, useVolunteers } from "./hooks";
 import { VolunteerForm } from "./VolunteerForm";
 import type { ArchivedFilter, Volunteer } from "./api";
 
-export function VolunteerList() {
+interface VolunteerListProps {
+  onSelect?: (id: number) => void;
+}
+
+export function VolunteerList({ onSelect }: VolunteerListProps = {}) {
   const [showArchived, setShowArchived] = useState(false);
   const filter: ArchivedFilter = showArchived ? "all" : "false";
   const query = useVolunteers(filter);
@@ -42,12 +46,6 @@ export function VolunteerList() {
           <a className="underline" href="/api/volunteers/export.csv">
             Exporter
           </a>
-          <button onClick={() => navigate("/cars")} className="underline">
-            Véhicules
-          </button>
-          <button onClick={() => navigate("/")} className="underline">
-            Carte
-          </button>
         </nav>
       </header>
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -92,17 +90,34 @@ export function VolunteerList() {
       )}
       <ul className="divide-y divide-slate-200" data-testid="volunteer-list">
         {filtered.map((v) => (
-          <Row key={v.id} v={v} onArchive={() => archive.mutate(v.id)} />
+          <Row
+            key={v.id}
+            v={v}
+            onArchive={() => archive.mutate(v.id)}
+            onSelect={onSelect}
+          />
         ))}
       </ul>
     </main>
   );
 }
 
-function Row({ v, onArchive }: { v: Volunteer; onArchive: () => void }) {
+function Row({
+  v,
+  onArchive,
+  onSelect,
+}: {
+  v: Volunteer;
+  onArchive: () => void;
+  onSelect?: (id: number) => void;
+}) {
+  const open = () => {
+    if (onSelect) onSelect(v.id);
+    else navigate(`/volunteers/${v.id}`);
+  };
   return (
     <li className="flex items-center justify-between gap-3 py-3" data-volunteer-id={v.id}>
-      <button onClick={() => navigate(`/volunteers/${v.id}`)} className="flex flex-col items-start text-left">
+      <button onClick={open} className="flex flex-col items-start text-left">
         <span className="font-medium">
           {v.first_name} {v.last_name}{v.archived ? " (archivé)" : ""}
         </span>
