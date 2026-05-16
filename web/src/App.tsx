@@ -14,6 +14,7 @@ import { RaceList } from "@/features/race/RaceList";
 import { VolunteerList } from "@/features/volunteer/VolunteerList";
 import { VolunteerDetail } from "@/features/volunteer/VolunteerDetail";
 import { CsvImportWizard } from "@/features/volunteer/CsvImportWizard";
+import { CarDetail } from "@/features/car/CarDetail";
 import { CarList } from "@/features/car/CarList";
 import { MissionsGrid } from "@/features/mission/MissionsGrid";
 import { Button } from "@/components/ui/button";
@@ -122,6 +123,13 @@ function Routes({ region }: { region: string }) {
   }
   if (matchRoute("/volunteers", route.path)) {
     return <VolunteerList />;
+  }
+  const carMatch = matchRoute("/cars/:id", route.path);
+  if (carMatch && carMatch.id) {
+    const id = Number(carMatch.id);
+    if (Number.isFinite(id) && id > 0) {
+      return <CarDetail id={id} />;
+    }
   }
   if (matchRoute("/cars", route.path)) {
     return <CarList />;

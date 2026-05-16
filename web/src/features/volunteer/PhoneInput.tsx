@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { Input } from "@/components/ui/input";
+
 // Curated subset of countries common at French ultra-trail events. Order in the
 // dropdown is preserved.
 const COUNTRIES: Array<{ code: string; dial: string; label: string }> = [
@@ -60,9 +62,9 @@ export function PhoneInput({ value, onChange, defaultCountry = "FR", required, i
           </option>
         ))}
       </select>
-      <input
+      <Input
         id={id}
-        className="input flex-1"
+        className="flex-1"
         type="tel"
         inputMode="tel"
         required={required}

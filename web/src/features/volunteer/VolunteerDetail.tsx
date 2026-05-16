@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { navigate } from "@/lib/router";
 import { useAssignmentsForVolunteer } from "@/features/assignment/hooks";
 import type { Assignment } from "@/features/assignment/api";
@@ -20,9 +21,9 @@ export function VolunteerDetail({ id, onBack }: { id: number; onBack?: () => voi
       <main className="p-6 text-sm text-red-700">
         Introuvable.{" "}
         {onBack && (
-          <button className="underline" onClick={onBack}>
+          <Button variant="link" size="sm" onClick={onBack}>
             Retour
-          </button>
+          </Button>
         )}
       </main>
     );

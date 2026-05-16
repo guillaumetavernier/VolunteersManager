@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { navigate } from "@/lib/router";
 import { useArchiveVolunteer, useVolunteers } from "./hooks";
 import { VolunteerForm } from "./VolunteerForm";
@@ -50,15 +51,15 @@ export function VolunteerList({ onSelect }: VolunteerListProps = {}) {
         </nav>
       </header>
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <input
-          className="input flex-1"
+        <Input
+          className="flex-1"
           placeholder="Rechercher (nom, prénom, email)"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           aria-label="Rechercher"
         />
-        <input
-          className="input w-48"
+        <Input
+          className="w-48"
           placeholder="Filtrer par rôle"
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
@@ -72,12 +73,9 @@ export function VolunteerList({ onSelect }: VolunteerListProps = {}) {
           />
           Afficher les archivés
         </label>
-        <button
-          onClick={() => setCreating(true)}
-          className="rounded-md bg-slate-900 px-3 py-2 text-sm text-white"
-        >
+        <Button size="sm" onClick={() => setCreating(true)}>
           Nouveau bénévole
-        </button>
+        </Button>
       </div>
       {creating && (
         <section className="mb-6 rounded-md border border-slate-200 p-4">
@@ -130,9 +128,9 @@ function Row({
         </span>
       </button>
       {!v.archived && (
-        <button onClick={onArchive} className="text-sm text-red-700 hover:underline">
+        <Button variant="link" size="sm" onClick={onArchive} className="text-destructive">
           Archiver
-        </button>
+        </Button>
       )}
     </li>
   );

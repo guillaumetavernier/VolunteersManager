@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { navigate } from "@/lib/router";
 import {
   csvCommit,
@@ -91,9 +92,9 @@ export function CsvImportWizard() {
     <main className="mx-auto max-w-4xl p-6">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Import CSV bénévoles</h1>
-        <button onClick={() => navigate("/volunteers")} className="text-sm text-slate-600 underline">
+        <Button variant="link" size="sm" onClick={() => navigate("/volunteers")}>
           Annuler
-        </button>
+        </Button>
       </header>
       {error && <p role="alert" className="mb-3 text-sm text-red-600">{error}</p>}
 
@@ -139,7 +140,7 @@ export function CsvImportWizard() {
                   </td>
                   <td className="py-2">
                     <select
-                      className="input"
+                      className="input w-full"
                       value={mapping[String(i)] ?? ""}
                       onChange={(e) =>
                         setMapping((m) => ({ ...m, [String(i)]: e.target.value }))
@@ -162,7 +163,7 @@ export function CsvImportWizard() {
             <label className="text-sm">
               Clé de rapprochement&nbsp;
               <select
-                className="input"
+                className="input w-full"
                 value={upsertKey}
                 onChange={(e) => setUpsertKey(e.target.value as "name" | "email")}
               >
@@ -170,13 +171,9 @@ export function CsvImportWizard() {
                 <option value="email">Email</option>
               </select>
             </label>
-            <button
-              onClick={submitMapping}
-              disabled={busy}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-50"
-            >
+            <Button size="sm" onClick={submitMapping} disabled={busy}>
               Calculer l'aperçu
-            </button>
+            </Button>
           </div>
         </section>
       )}
@@ -212,46 +209,49 @@ export function CsvImportWizard() {
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                     <span>Choix&nbsp;:</span>
                     {d.candidates?.map((cid) => (
-                      <button
+                      <Button
                         key={cid}
+                        variant="secondary"
+                        size="sm"
                         onClick={() => resolveRow(d.row.index, `update:${cid}`)}
-                        className="rounded bg-slate-200 px-2 py-1"
                         data-resolve-update={cid}
                       >
                         Mettre à jour #{cid}
-                      </button>
+                      </Button>
                     ))}
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => resolveRow(d.row.index, "new")}
-                      className="rounded bg-slate-200 px-2 py-1"
                       data-resolve="new"
                     >
                       Créer nouveau
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => resolveRow(d.row.index, "skip")}
-                      className="rounded bg-slate-200 px-2 py-1"
                       data-resolve="skip"
                     >
                       Ignorer
-                    </button>
+                    </Button>
                   </div>
                 )}
               </li>
             ))}
           </ul>
           <div className="flex items-center gap-3">
-            <button
+            <Button
+              size="sm"
               onClick={commit}
               disabled={busy || counts.ambiguous > 0}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-50"
               data-action="commit"
             >
               Confirmer et importer
-            </button>
-            <button onClick={() => setStep("map")} className="text-sm text-slate-600 underline">
+            </Button>
+            <Button variant="link" size="sm" onClick={() => setStep("map")}>
               Modifier le mapping
-            </button>
+            </Button>
           </div>
         </section>
       )}
@@ -260,9 +260,9 @@ export function CsvImportWizard() {
         <section className="grid gap-2 rounded-md border border-green-200 bg-green-50 p-4 text-sm">
           <p>Import terminé&nbsp;: {committed.inserted} créés, {committed.updated} mis à jour, {committed.skipped} ignorés.</p>
           <div>
-            <button onClick={() => navigate("/volunteers")} className="text-sm text-slate-700 underline">
+            <Button variant="link" size="sm" onClick={() => navigate("/volunteers")}>
               Retour aux bénévoles
-            </button>
+            </Button>
           </div>
         </section>
       )}
