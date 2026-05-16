@@ -25,7 +25,6 @@ export type HeaderPage =
   | "vehicules"
   | "vehicule-detail"
   | "roadbooks"
-  | "roadbooks-parametres"
   | "parametres";
 
 const TOOL_KEY = "vm:last-tool";
@@ -65,7 +64,6 @@ export function classify(route: Route): AppRoute {
   const vehDetail = matchRoute("/ressources/vehicules/:id", path);
   if (vehDetail?.id) return { kind: "header", page: "vehicule-detail", param: vehDetail.id };
   if (path === "/roadbooks") return { kind: "header", page: "roadbooks" };
-  if (path === "/roadbooks/parametres") return { kind: "header", page: "roadbooks-parametres" };
   if (path === "/parametres") return { kind: "header", page: "parametres" };
 
   // Map / tool routes.

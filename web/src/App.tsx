@@ -11,7 +11,6 @@ import {
 import { EventInitWizard } from "@/features/event/EventInitWizard";
 import { RessourcesPage } from "@/features/ressources/RessourcesPage";
 import { GenerateRoadbooksPage } from "@/features/roadbook/GenerateRoadbooksPage";
-import { RoadbookSettingsPage } from "@/features/roadbook/RoadbookSettingsPage";
 import { SettingsPage } from "@/features/settings/SettingsPage";
 import { IssuesPanel } from "@/features/warnings/IssuesPanel";
 import { installWarningsBridge } from "@/lib/mutationResponse";
@@ -80,8 +79,6 @@ function Body({ route, region }: { route: AppRoute; region: string }) {
         );
       case "roadbooks":
         return <GenerateRoadbooksPage />;
-      case "roadbooks-parametres":
-        return <RoadbookSettingsPage />;
       case "parametres":
         return <SettingsPage />;
     }
