@@ -218,7 +218,7 @@ func (h *Handler) uploadGPX(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, errorPayload{Code: "missing_file", Message: err.Error()})
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	buf, err := io.ReadAll(io.LimitReader(file, maxGPXBytes+1))
 	if err != nil {
@@ -365,6 +365,6 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(body); err != nil {
-		fmt.Fprintf(w, `{"code":"internal"}`)
+		_, _ = fmt.Fprintf(w, `{"code":"internal"}`)
 	}
 }

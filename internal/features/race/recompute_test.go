@@ -56,7 +56,9 @@ func TestRecompute_AutoTimesFromPaces(t *testing.T) {
 	_, _ = part.Write([]byte(`<?xml version="1.0"?><gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1"><trk><trkseg>
 <trkpt lat="0" lon="0"/><trkpt lat="0" lon="0.001"/><trkpt lat="0" lon="0.002"/><trkpt lat="0" lon="0.003"/>
 </trkseg></trk></gpx>`))
-	mw.Close()
+	if err := mw.Close(); err != nil {
+		t.Fatalf("mw.Close: %v", err)
+	}
 	req := httptest.NewRequest(http.MethodPost, "/api/races/"+strconv.FormatInt(ra.ID, 10)+"/gpx", &buf)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	rec = httptest.NewRecorder()

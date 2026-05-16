@@ -18,7 +18,7 @@ func (s *Store) List(raceID int64) ([]Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []Entry
 	for rows.Next() {
 		e, err := scanEntry(rows)
@@ -53,12 +53,14 @@ func (s *Store) Replace(raceID int64, items []PutOrderItem) error {
 		var vsID int64
 		var mf, ml *string
 		if err := rows.Scan(&vsID, &mf, &ml); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return err
 		}
 		saved[vsID] = savedManualTimes{manualFirstIn: mf, manualLastIn: ml}
 	}
-	rows.Close()
+	if err := rows.Close(); err != nil {
+		return err
+	}
 	if err := rows.Err(); err != nil {
 		return err
 	}

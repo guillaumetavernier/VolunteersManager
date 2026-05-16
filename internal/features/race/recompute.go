@@ -82,7 +82,7 @@ func (s *Service) RecomputeForVS(vsID int64) error {
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var ids []int64
 	for rows.Next() {
 		var id int64
@@ -116,7 +116,7 @@ func (s *Service) loadEntries(raceID int64) ([]entryRow, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []entryRow
 	for rows.Next() {
 		var e entryRow
@@ -133,7 +133,7 @@ func (s *Service) loadTrack(raceID int64) (gpx.Track, error) {
 	if err != nil {
 		return gpx.Track{}, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var tracks []gpx.Track
 	for rows.Next() {
 		var pointsJSON string

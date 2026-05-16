@@ -71,7 +71,7 @@ func TestTiles_DownloadFlow(t *testing.T) {
 		w.Header().Set("Content-Length", "16")
 		_, _ = w.Write([]byte("PMTILES_FAKE_BODY"[:16]))
 	}))
-	defer upstream.Close()
+	defer func() { upstream.Close() }()
 
 	dir := t.TempDir()
 	svc := NewTileService(dir, upstream.URL)

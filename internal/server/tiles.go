@@ -90,7 +90,7 @@ func (s *TileService) serve(w http.ResponseWriter, r *http.Request) {
 		writeTileError(w, http.StatusInternalServerError, "internal")
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	stat, err := f.Stat()
 	if err != nil {
 		writeTileError(w, http.StatusInternalServerError, "internal")
@@ -188,7 +188,7 @@ func (s *TileService) run(region, url string) {
 		finalize(StateError, err.Error())
 		return
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		finalize(StateError, fmt.Sprintf("upstream %d", resp.StatusCode))
 		return

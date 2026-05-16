@@ -118,7 +118,9 @@ func uploadGPX(t *testing.T, r chi.Router, raceID int64, body string) int {
 	if _, err := part.Write([]byte(body)); err != nil {
 		t.Fatalf("write part: %v", err)
 	}
-	mw.Close()
+	if err := mw.Close(); err != nil {
+		t.Fatalf("mw.Close: %v", err)
+	}
 	req := httptest.NewRequest(http.MethodPost, "/api/races/"+strconv.FormatInt(raceID, 10)+"/gpx", &buf)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	rec := httptest.NewRecorder()

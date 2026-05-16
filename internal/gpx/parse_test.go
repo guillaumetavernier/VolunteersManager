@@ -11,7 +11,7 @@ func TestParse_FlattenSegmentsInOrder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open fixture: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	tr, err := Parse(f)
 	if err != nil {
 		t.Fatalf("Parse: %v", err)

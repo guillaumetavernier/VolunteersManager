@@ -23,7 +23,7 @@ func (s *Store) List() ([]VS, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []VS
 	for rows.Next() {
 		v, err := scanRow(rows)

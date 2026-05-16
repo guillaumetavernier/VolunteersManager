@@ -213,7 +213,7 @@ func (h *Handler) uploadPhoto(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, errorPayload{Code: "missing_file", Message: err.Error()})
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	if header.Size > maxPhotoBytes {
 		writeJSON(w, http.StatusRequestEntityTooLarge, errorPayload{Code: "file_too_large"})
 		return
@@ -310,6 +310,6 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(body); err != nil {
 		// last resort
-		fmt.Fprintf(w, `{"code":"internal"}`)
+		_, _ = fmt.Fprintf(w, `{"code":"internal"}`)
 	}
 }

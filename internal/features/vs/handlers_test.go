@@ -138,7 +138,9 @@ func TestHandlers_PhotoUpload(t *testing.T) {
 	if _, err := part.Write(pngBytes); err != nil {
 		t.Fatalf("write part: %v", err)
 	}
-	mw.Close()
+	if err := mw.Close(); err != nil {
+		t.Fatalf("mw.Close: %v", err)
+	}
 
 	req := httptest.NewRequest(http.MethodPost, "/api/vs/"+itoa(v.ID)+"/photo", &buf)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
@@ -166,7 +168,9 @@ func TestHandlers_PhotoUpload_RejectsBadMime(t *testing.T) {
 	mw := multipart.NewWriter(&buf)
 	part, _ := mw.CreateFormFile("photo", "a.txt")
 	_, _ = part.Write([]byte("not an image"))
-	mw.Close()
+	if err := mw.Close(); err != nil {
+		t.Fatalf("mw.Close: %v", err)
+	}
 
 	req := httptest.NewRequest(http.MethodPost, "/api/vs/"+itoa(v.ID)+"/photo", &buf)
 	req.Header.Set("Content-Type", mw.FormDataContentType())

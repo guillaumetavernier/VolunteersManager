@@ -23,7 +23,7 @@ func (s *Store) List() ([]Race, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []Race
 	for rows.Next() {
 		r, err := scanRace(rows)
@@ -127,7 +127,7 @@ func (s *Store) ListGPX(raceID int64) ([]GPXFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []GPXFile
 	for rows.Next() {
 		g, err := scanGPX(rows)
