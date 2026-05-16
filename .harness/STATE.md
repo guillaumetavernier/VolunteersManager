@@ -3,7 +3,7 @@
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
 **Last updated:** 2026-05-16
-**Current milestone:** **[09-archive-polish](../docs/milestones/09-archive-polish.md)** — in progress.
+**Current milestone:** **[10-navigation-rework](../docs/milestones/10-navigation-rework.md)** — completed.
 
 ## Status legend
 
@@ -26,6 +26,7 @@
 | 07 | 07-timeline                   | 🟢 completed   | Canvas timeline + per-frame MapLibre sources; bench 0.009 ms/frame; 12 Playwright tests + 84 Vitest tests green. |
 | 08 | 08-roadbook                   | 🟢 completed   | All acceptance criteria pass; mini-map shipped force-off per locked v1 decision (stub `ErrMiniMapNotImplemented`). |
 | 09 | 09-archive-polish             | 🟢 completed   | All acceptance criteria pass except the deploy-time tag-push check; harness + Playwright e2e green. |
+| 10 | 10-navigation-rework          | 🟢 completed   | Map-is-home toolbar shipped; AppShell + MapWorkspace + four tool sidebars; legacy MapDrawer/PbEditPanel/MissionsPanel removed; 22 Playwright tests + 87 Vitest tests green. |
 
 ## Acceptance criteria — per-milestone checklist
 
@@ -134,6 +135,23 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 - [~] Tag `v0.1.0` triggers the release pipeline; 5 binaries appear in the GitHub Release. (Wired in `.github/workflows/release.yml` with the 5-target matrix; `actionlint` clean. Actual tag push is a deploy-time check, not runnable from inside the agent.)
 - [x] Docker image runs and serves the SPA on port 8080. (`Dockerfile` builds via node→go→distroless; `.github/workflows/docker.yml` publishes to GHCR.)
 - [x] README quickstart walkthrough succeeds end-to-end. (Updated README covers binary download / `make build`, Docker, systemd, nginx/caddy reverse-proxy basic-auth, archive + backup story.)
+
+### 10-navigation-rework
+
+- [x] On `/`, the AppShell shows the two-row header (header + toolbar) and a persistent right sidebar. No "Ouvrir le panneau" button. No floating race-filter box.
+- [x] Toolbar switches between VS / Trajets / Chronologie / Courses; each tool changes both the map-click behavior and the sidebar root.
+- [x] Clicking a VS marker selects it (URL → `/vs/:id`); sidebar shows the VS detail and its missions. No `PbEditPanel` or `MissionsPanel` overlays render.
+- [x] In Trajets tool: trip list ⇄ Besoins workspace toggle works; "Voir matrice" opens `MatrixView` in a modal.
+- [x] In Chronologie tool: day picker + scrubber render in the sidebar; runner / volunteer / car markers animate on the map.
+- [x] In Courses tool: race list → race detail flow renders in the sidebar (GPX upload + VS sequence editor included). Race visibility toggles via the layers icon, not the legacy floating box.
+- [x] Header pages all reachable: `/affectations`, `/ressources/benevoles[/:id|/import]`, `/ressources/vehicules[/:id]`, `/roadbooks[/parametres]`, `/parametres`. Each renders without the toolbar row.
+- [x] `/parametres` has two tabs (Roadbook, Données); the Données tab contains both backup and archive content.
+- [x] ⚠ counter opens a right-anchored slide-over with the IssuesPanel content; row clicks navigate to the right new routes.
+- [x] `web/src/features/map/MapDrawer.tsx`, `web/src/features/vs/PbEditPanel.tsx`, `web/src/features/mission/MissionsPanel.tsx` deleted.
+- [x] `grep -r "map-drawer\|Ouvrir le panneau\|PbEditPanel\|MissionsPanel" web/src` returns no matches.
+- [x] `pnpm tsc -b --noEmit` clean.
+- [x] All Playwright specs green (22 tests in 9 specs); new `e2e/navigation.spec.ts` (7 sub-tests) passes.
+- [x] `./scripts/harness/check.sh` green.
 
 ## Blockers
 
