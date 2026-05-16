@@ -40,8 +40,9 @@ export async function patchVS(id: number, input: VSPatch): Promise<VS> {
   });
 }
 
-export async function deleteVS(id: number): Promise<void> {
-  await apiFetch<null>(`/api/vs/${id}`, { method: "DELETE" });
+export async function deleteVS(id: number, force = false): Promise<void> {
+  const qs = force ? "?force=true" : "";
+  await apiFetch<null>(`/api/vs/${id}${qs}`, { method: "DELETE" });
 }
 
 export async function uploadVSPhoto(id: number, file: File): Promise<VS> {

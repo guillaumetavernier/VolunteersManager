@@ -166,3 +166,33 @@ func TestRace_GPXUploadRejectsGarbage(t *testing.T) {
 		t.Fatalf("status = %d, want 422", code)
 	}
 }
+
+func TestRace_DeleteFiresOnDelete(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "test.db"))
+	if err != nil {
+		t.Fatalf("store.Open: %v", err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+	if err := s.Migrate(); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	r := chi.NewRouter()
+	h := NewHandler(NewStore(s.DB), NewService(s.DB), dir)
+	called := int64(0)
+	h.OnDelete = func(id int64) error {
+		called = id
+		return nil
+	}
+	h.Mount(r)
+
+	ra := createRace(t, r, `{"name":"X"}`)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/api/races/"+strconv.FormatInt(ra.ID, 10), nil))
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("delete status = %d", rec.Code)
+	}
+	if called != ra.ID {
+		t.Fatalf("OnDelete not called for %d (got %d)", ra.ID, called)
+	}
+}

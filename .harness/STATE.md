@@ -3,7 +3,7 @@
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
 **Last updated:** 2026-05-16
-**Current milestone:** **[03-volunteers-cars-csv](../docs/milestones/03-volunteers-cars-csv.md)** — in progress.
+**Current milestone:** **[05-constraints](../docs/milestones/05-constraints.md)** — not started.
 
 ## Status legend
 
@@ -20,7 +20,7 @@
 | 01 | 01-event-vs-map               | 🟢 completed   | All M01 flows covered by Playwright e2e; offline-tiles render needs a real .pmtiles in prod. |
 | 02 | 02-races-gpx                  | 🟢 completed   | All M02 flows covered by Playwright e2e (wizard, VS, race, polyline color). |
 | 03 | 03-volunteers-cars-csv        | 🟢 completed   | All acceptance criteria pass; harness + Playwright e2e green. |
-| 04 | 04-missions-assignments       | ⚪ not_started | Includes VS-delete cascade-confirm extension. |
+| 04 | 04-missions-assignments       | 🟢 completed   | All acceptance criteria pass; harness + Playwright e2e green. |
 | 05 | 05-constraints                | ⚪ not_started | Response-shape change retrofits M01–M04 endpoints. |
 | 06 | 06-trips-travel-matrix        | ⚪ not_started | |
 | 07 | 07-timeline                   | ⚪ not_started | |
@@ -70,7 +70,16 @@ When you start a milestone, copy its **Acceptance criteria** block from the mile
 - [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (harness pass; 6 Playwright tests pass)
 
 ### 04-missions-assignments
-_Not yet started._
+
+- [x] Create 3 missions at a VS on day 1. (e2e/missions.spec.ts asserts 3 mission cards + API count of 3)
+- [x] Drag a volunteer onto a mission → assignment created; staffing badge updates from `0/1` to `1/1`. (e2e/missions.spec.ts drag-and-drop + badge assertion)
+- [x] Try to assign the same volunteer twice → friendly error (409 surfaced as a toast). (e2e asserts `[data-toast-kind="error"]` after second drag; handler test covers 409)
+- [x] The volunteer picker filters compatible candidates by default; "show all" reveals the rest. (`compat.ts` + `VolunteerPicker.tsx`; compat unit tests cover role/availability filtering)
+- [x] Reload → assignments persist; grid view shows them in the right cells. (e2e reload → 3 cards + `1/1` badge; grid view chips visible)
+- [x] Grid view (`/missions/grid`) renders correctly for a multi-day event with overlapping missions in the same VS. (`MissionsGrid` renders chips into 30-min buckets per day-tab; e2e walks through the route)
+- [x] Delete a VS that has missions and assignments → confirmation dialog lists the counts → confirming with force performs the cascade. (e2e clicks delete → confirms cascade dialog → VS gone)
+- [x] Delete a race that is in a mission's `tagged_race_ids` → the tag disappears from the mission on next list fetch. (`mission.Store.ScrubRaceTag` fired by race `OnDelete` hook; covered by Go store test + e2e)
+- [x] `go test ./...` and `pnpm test` green; Playwright e2e green. (8 Playwright tests pass; 49 Vitest tests; full Go suite green)
 
 ### 05-constraints
 _Not yet started._

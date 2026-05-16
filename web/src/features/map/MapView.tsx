@@ -11,6 +11,7 @@ import type { VS } from "@/features/vs/api";
 import { VsEditPanel, makeDraft, type DraftVS } from "@/features/vs/VsEditPanel";
 import { useRaces } from "@/features/race/hooks";
 import { RacePolyline } from "@/features/race/RacePolylines";
+import { MissionsPanel } from "@/features/mission/MissionsPanel";
 
 import { buildMapStyle } from "./style";
 
@@ -28,6 +29,7 @@ export function MapView({ region }: Props) {
   const [mapInstance, setMapInstance] = useState<MLMap | null>(null);
   const [styleReady, setStyleReady] = useState(false);
   const [editing, setEditing] = useState<DraftVS | null>(null);
+  const [missionsVS, setMissionsVS] = useState<VS | null>(null);
   const [tilesMissing, setTilesMissing] = useState(false);
   const [raceVisibility, setRaceVisibility] = useState<Record<number, boolean>>({});
 
@@ -192,7 +194,17 @@ export function MapView({ region }: Props) {
           visible={visibleFor(r.id)}
         />
       ))}
-      {editing && <VsEditPanel draft={editing} onClose={() => setEditing(null)} />}
+      {editing && (
+        <VsEditPanel
+          draft={editing}
+          onClose={() => setEditing(null)}
+          onOpenMissions={(v) => {
+            setEditing(null);
+            setMissionsVS(v);
+          }}
+        />
+      )}
+      {missionsVS && <MissionsPanel vs={missionsVS} onClose={() => setMissionsVS(null)} />}
     </div>
   );
 }

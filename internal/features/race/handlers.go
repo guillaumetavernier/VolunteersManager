@@ -20,10 +20,17 @@ import (
 
 const maxGPXBytes = 20 * 1024 * 1024
 
+// OnDelete is fired after a race row is removed. The server wires it to the
+// mission store's race-tag scrubber. nil is a no-op so the package stays
+// independently testable. The scrub is a tidiness pass — orphan IDs in
+// missions.tagged_race_ids are non-load-bearing.
+type OnDelete func(raceID int64) error
+
 type Handler struct {
 	Store    *Store
 	Service  *Service
 	AssetDir string
+	OnDelete OnDelete
 }
 
 func NewHandler(s *Store, svc *Service, assetDir string) *Handler {
@@ -165,6 +172,9 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
 		return
+	}
+	if h.OnDelete != nil {
+		_ = h.OnDelete(id)
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

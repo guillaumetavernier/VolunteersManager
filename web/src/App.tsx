@@ -13,13 +13,16 @@ import { VolunteerList } from "@/features/volunteer/VolunteerList";
 import { VolunteerDetail } from "@/features/volunteer/VolunteerDetail";
 import { CsvImportWizard } from "@/features/volunteer/CsvImportWizard";
 import { CarList } from "@/features/car/CarList";
+import { MissionsGrid } from "@/features/mission/MissionsGrid";
 import { matchRoute, useRoute } from "@/lib/router";
 import { queryClient } from "@/lib/queryClient";
+import { ToastViewport } from "@/lib/toast";
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppRouter />
+      <ToastViewport />
     </QueryClientProvider>
   );
 }
@@ -70,6 +73,9 @@ function Routes({ region }: { region: string }) {
   if (matchRoute("/cars", route.path)) {
     return <CarList />;
   }
+  if (matchRoute("/missions/grid", route.path)) {
+    return <MissionsGrid />;
+  }
   return <MapShell region={region} />;
 }
 
@@ -87,6 +93,9 @@ function MapShell({ region }: { region: string }) {
         </button>
         <button onClick={() => (window.location.hash = "/cars")} className="underline">
           Véhicules
+        </button>
+        <button onClick={() => (window.location.hash = "/missions/grid")} className="underline">
+          Grille
         </button>
       </nav>
       {status.data?.state === "downloading" && (

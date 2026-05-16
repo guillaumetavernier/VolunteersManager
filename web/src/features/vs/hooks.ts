@@ -52,7 +52,7 @@ export function usePatchVS() {
 export function useDeleteVS() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => deleteVS(id),
+    mutationFn: ({ id, force }: { id: number; force?: boolean }) => deleteVS(id, force ?? false),
     onSuccess: () => qc.invalidateQueries({ queryKey: vsListKey }),
   });
 }

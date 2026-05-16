@@ -182,3 +182,30 @@ func TestHandlers_PhotoUpload_RejectsBadMime(t *testing.T) {
 }
 
 func itoa(i int64) string { return strconv.FormatInt(i, 10) }
+
+func TestHandlers_DeleteWithDependents409AndForce(t *testing.T) {
+	h, r, _ := newTestHandler(t)
+	v := createVS(t, r, `{"name":"A","lat":45,"lon":6}`)
+	h.Dependents = func(id int64) (Dependents, error) {
+		return Dependents{Missions: 3, Assignments: 2}, nil
+	}
+
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/api/vs/"+itoa(v.ID), nil))
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d, want 409", rec.Code)
+	}
+	var ep errorPayload
+	if err := json.NewDecoder(rec.Body).Decode(&ep); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if ep.Code != "has_dependents" || ep.Dependents == nil || ep.Dependents.Missions != 3 || ep.Dependents.Assignments != 2 {
+		t.Fatalf("payload = %+v", ep)
+	}
+
+	rec = httptest.NewRecorder()
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/api/vs/"+itoa(v.ID)+"?force=true", nil))
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("force status = %d, want 204", rec.Code)
+	}
+}

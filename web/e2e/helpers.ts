@@ -21,7 +21,7 @@ export async function resetState(api: APIRequestContext) {
   const vsList = await api.get("/api/vs");
   if (vsList.ok()) {
     const list = await vsList.json();
-    for (const v of list) await api.delete(`/api/vs/${v.id}`);
+    for (const v of list) await api.delete(`/api/vs/${v.id}?force=true`);
   }
 }
 

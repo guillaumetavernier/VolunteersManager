@@ -24,10 +24,22 @@ const (
 // no-op so the package stays independently testable.
 type OnMove func(vsID int64)
 
+// DependentCounter reports how many child rows would be orphaned by a hard
+// delete of the given VS. Wired by the server to mission/assignment stores;
+// nil is treated as zero so the package stays independently testable.
+type DependentCounter func(vsID int64) (Dependents, error)
+
+// Dependents is the per-VS dependent summary returned in 409 bodies.
+type Dependents struct {
+	Missions    int `json:"missions"`
+	Assignments int `json:"assignments"`
+}
+
 type Handler struct {
-	Store    *Store
-	AssetDir string // absolute path to ./assets directory; photos go under <AssetDir>/vs/
-	OnMove   OnMove
+	Store      *Store
+	AssetDir   string // absolute path to ./assets directory; photos go under <AssetDir>/vs/
+	OnMove     OnMove
+	Dependents DependentCounter
 }
 
 func NewHandler(s *Store, assetDir string) *Handler {
@@ -51,8 +63,9 @@ func (h *Handler) Mount(r chi.Router) {
 }
 
 type errorPayload struct {
-	Code    string `json:"code"`
-	Message string `json:"message,omitempty"`
+	Code       string      `json:"code"`
+	Message    string      `json:"message,omitempty"`
+	Dependents *Dependents `json:"dependents,omitempty"`
 }
 
 func (h *Handler) list(w http.ResponseWriter, _ *http.Request) {
@@ -176,9 +189,18 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	// M01 has no dependent rows. M04 and M06 extend this handler to surface a
-	// confirmation listing missions/assignments and to refuse with 409 when
-	// trip_stops still reference the VS.
+	force := r.URL.Query().Get("force") == "true"
+	if h.Dependents != nil && !force {
+		dep, err := h.Dependents(id)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
+			return
+		}
+		if dep.Missions > 0 || dep.Assignments > 0 {
+			writeJSON(w, http.StatusConflict, errorPayload{Code: "has_dependents", Dependents: &dep})
+			return
+		}
+	}
 	if err := h.Store.Delete(id); err != nil {
 		if errors.Is(err, ErrNotFound) {
 			writeJSON(w, http.StatusNotFound, errorPayload{Code: "not_found"})

@@ -115,15 +115,15 @@ The coordinator can define missions at each VS (day, time window, role, headcoun
 
 ## Acceptance criteria
 
-- [ ] Create 3 missions at a VS on day 1.
-- [ ] Drag a volunteer onto a mission → assignment created; staffing badge updates from `0/1` to `1/1`.
-- [ ] Try to assign the same volunteer twice → friendly error (409 surfaced as a toast).
-- [ ] The volunteer picker filters compatible candidates by default; "show all" reveals the rest.
-- [ ] Reload → assignments persist; grid view shows them in the right cells.
-- [ ] Grid view (`/missions/grid`) renders correctly for a multi-day event with overlapping missions in the same VS.
-- [ ] Delete a VS that has missions and assignments → confirmation dialog lists the counts → confirming with force performs the cascade.
-- [ ] Delete a race that is in a mission's `tagged_race_ids` → the tag disappears from the mission on next list fetch.
-- [ ] `go test ./...` and `pnpm test` green; Playwright e2e green.
+- [x] Create 3 missions at a VS on day 1.
+- [x] Drag a volunteer onto a mission → assignment created; staffing badge updates from `0/1` to `1/1`.
+- [x] Try to assign the same volunteer twice → friendly error (409 surfaced as a toast).
+- [x] The volunteer picker filters compatible candidates by default; "show all" reveals the rest.
+- [x] Reload → assignments persist; grid view shows them in the right cells.
+- [x] Grid view (`/missions/grid`) renders correctly for a multi-day event with overlapping missions in the same VS.
+- [x] Delete a VS that has missions and assignments → confirmation dialog lists the counts → confirming with force performs the cascade.
+- [x] Delete a race that is in a mission's `tagged_race_ids` → the tag disappears from the mission on next list fetch.
+- [x] `go test ./...` and `pnpm test` green; Playwright e2e green.
 
 ## References
 

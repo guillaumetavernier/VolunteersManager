@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import { ApiError } from "@/lib/api";
+
 import {
   useCreateVS,
   useDeleteVS,
@@ -33,11 +35,13 @@ export function makeDraft(v?: VS | null, fallback?: { lat: number; lon: number }
 interface Props {
   draft: DraftVS;
   onClose: () => void;
+  onOpenMissions?: (v: VS) => void;
 }
 
-export function VsEditPanel({ draft, onClose }: Props) {
+export function VsEditPanel({ draft, onClose, onOpenMissions }: Props) {
   const [form, setForm] = useState<DraftVS>(draft);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDeps, setPendingDeps] = useState<{ missions: number; assignments: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Re-sync when the parent swaps to a different VS without unmounting.
@@ -86,15 +90,28 @@ export function VsEditPanel({ draft, onClose }: Props) {
     }
   }
 
-  async function onDelete() {
+  async function attemptDelete(force: boolean) {
     if (form.id == null) return;
-    if (!confirm(`Delete VS "${form.name}"?`)) return;
     try {
-      await del.mutateAsync(form.id);
+      await del.mutateAsync({ id: form.id, force });
+      setPendingDeps(null);
       onClose();
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        const body = err.body as { dependents?: { missions: number; assignments: number } } | null;
+        if (body?.dependents) {
+          setPendingDeps(body.dependents);
+          return;
+        }
+      }
       setError((err as Error).message);
     }
+  }
+
+  async function onDelete() {
+    if (form.id == null) return;
+    if (!confirm(`Supprimer le VS "${form.name}" ?`)) return;
+    await attemptDelete(false);
   }
 
   return (
@@ -108,6 +125,28 @@ export function VsEditPanel({ draft, onClose }: Props) {
           ×
         </button>
       </header>
+      {!isNew && onOpenMissions && (
+        <button
+          type="button"
+          onClick={() =>
+            onOpenMissions({
+              id: form.id!,
+              name: form.name,
+              lat: form.lat,
+              lon: form.lon,
+              notes: form.notes || null,
+              photo_path: form.photo_path,
+              what3words: form.what3words || null,
+              created_at: "",
+              updated_at: "",
+            })
+          }
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50"
+          data-action="open-missions"
+        >
+          Missions à ce VS
+        </button>
+      )}
       <form className="grid gap-3" onSubmit={onSubmit}>
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Name</span>
@@ -191,6 +230,38 @@ export function VsEditPanel({ draft, onClose }: Props) {
           </button>
         </div>
       </form>
+      {pendingDeps && (
+        <div
+          role="dialog"
+          aria-label="Confirmer la suppression"
+          data-cascade-confirm
+          className="fixed inset-0 z-30 grid place-items-center bg-slate-900/40 p-4"
+        >
+          <div className="grid w-full max-w-md gap-3 rounded-md bg-white p-4 shadow-xl">
+            <h3 className="text-lg font-semibold">Supprimer ce VS ?</h3>
+            <p className="text-sm text-slate-700">
+              Ce VS a {pendingDeps.missions} mission{pendingDeps.missions === 1 ? "" : "s"} et
+              {" "}{pendingDeps.assignments} affectation{pendingDeps.assignments === 1 ? "" : "s"}.
+              Tout sera supprimé en cascade.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setPendingDeps(null)}
+                className="text-sm text-slate-600 underline"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => attemptDelete(true)}
+                className="rounded-md bg-rose-700 px-4 py-2 text-sm text-white"
+                data-action="confirm-cascade-delete"
+              >
+                Tout supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

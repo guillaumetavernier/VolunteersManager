@@ -12,8 +12,10 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/guillaumetavernier/volunteersmanager/internal/csv"
+	"github.com/guillaumetavernier/volunteersmanager/internal/features/assignment"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/car"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/event"
+	"github.com/guillaumetavernier/volunteersmanager/internal/features/mission"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/race"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/racevs"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/volunteer"
@@ -47,6 +49,7 @@ func New(cfg Config) (http.Handler, error) {
 
 		raceStore := race.NewStore(cfg.DB)
 		raceSvc := race.NewService(cfg.DB)
+		missionStore := mission.NewStore(cfg.DB)
 
 		vsHandler := vs.NewHandler(vs.NewStore(cfg.DB), cfg.AssetDir)
 		vsHandler.OnMove = func(id int64) {
@@ -54,15 +57,37 @@ func New(cfg Config) (http.Handler, error) {
 				cfg.Logger.Warn("recompute after VS move failed", "vs_id", id, "err", err)
 			}
 		}
+		vsHandler.Dependents = func(id int64) (vs.Dependents, error) {
+			missions, err := missionStore.CountByVS(id)
+			if err != nil {
+				return vs.Dependents{}, err
+			}
+			assignments, err := missionStore.CountAssignmentsByVS(id)
+			if err != nil {
+				return vs.Dependents{}, err
+			}
+			return vs.Dependents{Missions: missions, Assignments: assignments}, nil
+		}
 		vsHandler.Mount(r)
 
-		race.NewHandler(raceStore, raceSvc, cfg.AssetDir).Mount(r)
+		raceHandler := race.NewHandler(raceStore, raceSvc, cfg.AssetDir)
+		raceHandler.OnDelete = func(raceID int64) error {
+			if err := missionStore.ScrubRaceTag(raceID); err != nil {
+				cfg.Logger.Warn("scrub mission race tag failed", "race_id", raceID, "err", err)
+				return err
+			}
+			return nil
+		}
+		raceHandler.Mount(r)
 		racevs.NewHandler(racevs.NewStore(cfg.DB), raceSvc).Mount(r)
 
 		volStore := volunteer.NewStore(cfg.DB)
 		volunteer.NewHandler(volStore, eventStore).Mount(r)
 		car.NewHandler(car.NewStore(cfg.DB)).Mount(r)
 		csv.NewHandler(csv.NewSessionStore(cfg.DB), volStore, eventStore).Mount(r)
+
+		mission.NewHandler(missionStore).Mount(r)
+		assignment.NewHandler(assignment.NewStore(cfg.DB)).Mount(r)
 	}
 	if cfg.TileDir != "" {
 		NewTileService(cfg.TileDir, cfg.TileBaseURL).Mount(r)
