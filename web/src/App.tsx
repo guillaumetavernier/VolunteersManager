@@ -8,6 +8,7 @@ import {
   useTileDownloadStatus,
 } from "@/features/event/hooks";
 import { MapView } from "@/features/map/MapView";
+import { MapDrawer, type DrawerFrame } from "@/features/map/MapDrawer";
 import { RaceDetail } from "@/features/race/RaceDetail";
 import { RaceList } from "@/features/race/RaceList";
 import { VolunteerList } from "@/features/volunteer/VolunteerList";
@@ -15,6 +16,8 @@ import { VolunteerDetail } from "@/features/volunteer/VolunteerDetail";
 import { CsvImportWizard } from "@/features/volunteer/CsvImportWizard";
 import { CarList } from "@/features/car/CarList";
 import { MissionsGrid } from "@/features/mission/MissionsGrid";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { TripList } from "@/features/trip/TripList";
 import { TripEditor } from "@/features/trip/TripEditor";
 import { TransportNeedsList } from "@/features/trip/TransportNeedsList";
@@ -70,43 +73,22 @@ function AppShell({ children }: { children: ReactNode }) {
         className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 py-2 text-sm shadow-sm"
         data-testid="app-header"
       >
-        <nav className="flex items-center gap-3">
-          <button onClick={() => (window.location.hash = "/")} className="font-semibold">
+        <nav className="flex items-center gap-1">
+          <Button variant="ghost" onClick={() => (window.location.hash = "/")}>
             Carte
-          </button>
-          <button onClick={() => (window.location.hash = "/races")} className="underline">
-            Courses
-          </button>
-          <button onClick={() => (window.location.hash = "/volunteers")} className="underline">
-            Bénévoles
-          </button>
-          <button onClick={() => (window.location.hash = "/cars")} className="underline">
-            Véhicules
-          </button>
-          <button onClick={() => (window.location.hash = "/missions/grid")} className="underline">
-            Grille
-          </button>
-          <button onClick={() => (window.location.hash = "/trips")} className="underline">
-            Trajets
-          </button>
-          <button onClick={() => (window.location.hash = "/travel-times")} className="underline">
-            Matrice
-          </button>
-          <button onClick={() => (window.location.hash = "/timeline")} className="underline">
+          </Button>
+          <Button variant="ghost" onClick={() => (window.location.hash = "/timeline")}>
             Chronologie
-          </button>
-          <button onClick={() => (window.location.hash = "/roadbooks")} className="underline">
+          </Button>
+          <Button variant="ghost" onClick={() => (window.location.hash = "/roadbooks")}>
             Roadbooks
-          </button>
-          <button onClick={() => (window.location.hash = "/settings/roadbook")} className="underline">
+          </Button>
+          <Button variant="ghost" onClick={() => (window.location.hash = "/settings/roadbook")}>
             Paramètres
-          </button>
-          <button onClick={() => (window.location.hash = "/settings/archive")} className="underline">
-            Archive
-          </button>
-          <button onClick={() => (window.location.hash = "/settings/backup")} className="underline">
+          </Button>
+          <Button variant="ghost" onClick={() => (window.location.hash = "/settings/backup")}>
             Sauvegarde
-          </button>
+          </Button>
         </nav>
         <GlobalIssueCounter />
       </header>
@@ -196,23 +178,32 @@ function Routes({ region }: { region: string }) {
 
 function MapShell({ region }: { region: string }) {
   const status = useTileDownloadStatus(true);
+  const [stack, setStack] = useState<DrawerFrame[]>([]);
   return (
     <>
       <MapView region={region} />
-      <nav className="absolute top-4 right-4 z-10 flex items-center gap-2 rounded-md bg-white/90 px-3 py-2 text-sm shadow">
-        <button onClick={() => (window.location.hash = "/races")} className="underline">
-          Courses
-        </button>
-        <button onClick={() => (window.location.hash = "/volunteers")} className="underline">
-          Bénévoles
-        </button>
-        <button onClick={() => (window.location.hash = "/cars")} className="underline">
-          Véhicules
-        </button>
-        <button onClick={() => (window.location.hash = "/missions/grid")} className="underline">
-          Grille
-        </button>
-      </nav>
+      {stack.length === 0 && (
+        <div className="absolute top-4 right-4 z-10">
+          <Button
+            data-testid="map-drawer-open-races"
+            variant="default"
+            onClick={() => setStack([{ kind: "list", tab: "races" }])}
+          >
+            Ouvrir le panneau
+          </Button>
+        </div>
+      )}
+      {stack.length > 0 && (
+        <MapDrawer
+          stack={stack}
+          onPush={(f) => setStack((s) => [...s, f])}
+          onPop={() => setStack((s) => s.slice(0, -1))}
+          onSwitchTab={(tab) =>
+            setStack((s) => [...s.slice(0, -1), { kind: "list", tab }])
+          }
+          onClose={() => setStack([])}
+        />
+      )}
       {status.data?.state === "downloading" && (
         <div className="pointer-events-none absolute bottom-4 right-4 rounded-md bg-slate-900/90 px-4 py-2 text-sm text-white shadow">
           Downloading tiles… {fmtBytes(status.data.bytes_downloaded)}
