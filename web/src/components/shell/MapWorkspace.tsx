@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 import { Sidebar } from "./Sidebar";
 import { LayersControl } from "./LayersControl";
 import { rememberTool, type Tool, type MapSub } from "./routes";
+import { useMapLayers } from "./useMapLayers";
 
 import { useTileDownloadStatus } from "@/features/event/hooks";
 import { MapView } from "@/features/map/MapView";
@@ -29,9 +30,8 @@ export function MapWorkspace({ region, tool, sub }: Props) {
     rememberTool(tool);
   }, [tool]);
 
-  const [raceVisibility, setRaceVisibility] = useState<Record<number, boolean>>({});
-  const onToggleRace = (id: number, visible: boolean) =>
-    setRaceVisibility((s) => ({ ...s, [id]: visible }));
+  const raceVisibility = useMapLayers((s) => s.raceVisibility);
+  const onToggleRace = useMapLayers((s) => s.toggleRace);
 
   if (tool === "chronologie") {
     return <ChronologieWorkspace region={region} />;
