@@ -8,7 +8,7 @@ import { navigate } from "@/lib/router";
 import { useVSList } from "@/features/vs/hooks";
 import { usePatchVS } from "@/features/vs/hooks";
 import type { VS } from "@/features/vs/api";
-import { VsEditPanel, makeDraft, type DraftVS } from "@/features/vs/VsEditPanel";
+import { PbEditPanel, makeDraft, type DraftVS } from "@/features/vs/PbEditPanel";
 import { useRaces } from "@/features/race/hooks";
 import { RacePolyline } from "@/features/race/RacePolylines";
 import { MissionsPanel } from "@/features/mission/MissionsPanel";
@@ -200,7 +200,7 @@ export function MapView({ region }: Props) {
         />
       ))}
       {editing && (
-        <VsEditPanel
+        <PbEditPanel
           draft={editing}
           onClose={() => setEditing(null)}
           onOpenMissions={(v) => {

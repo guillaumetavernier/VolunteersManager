@@ -38,7 +38,7 @@ interface Props {
   onOpenMissions?: (v: VS) => void;
 }
 
-export function VsEditPanel({ draft, onClose, onOpenMissions }: Props) {
+export function PbEditPanel({ draft, onClose, onOpenMissions }: Props) {
   const [form, setForm] = useState<DraftVS>(draft);
   const [error, setError] = useState<string | null>(null);
   const [pendingDeps, setPendingDeps] = useState<{ missions: number; assignments: number } | null>(null);
@@ -110,17 +110,17 @@ export function VsEditPanel({ draft, onClose, onOpenMissions }: Props) {
 
   async function onDelete() {
     if (form.id == null) return;
-    if (!confirm(`Supprimer le VS "${form.name}" ?`)) return;
+    if (!confirm(`Supprimer le PB «${form.name}» ?`)) return;
     await attemptDelete(false);
   }
 
   return (
     <aside
       className="fixed right-0 top-0 z-20 flex h-full w-96 flex-col gap-4 overflow-y-auto border-l border-slate-200 bg-white p-6 shadow-lg"
-      aria-label={isNew ? "Create VS" : `Edit VS ${form.name}`}
+      aria-label={isNew ? "Créer un PB" : `Modifier le PB ${form.name}`}
     >
       <header className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{isNew ? "New volunteer spot" : form.name}</h2>
+        <h2 className="text-lg font-semibold">{isNew ? "Nouveau point bénévole" : form.name}</h2>
         <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
           ×
         </button>
@@ -144,7 +144,7 @@ export function VsEditPanel({ draft, onClose, onOpenMissions }: Props) {
           className="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50"
           data-action="open-missions"
         >
-          Missions à ce VS
+          Missions à ce PB
         </button>
       )}
       <form className="grid gap-3" onSubmit={onSubmit}>
@@ -238,9 +238,9 @@ export function VsEditPanel({ draft, onClose, onOpenMissions }: Props) {
           className="fixed inset-0 z-30 grid place-items-center bg-slate-900/40 p-4"
         >
           <div className="grid w-full max-w-md gap-3 rounded-md bg-white p-4 shadow-xl">
-            <h3 className="text-lg font-semibold">Supprimer ce VS ?</h3>
+            <h3 className="text-lg font-semibold">Supprimer ce PB ?</h3>
             <p className="text-sm text-slate-700">
-              Ce VS a {pendingDeps.missions} mission{pendingDeps.missions === 1 ? "" : "s"} et
+              Ce PB a {pendingDeps.missions} mission{pendingDeps.missions === 1 ? "" : "s"} et
               {" "}{pendingDeps.assignments} affectation{pendingDeps.assignments === 1 ? "" : "s"}.
               Tout sera supprimé en cascade.
             </p>

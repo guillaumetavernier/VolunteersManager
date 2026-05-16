@@ -36,7 +36,7 @@ test("VS missions: create 3, drag-assign, 409 on dup, grid view, cascade-delete"
   await page.goto("/");
   await waitForMap(page);
   await page.locator(`[data-vs-name="Refuge Nord"]`).click();
-  await expect(page.getByLabel(`Edit VS Refuge Nord`)).toBeVisible();
+  await expect(page.getByLabel(`Modifier le PB Refuge Nord`)).toBeVisible();
   await page.locator('[data-action="open-missions"]').click();
   await expect(page.locator("[data-missions-panel]")).toBeVisible();
 

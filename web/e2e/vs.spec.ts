@@ -24,11 +24,11 @@ test("click-empty-map opens VS create panel; submit persists; drag updates DB", 
   const cy = box.y + box.height / 2;
   await page.mouse.click(cx, cy);
 
-  // The VS create panel appears with the clicked coords pre-filled.
-  await expect(page.getByLabel("Create VS")).toBeVisible();
+  // The PB create panel appears with the clicked coords pre-filled.
+  await expect(page.getByLabel("Créer un PB")).toBeVisible();
   await page.getByLabel("Name").fill("Refuge");
   await page.getByRole("button", { name: /^create$/i }).click();
-  await expect(page.getByLabel("Create VS")).toBeHidden();
+  await expect(page.getByLabel("Créer un PB")).toBeHidden();
 
   // The new VS round-trips in the API.
   const xs = await (await request.get("/api/vs")).json();
