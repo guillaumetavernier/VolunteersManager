@@ -15,7 +15,11 @@ import {
 
 type Step = "upload" | "map" | "preview" | "commit" | "done";
 
-export function CsvImportWizard() {
+interface CsvImportWizardProps {
+  onClose?: () => void;
+}
+
+export function CsvImportWizard({ onClose }: CsvImportWizardProps = {}) {
   const [step, setStep] = useState<Step>("upload");
   const [upload, setUpload] = useState<UploadResponse | null>(null);
   const [mapping, setMapping] = useState<Record<string, string>>({});
@@ -88,14 +92,28 @@ export function CsvImportWizard() {
     }
   }
 
-  return (
-    <main className="mx-auto max-w-4xl p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Import CSV bénévoles</h1>
-        <Button variant="link" size="sm" onClick={() => navigate("/volunteers")}>
-          Annuler
-        </Button>
-      </header>
+  const handleCancel = () => {
+    if (onClose) onClose();
+    else navigate("/volunteers");
+  };
+
+  const body = (
+    <>
+      {!onClose && (
+        <header className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Import CSV bénévoles</h1>
+          <Button variant="link" size="sm" onClick={handleCancel}>
+            Annuler
+          </Button>
+        </header>
+      )}
+      {onClose && (
+        <div className="flex justify-end">
+          <Button variant="link" size="sm" onClick={handleCancel}>
+            Annuler
+          </Button>
+        </div>
+      )}
       {error && <p role="alert" className="mb-3 text-sm text-red-600">{error}</p>}
 
       {step === "upload" && (
@@ -260,14 +278,25 @@ export function CsvImportWizard() {
         <section className="grid gap-2 rounded-md border border-green-200 bg-green-50 p-4 text-sm">
           <p>Import terminé&nbsp;: {committed.inserted} créés, {committed.updated} mis à jour, {committed.skipped} ignorés.</p>
           <div>
-            <Button variant="link" size="sm" onClick={() => navigate("/volunteers")}>
-              Retour aux bénévoles
-            </Button>
+            {onClose ? (
+              <Button variant="link" size="sm" onClick={onClose}>
+                Fermer
+              </Button>
+            ) : (
+              <Button variant="link" size="sm" onClick={() => navigate("/volunteers")}>
+                Retour aux bénévoles
+              </Button>
+            )}
           </div>
         </section>
       )}
-    </main>
+    </>
   );
+
+  if (onClose) {
+    return <div className="grid gap-4">{body}</div>;
+  }
+  return <main className="mx-auto max-w-4xl p-6">{body}</main>;
 }
 
 function Stat({ label, value }: { label: string; value: number }) {

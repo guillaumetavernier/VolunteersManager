@@ -1,8 +1,15 @@
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { navigate } from "@/lib/router";
+import { CsvImportWizard } from "./CsvImportWizard";
 import { useArchiveVolunteer, useVolunteers } from "./hooks";
 import { VolunteerForm } from "./VolunteerForm";
 import type { ArchivedFilter, Volunteer } from "./api";
@@ -18,6 +25,7 @@ export function VolunteerList({ onSelect }: VolunteerListProps = {}) {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [creating, setCreating] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const archive = useArchiveVolunteer();
 
   const filtered = useMemo(() => {
@@ -39,7 +47,7 @@ export function VolunteerList({ onSelect }: VolunteerListProps = {}) {
       <header className="mb-6 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Bénévoles</h1>
         <nav className="flex items-center gap-1">
-          <Button variant="link" size="sm" onClick={() => navigate("/volunteers/import")}>
+          <Button variant="link" size="sm" onClick={() => setImportOpen(true)}>
             Importer un CSV
           </Button>
           <Button variant="link" size="sm" asChild>
@@ -97,6 +105,14 @@ export function VolunteerList({ onSelect }: VolunteerListProps = {}) {
           />
         ))}
       </ul>
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Import CSV bénévoles</DialogTitle>
+          </DialogHeader>
+          <CsvImportWizard onClose={() => setImportOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
