@@ -91,6 +91,8 @@ export function MapView({ region }: Props) {
 
     return () => {
       m.off("click", onClick);
+      for (const mk of markersRef.current.values()) mk.remove();
+      markersRef.current.clear();
       m.remove();
       mapRef.current = null;
       setMapInstance(null);
@@ -100,9 +102,12 @@ export function MapView({ region }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [style]);
 
-  // Sync VS markers with the list.
+  // Sync VS markers with the list. Depends on `mapInstance` so the effect
+  // re-runs when navigation remounts MapView and a fresh map is created —
+  // otherwise the cached `vsQuery.data` wouldn't trigger another pass and
+  // markers would never get `addTo(newMap)`.
   useEffect(() => {
-    const map = mapRef.current;
+    const map = mapInstance;
     if (!map || !vsQuery.data) return;
     const current = markersRef.current;
     const next = new Map<number, Marker>();
@@ -139,7 +144,7 @@ export function MapView({ region }: Props) {
       if (!next.has(id)) m.remove();
     }
     markersRef.current = next;
-  }, [vsQuery.data, patch]);
+  }, [vsQuery.data, patch, mapInstance]);
 
   function openEditFor(v: VS) {
     setEditing(makeDraft(v));

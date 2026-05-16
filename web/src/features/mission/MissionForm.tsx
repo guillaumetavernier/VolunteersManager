@@ -67,17 +67,17 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-3 rounded-md border border-slate-200 p-3 text-sm" data-mission-form>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="grid min-w-0 gap-3 rounded-md border border-slate-200 p-3 text-sm" data-mission-form>
       <div className="grid grid-cols-3 gap-2">
         <Field label="Jour" error={form.formState.errors.day?.message}>
-          <input className="input" type="number" min={1} {...form.register("day")} aria-label="Jour" />
+          <input className="input w-full min-w-0" type="number" min={1} {...form.register("day")} aria-label="Jour" />
         </Field>
         <Field label="Effectif" error={form.formState.errors.headcount?.message}>
-          <input className="input" type="number" min={1} {...form.register("headcount")} aria-label="Effectif" />
+          <input className="input w-full min-w-0" type="number" min={1} {...form.register("headcount")} aria-label="Effectif" />
         </Field>
         <Field label="Rôle" error={form.formState.errors.role_type?.message}>
           <input
-            className="input"
+            className="input w-full min-w-0"
             list="mission-role-types"
             {...form.register("role_type")}
             aria-label="Rôle"
@@ -91,17 +91,17 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
       </div>
       <div className="grid grid-cols-2 gap-2">
         <Field label="Début" error={form.formState.errors.start_time?.message}>
-          <input className="input" type="datetime-local" {...form.register("start_time")} aria-label="Début" />
+          <input className="input w-full min-w-0" type="datetime-local" {...form.register("start_time")} aria-label="Début" />
         </Field>
         <Field label="Fin" error={form.formState.errors.end_time?.message}>
-          <input className="input" type="datetime-local" {...form.register("end_time")} aria-label="Fin" />
+          <input className="input w-full min-w-0" type="datetime-local" {...form.register("end_time")} aria-label="Fin" />
         </Field>
       </div>
       <Field label="Titre">
-        <input className="input" {...form.register("title")} />
+        <input className="input w-full" {...form.register("title")} />
       </Field>
       <Field label="Description">
-        <textarea className="input min-h-16" {...form.register("description")} />
+        <textarea className="input min-h-16 w-full" {...form.register("description")} />
       </Field>
       <Field label="Courses associées">
         <Controller
@@ -159,7 +159,7 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
-    <label className="grid gap-1 text-sm">
+    <label className="grid min-w-0 gap-1 text-sm">
       <span className="font-medium">{label}</span>
       {children}
       {error && <span className="text-xs text-red-600">{error}</span>}

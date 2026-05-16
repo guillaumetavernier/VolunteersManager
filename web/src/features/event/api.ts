@@ -64,3 +64,17 @@ export interface TileDownloadStatus {
 export async function getTileDownloadStatus(): Promise<TileDownloadStatus> {
   return apiFetch<TileDownloadStatus>("/api/tiles/download/status");
 }
+
+export interface TileRegion {
+  slug: string;
+  available: boolean;
+}
+
+export interface TileRegionsResponse {
+  regions: TileRegion[];
+  available_locally: string[] | null;
+}
+
+export async function listTiles(): Promise<TileRegionsResponse> {
+  return apiFetch<TileRegionsResponse>("/api/tiles");
+}

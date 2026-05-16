@@ -116,7 +116,7 @@ export function VsEditPanel({ draft, onClose, onOpenMissions }: Props) {
 
   return (
     <aside
-      className="fixed right-0 top-0 z-10 flex h-full w-96 flex-col gap-4 overflow-y-auto border-l border-slate-200 bg-white p-6 shadow-lg"
+      className="fixed right-0 top-0 z-20 flex h-full w-96 flex-col gap-4 overflow-y-auto border-l border-slate-200 bg-white p-6 shadow-lg"
       aria-label={isNew ? "Create VS" : `Edit VS ${form.name}`}
     >
       <header className="flex items-center justify-between">

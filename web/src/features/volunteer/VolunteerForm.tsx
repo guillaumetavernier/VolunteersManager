@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useEffect } from "react";
 
+import { ApiError } from "@/lib/api";
 import { useEvent } from "@/features/event/hooks";
 import { useVSList } from "@/features/vs/hooks";
 import { useCreateVolunteer, usePatchVolunteer } from "./hooks";
@@ -205,7 +206,7 @@ export function VolunteerForm({ existing, onSaved, onCancel }: Props) {
       </div>
       {(create.isError || patch.isError) && (
         <p role="alert" className="text-sm text-red-600">
-          {String((create.error ?? patch.error) as Error)}
+          {formatError(create.error ?? patch.error)}
         </p>
       )}
     </form>
@@ -220,6 +221,23 @@ function Field({ label, error, children }: { label: string; error?: string; chil
       {error && <span className="text-xs text-red-600">{error}</span>}
     </label>
   );
+}
+
+const ERROR_FR: Record<string, string> = {
+  missing_fields: "Prénom, nom et téléphone sont obligatoires.",
+  phone_invalid: "Le numéro de téléphone n'est pas valide (format E.164).",
+  bad_request: "Requête invalide.",
+  internal: "Erreur interne du serveur.",
+};
+
+function formatError(err: unknown): string {
+  if (err instanceof ApiError) {
+    const body = err.body as { code?: string; message?: string } | null;
+    if (body?.code && ERROR_FR[body.code]) return ERROR_FR[body.code];
+    if (body?.message) return body.message;
+    return err.message;
+  }
+  return String(err);
 }
 
 function countryFromEvent(ev: { country_code?: string } | null | undefined): string {
