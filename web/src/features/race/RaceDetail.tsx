@@ -14,6 +14,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useVSList } from "@/features/vs/hooks";
 import type { VS } from "@/features/vs/api";
 
@@ -38,7 +40,7 @@ interface Props {
 
 export function RaceDetail({ raceID, onBack }: Props) {
   const race = useRace(raceID);
-  if (race.isLoading) return <main className="p-6">Loading…</main>;
+  if (race.isLoading) return <main className="p-6">Chargement…</main>;
   if (race.error)
     return (
       <main className="p-6 text-sm text-red-700">
@@ -97,20 +99,18 @@ function RaceForm({ race }: { race: Race }) {
 
   return (
     <form onSubmit={onSubmit} className="mb-8 grid gap-4 rounded-md border border-slate-200 p-4">
-      <h2 className="text-lg font-semibold">Race settings</h2>
+      <h2 className="text-lg font-semibold">Paramètres de la course</h2>
       <div className="grid grid-cols-2 gap-4">
         <label className="grid gap-1 text-sm">
-          <span className="font-medium">Name</span>
-          <input
-            className="input"
+          <span className="font-medium">Nom</span>
+          <Input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </label>
         <label className="grid gap-1 text-sm">
-          <span className="font-medium">Color</span>
-          <input
-            className="input"
+          <span className="font-medium">Couleur</span>
+          <Input
             type="color"
             value={form.color}
             onChange={(e) => setForm({ ...form, color: e.target.value })}
@@ -119,9 +119,8 @@ function RaceForm({ race }: { race: Race }) {
       </div>
       <div className="grid grid-cols-3 gap-4">
         <label className="grid gap-1 text-sm">
-          <span className="font-medium">Front pace (km/h)</span>
-          <input
-            className="input"
+          <span className="font-medium">Allure tête (km/h)</span>
+          <Input
             type="number"
             step="0.1"
             value={form.front_pace}
@@ -129,9 +128,8 @@ function RaceForm({ race }: { race: Race }) {
           />
         </label>
         <label className="grid gap-1 text-sm">
-          <span className="font-medium">Tail pace (km/h)</span>
-          <input
-            className="input"
+          <span className="font-medium">Allure queue (km/h)</span>
+          <Input
             type="number"
             step="0.1"
             value={form.tail_pace}
@@ -139,9 +137,8 @@ function RaceForm({ race }: { race: Race }) {
           />
         </label>
         <label className="grid gap-1 text-sm">
-          <span className="font-medium">Start time</span>
-          <input
-            className="input"
+          <span className="font-medium">Heure de départ</span>
+          <Input
             type="datetime-local"
             value={form.start_time.slice(0, 16)}
             onChange={(e) =>
@@ -154,13 +151,9 @@ function RaceForm({ race }: { race: Race }) {
         </label>
       </div>
       <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          className="rounded-md bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
-          disabled={patch.isPending}
-        >
-          Save
-        </button>
+        <Button type="submit" disabled={patch.isPending}>
+          Enregistrer
+        </Button>
         {patch.isError && (
           <span role="alert" className="text-sm text-red-600">
             {(patch.error as Error).message}
@@ -187,27 +180,23 @@ function GPXSection({ raceID }: { raceID: number }) {
 
   return (
     <section className="mb-8 grid gap-3 rounded-md border border-slate-200 p-4">
-      <h2 className="text-lg font-semibold">GPX files</h2>
+      <h2 className="text-lg font-semibold">Fichiers GPX</h2>
       <div className="flex items-center gap-2">
         <input ref={fileRef} type="file" accept=".gpx,application/gpx+xml,application/xml" className="text-sm" />
         <label className="text-sm text-slate-600">
-          Day&nbsp;
-          <input className="input w-16" type="number" min={1} value={day} onChange={(e) => setDay(e.target.value)} />
+          Jour&nbsp;
+          <Input className="w-16" type="number" min={1} value={day} onChange={(e) => setDay(e.target.value)} />
         </label>
-        <button
-          onClick={onUpload}
-          className="rounded-md bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50"
-          disabled={upload.isPending}
-        >
-          {upload.isPending ? "Uploading…" : "Upload"}
-        </button>
+        <Button onClick={onUpload} size="sm" disabled={upload.isPending}>
+          {upload.isPending ? "Envoi…" : "Téléverser"}
+        </Button>
         {upload.isError && (
           <span role="alert" className="text-sm text-red-600">
             {(upload.error as Error).message}
           </span>
         )}
       </div>
-      {gpx.data && gpx.data.length === 0 && <p className="text-sm text-slate-500">No GPX uploaded yet.</p>}
+      {gpx.data && gpx.data.length === 0 && <p className="text-sm text-slate-500">Aucun GPX importé pour l'instant.</p>}
       <ul className="divide-y divide-slate-200 text-sm">
         {gpx.data?.map((g) => (
           <li key={g.id} className="flex items-center justify-between py-2">
@@ -215,10 +204,10 @@ function GPXSection({ raceID }: { raceID: number }) {
               <code>{g.file_path.split("/").pop()}</code>
               {" — "}
               {(g.total_distance_m / 1000).toFixed(2)} km
-              {g.day != null && ` · day ${g.day}`}
+              {g.day != null && ` · jour ${g.day}`}
             </span>
             <button onClick={() => del.mutate(g.id)} className="text-red-700 hover:underline">
-              Delete
+              Supprimer
             </button>
           </li>
         ))}
@@ -267,9 +256,9 @@ function VSListSection({ raceID }: { raceID: number }) {
 
   return (
     <section className="grid gap-3 rounded-md border border-slate-200 p-4">
-      <h2 className="text-lg font-semibold">Volunteer spots along the race</h2>
+      <h2 className="text-lg font-semibold">Points bénévoles le long de la course</h2>
       {data.length === 0 && (
-        <p className="text-sm text-slate-500">No VS yet. Add one from the picker below.</p>
+        <p className="text-sm text-slate-500">Aucun PB pour l'instant. Ajoutez-en un via le sélecteur ci-dessous.</p>
       )}
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <SortableContext items={data.map((e) => e.vs_id)} strategy={verticalListSortingStrategy}>
@@ -278,7 +267,7 @@ function VSListSection({ raceID }: { raceID: number }) {
               <SortableRow
                 key={entry.vs_id}
                 entry={entry}
-                vsName={vsByID.get(entry.vs_id)?.name ?? `VS ${entry.vs_id}`}
+                vsName={vsByID.get(entry.vs_id)?.name ?? `PB ${entry.vs_id}`}
                 raceID={raceID}
                 onRemove={() => removeVS(entry.vs_id)}
               />
@@ -288,10 +277,10 @@ function VSListSection({ raceID }: { raceID: number }) {
       </DndContext>
       {candidates.length > 0 && (
         <div className="flex items-center gap-2 border-t border-slate-100 pt-3 text-sm">
-          <span>Add VS:</span>
-          <select className="input" defaultValue="" onChange={(e) => e.target.value && addVS(Number(e.target.value))}>
+          <span>Ajouter un PB :</span>
+          <select className="input w-full" defaultValue="" onChange={(e) => e.target.value && addVS(Number(e.target.value))}>
             <option value="" disabled>
-              Pick a VS…
+              Choisir un PB…
             </option>
             {candidates.map((v) => (
               <option key={v.id} value={v.id}>
@@ -338,7 +327,7 @@ function SortableRow({
         {...attributes}
         {...listeners}
         className="cursor-grab text-slate-400 hover:text-slate-700"
-        aria-label={`Drag ${vsName}`}
+        aria-label={`Déplacer ${vsName}`}
       >
         ⋮⋮
       </button>
@@ -353,14 +342,14 @@ function SortableRow({
         </div>
         <div className="grid grid-cols-2 gap-2 text-xs">
           <TimeEditor
-            label="first-in"
+            label="premier passage"
             auto={entry.auto_first_in}
             manual={entry.manual_first_in}
             onSet={(v) => override.mutate({ vsID: entry.vs_id, patch: { manual_first_in: v } })}
             onClear={() => clear.mutate({ vsID: entry.vs_id, fields: { first: true } })}
           />
           <TimeEditor
-            label="last-in"
+            label="dernier passage"
             auto={entry.auto_last_in}
             manual={entry.manual_last_in}
             onSet={(v) => override.mutate({ vsID: entry.vs_id, patch: { manual_last_in: v } })}
@@ -369,7 +358,7 @@ function SortableRow({
         </div>
       </div>
       <button onClick={onRemove} className="text-sm text-red-700 hover:underline">
-        Remove
+        Retirer
       </button>
     </li>
   );
@@ -392,11 +381,11 @@ function TimeEditor({
   return (
     <div className="grid gap-1">
       <span className="text-slate-500">
-        {label} {manual ? "(override)" : "(auto)"}
+        {label} {manual ? "(manuel)" : "(auto)"}
       </span>
       <div className="flex items-center gap-1">
-        <input
-          className="input text-xs"
+        <Input
+          className="text-xs"
           type="datetime-local"
           value={effective ? effective.slice(0, 16) : ""}
           onChange={(e) => {
@@ -407,7 +396,7 @@ function TimeEditor({
         />
         {manual && (
           <button onClick={onClear} className="text-xs text-slate-500 underline">
-            reset
+            réinitialiser
           </button>
         )}
       </div>

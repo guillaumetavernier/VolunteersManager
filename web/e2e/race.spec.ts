@@ -26,18 +26,18 @@ test("create race, upload GPX, add VS in order, override one time, see polyline 
 
   // Go to the races list and create a race.
   await page.goto("/#/races");
-  await page.getByPlaceholder("New race name").fill("42km");
-  await page.getByRole("button", { name: /add race/i }).click();
+  await page.getByPlaceholder("Nom de la nouvelle course").fill("42km");
+  await page.getByRole("button", { name: /ajouter une course/i }).click();
 
   // We navigate to /races/{id}; the form is visible.
-  await expect(page.getByRole("heading", { name: /race settings/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /paramètres de la course/i })).toBeVisible();
 
   // Set a recognisable color, paces, start time.
-  await page.getByLabel("Color").fill("#ff0000");
-  await page.getByLabel("Front pace (km/h)").fill("15");
-  await page.getByLabel("Tail pace (km/h)").fill("6");
-  // The Save button persists everything.
-  await page.getByRole("button", { name: /^save$/i }).click();
+  await page.getByLabel("Couleur").fill("#ff0000");
+  await page.getByLabel("Allure tête (km/h)").fill("15");
+  await page.getByLabel("Allure queue (km/h)").fill("6");
+  // The Enregistrer button persists everything.
+  await page.getByRole("button", { name: /^enregistrer$/i }).click();
 
   // Persist start time via the API directly — datetime-local in headless is
   // browser/locale-flaky and isn't the point of this test.
@@ -52,7 +52,7 @@ test("create race, upload GPX, add VS in order, override one time, see polyline 
   const gpxPath = path.resolve(__dirname, "fixtures/sample.gpx");
   await fs.access(gpxPath);
   await page.locator('input[type="file"]').setInputFiles(gpxPath);
-  await page.getByRole("button", { name: /^upload$/i }).click();
+  await page.getByRole("button", { name: /^téléverser$/i }).click();
 
   // Wait for the file to land in the list — the stored filename is its sha256,
   // so match on the km-distance suffix instead.

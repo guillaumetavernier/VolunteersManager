@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { navigate } from "@/lib/router";
 import { useCreateRace, useDeleteRace, useRaces } from "./hooks";
 
@@ -33,27 +35,27 @@ export function RaceList({ onSelect }: RaceListProps = {}) {
   return (
     <main className="mx-auto max-w-3xl p-6">
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Races</h1>
+        <h1 className="text-2xl font-semibold">Courses</h1>
       </header>
       <form onSubmit={onCreate} className="mb-6 flex gap-2">
-        <input
-          className="input flex-1"
-          placeholder="New race name"
+        <Input
+          className="flex-1"
+          placeholder="Nom de la nouvelle course"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <button type="submit" className="rounded-md bg-slate-900 px-4 py-2 text-white" disabled={create.isPending}>
-          Add race
-        </button>
+        <Button type="submit" disabled={create.isPending}>
+          Ajouter une course
+        </Button>
       </form>
       {create.isError && (
         <p role="alert" className="mb-4 text-sm text-red-600">
           {(create.error as Error).message}
         </p>
       )}
-      {races.isLoading && <p>Loading…</p>}
+      {races.isLoading && <p>Chargement…</p>}
       {races.data && races.data.length === 0 && (
-        <p className="text-sm text-slate-600">No races yet. Add the first one above.</p>
+        <p className="text-sm text-slate-600">Aucune course pour l'instant. Ajoutez la première ci-dessus.</p>
       )}
       <ul className="divide-y divide-slate-200">
         {races.data?.map((r) => (
@@ -65,20 +67,20 @@ export function RaceList({ onSelect }: RaceListProps = {}) {
               <span
                 className="h-4 w-4 rounded-full border border-slate-300"
                 style={{ backgroundColor: r.color }}
-                aria-label={`color ${r.color}`}
+                aria-label={`couleur ${r.color}`}
               />
               <span className="font-medium">{r.name}</span>
               <span className="text-xs text-slate-500">
-                front {r.front_pace} km/h · tail {r.tail_pace} km/h
+                tête {r.front_pace} km/h · queue {r.tail_pace} km/h
               </span>
             </button>
             <button
               onClick={() => {
-                if (confirm(`Delete race "${r.name}"?`)) del.mutate(r.id);
+                if (confirm(`Supprimer la course "${r.name}" ?`)) del.mutate(r.id);
               }}
               className="text-sm text-red-700 hover:underline"
             >
-              Delete
+              Supprimer
             </button>
           </li>
         ))}
