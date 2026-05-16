@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { putEvent } from "@/features/event/api";
 import { useEvent } from "@/features/event/hooks";
 import { toast } from "@/lib/toast";
@@ -89,14 +90,14 @@ export function BackupSettingsPage() {
         <span>Sauvegarde quotidienne</span>
       </label>
 
-      <button
+      <Button
+        type="button"
         onClick={save}
         disabled={busy}
-        className="rounded bg-slate-900 px-4 py-2 text-white"
         data-testid="save-backup"
       >
         Enregistrer
-      </button>
+      </Button>
     </main>
   );
 }

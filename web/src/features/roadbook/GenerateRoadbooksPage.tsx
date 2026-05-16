@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { navigate } from "@/lib/router";
 
 import { generateRoadbooks } from "./api";
@@ -28,23 +29,35 @@ export function GenerateRoadbooksPage() {
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Roadbooks</h1>
         <nav className="flex gap-3 text-sm text-slate-600">
-          <button onClick={() => navigate("/settings/roadbook")} className="underline">
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={() => navigate("/settings/roadbook")}
+            className="h-auto px-0"
+          >
             Paramètres
-          </button>
-          <button onClick={() => navigate("/")} className="underline">
+          </Button>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={() => navigate("/")}
+            className="h-auto px-0"
+          >
             Carte
-          </button>
+          </Button>
         </nav>
       </header>
 
-      <button
+      <Button
+        type="button"
         onClick={run}
         disabled={busy}
         data-testid="generate-button"
-        className="rounded bg-slate-900 px-4 py-2 text-white"
       >
         {busy ? "Génération en cours…" : "Générer les roadbooks"}
-      </button>
+      </Button>
 
       {error && <p className="mt-4 text-sm text-red-600" data-testid="generate-error">{error}</p>}
 

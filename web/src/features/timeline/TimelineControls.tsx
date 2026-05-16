@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Pause, Play } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+
 import { SPEEDS, useTimelineCursor, type Speed } from "./useTimelineCursor";
 import { useTimelineSelection } from "./useTimelineSelection";
 import type { TimelineData } from "./useTimelineData";
@@ -58,14 +60,16 @@ export function TimelineControls({ data }: Props) {
 
   return (
     <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-2 text-sm">
-      <button
+      <Button
+        type="button"
+        size="icon"
         onClick={toggle}
         data-testid="timeline-toggle-play"
         aria-label={playing ? "Pause" : "Lecture"}
-        className="grid h-8 w-8 place-items-center rounded-full bg-slate-900 text-white"
+        className="h-8 w-8 rounded-full"
       >
         {playing ? <Pause size={14} /> : <Play size={14} />}
-      </button>
+      </Button>
       <label className="flex items-center gap-1">
         Vitesse&nbsp;:
         <select
@@ -100,25 +104,31 @@ export function TimelineControls({ data }: Props) {
       </span>
       <div className="ml-auto flex flex-wrap items-center gap-2">
         {data.races.map((r) => (
-          <button
+          <Button
             key={r.id}
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={() => toggleRace(r.id)}
             data-testid={`timeline-race-toggle-${r.id}`}
-            className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs ${
-              isVisible(r.id) ? "border-slate-300 bg-white" : "border-slate-200 bg-slate-100 text-slate-400"
+            className={`h-auto gap-1 rounded-full px-2 py-0.5 text-xs ${
+              isVisible(r.id) ? "" : "bg-slate-100 text-slate-400"
             }`}
           >
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: r.color }} />
             {r.name}
-          </button>
+          </Button>
         ))}
-        <button
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
           onClick={() => setSelected(null)}
           data-testid="timeline-clear-segment"
-          className="rounded border border-slate-300 px-2 py-0.5 text-xs"
+          className="h-auto rounded px-2 py-0.5 text-xs"
         >
           Effacer segment
-        </button>
+        </Button>
       </div>
     </div>
   );

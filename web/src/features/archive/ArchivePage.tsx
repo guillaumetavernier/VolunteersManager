@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/lib/toast";
 
 import { exportArchiveUrl, uploadArchive } from "./api";
@@ -40,14 +42,15 @@ export function ArchivePage() {
           Le fichier .zip contient le dump SQL, les photos VS, le logo, le sponsor et les fichiers
           GPX. Les tuiles cartographiques sont exclues (trop volumineuses).
         </p>
-        <a
-          href={exportArchiveUrl()}
-          download
-          data-testid="export-archive"
-          className="inline-block rounded bg-slate-900 px-4 py-2 text-white"
-        >
-          Télécharger l'archive
-        </a>
+        <Button asChild>
+          <a
+            href={exportArchiveUrl()}
+            download
+            data-testid="export-archive"
+          >
+            Télécharger l'archive
+          </a>
+        </Button>
       </section>
 
       <section className="space-y-3 rounded border p-4">
@@ -57,7 +60,7 @@ export function ArchivePage() {
           serveur et redémarrez-le avec <code>--data-dir</code> pointant sur le nouveau dossier.
           (Aucun basculement automatique en v1.)
         </p>
-        <input
+        <Input
           type="file"
           accept=".zip,application/zip"
           onChange={onUpload}
