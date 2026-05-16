@@ -1,13 +1,22 @@
-import { useState } from "react";
-
 import { ArchivePage } from "@/features/archive/ArchivePage";
 import { BackupSettingsPage } from "@/features/archive/BackupSettingsPage";
 import { RoadbookSettingsPage } from "@/features/roadbook/RoadbookSettingsPage";
+import { navigate, useRoute } from "@/lib/router";
 
 type Tab = "roadbook" | "donnees";
 
+function readTab(path: string): Tab {
+  const q = path.split("?")[1];
+  if (!q) return "roadbook";
+  const v = new URLSearchParams(q).get("tab");
+  return v === "donnees" ? "donnees" : "roadbook";
+}
+
 export function SettingsPage() {
-  const [tab, setTab] = useState<Tab>("roadbook");
+  const route = useRoute();
+  const tab = readTab(route.path);
+  const setTab = (next: Tab) =>
+    navigate(next === "roadbook" ? "/parametres" : `/parametres?tab=${next}`);
   return (
     <div className="mx-auto flex h-full w-full max-w-5xl flex-col" data-testid="settings-page">
       <nav

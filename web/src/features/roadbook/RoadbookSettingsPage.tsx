@@ -130,10 +130,6 @@ export function RoadbookSettingsPage() {
   return (
     <main className="mx-auto grid max-w-6xl gap-6 p-6 lg:grid-cols-2" data-testid="roadbook-settings">
       <section className="space-y-4">
-        <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Roadbook — paramètres</h1>
-        </header>
-
         <label className="block">
           <span className="text-sm font-medium">Couleur principale</span>
           <Input
