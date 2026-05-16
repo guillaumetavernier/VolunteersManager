@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ensureEventInitialized, resetState, unwrap } from "./helpers";
+import { ensureEventInitialized, resetState, unwrap, waitForMap } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
 
@@ -182,4 +182,56 @@ test("capacity warning surfaces when boarders > car seats", async ({ request }) 
   });
   const ws = await (await request.get("/api/warnings")).json();
   expect(ws.some((w: { kind: string }) => w.kind === "capacity_exceeded")).toBe(true);
+});
+
+test("Voir matrice opens a Dialog without changing the URL", async ({ page }) => {
+  await page.goto("/#/trajets");
+  await expect(page).toHaveURL(/#\/trajets$/);
+  await page.locator('[data-action="open-matrix"]').click();
+  await expect(page.getByTestId("matrix-dialog")).toBeVisible();
+  await expect(page).toHaveURL(/#\/trajets$/);
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("matrix-dialog")).toHaveCount(0);
+  await expect(page).toHaveURL(/#\/trajets$/);
+});
+
+test("Trajets/Besoins toggle swaps sidebar list content", async ({ page }) => {
+  await page.goto("/#/trajets");
+  await expect(page.locator('[data-trajets-mode="trips"]')).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.locator('[data-testid="trip-list"]')).toHaveCount(1);
+  await expect(page.locator('[data-testid="transport-needs-list"]')).toHaveCount(0);
+  await page.locator('[data-trajets-mode="besoins"]').click();
+  await expect(page.locator('[data-testid="transport-needs-list"]')).toHaveCount(1);
+  await expect(page.locator('[data-testid="trip-list"]')).toHaveCount(0);
+  await page.locator('[data-trajets-mode="trips"]').click();
+  await expect(page.locator('[data-testid="trip-list"]')).toHaveCount(1);
+  await expect(page.locator('[data-testid="transport-needs-list"]')).toHaveCount(0);
+});
+
+test("clicking a VS marker while editing a trip appends a stop", async ({
+  page,
+  request,
+}) => {
+  const vsA = await unwrap<{ id: number }>(
+    await request.post("/api/vs", { data: { name: "PB-Alpha", lat: 48.0, lon: 2.0 } }),
+  );
+  const vsB = await unwrap<{ id: number }>(
+    await request.post("/api/vs", { data: { name: "PB-Beta", lat: 48.1, lon: 2.1 } }),
+  );
+
+  await page.goto("/#/trajets/new");
+  await waitForMap(page);
+  const stops = page.locator('[data-testid="stops"] [data-stop-index]');
+  await expect(stops).toHaveCount(2);
+
+  await page.locator(`[data-vs-id="${vsA.id}"]`).dispatchEvent("click");
+  await expect(stops).toHaveCount(3);
+  await expect(stops.nth(2).locator("select")).toHaveValue(String(vsA.id));
+
+  await page.locator(`[data-vs-id="${vsB.id}"]`).dispatchEvent("click");
+  await expect(stops).toHaveCount(4);
+  await expect(stops.nth(3).locator("select")).toHaveValue(String(vsB.id));
 });

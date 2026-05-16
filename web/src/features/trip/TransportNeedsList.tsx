@@ -29,7 +29,7 @@ export function TransportNeedsList({ day }: { day?: number } = {}) {
   }, [needs.data]);
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3" data-testid="transport-needs-list">
       {needs.isLoading && <p className="text-sm">Chargement…</p>}
       {!needs.isLoading && (needs.data?.length ?? 0) === 0 && (
         <p className="text-sm text-slate-600">Aucun besoin actuel.</p>

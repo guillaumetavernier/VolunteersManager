@@ -119,6 +119,48 @@ test("VS missions: create 3, drag-assign, 409 on dup, grid view, cascade-delete"
   }, { timeout: 5_000 }).toBe(0);
 });
 
+test("VS marker → VS detail → Missions → VolunteerPicker dialog opens", async ({
+  page,
+  request,
+}) => {
+  const vs = await unwrap<{ id: number }>(
+    await request.post("/api/vs", { data: { name: "Refuge Sud", lat: 48.8, lon: 2.3 } }),
+  );
+  await request.post("/api/volunteers", {
+    data: {
+      first_name: "Camille",
+      last_name: "Dupuis",
+      phone: "+33611112233",
+      role_types: ["Ravitaillement"],
+      availability: [{ day: 1, start: "06:00", end: "23:00" }],
+    },
+  });
+  await request.post(`/api/vs/${vs.id}/missions`, {
+    data: {
+      day: 1,
+      start_time: "2026-06-01T08:00",
+      end_time: "2026-06-01T10:00",
+      role_type: "Ravitaillement",
+      headcount: 1,
+    },
+  });
+
+  await page.goto("/#/vs");
+  await waitForMap(page);
+  await page.locator(`[data-vs-name="Refuge Sud"]`).click();
+  await expect(page).toHaveURL(/#\/vs\/\d+/);
+  await page.locator('[data-action="open-missions"]').click();
+  await expect(page.locator("[data-missions-panel]")).toBeVisible();
+  await page.locator('[data-action="open-picker"]').first().click();
+  const picker = page.getByRole("dialog", { name: /choisir un bénévole/i });
+  await expect(picker).toBeVisible();
+
+  await picker.getByText("Camille Dupuis").click();
+  await expect(
+    page.locator("[data-mission-id]").first().locator("[data-staffing-badge]"),
+  ).toHaveText("1/1", { timeout: 5_000 });
+});
+
 test("race-delete scrubs mission tagged_race_ids", async ({ request }) => {
   // Seed VS, race, mission tagged with that race.
   const vsRes = await request.post("/api/vs", {

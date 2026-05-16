@@ -28,7 +28,7 @@ export function TripList() {
   const days = Array.from(byDay.keys()).sort((a, b) => a - b);
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3" data-testid="trip-list">
       {trips.isLoading && <p className="text-sm">Chargement…</p>}
       {!trips.isLoading && days.length === 0 && (
         <p className="text-sm text-slate-600">Aucun trajet pour le moment.</p>
