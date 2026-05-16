@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { Button } from "@/components/ui/button";
 import { navigate } from "@/lib/router";
 import { useVSList } from "@/features/vs/hooks";
 import { useVolunteers } from "@/features/volunteer/hooks";
@@ -31,10 +32,10 @@ export function TransportNeedsList({ day }: { day?: number }) {
     <main className="mx-auto max-w-3xl p-6">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Besoins de transport</h1>
-        <nav className="flex items-center gap-3 text-sm">
-          <button onClick={() => navigate("/trips")} className="underline">
+        <nav className="flex items-center gap-2 text-sm">
+          <Button variant="link" size="sm" onClick={() => navigate("/trips")}>
             Trajets
-          </button>
+          </Button>
         </nav>
       </header>
       {needs.isLoading && <p>Chargement…</p>}
@@ -59,7 +60,8 @@ export function TransportNeedsList({ day }: { day?: number }) {
                       {vsName(n.from_vs)} ({n.from_time}) → {vsName(n.to_vs)} ({n.to_time})
                     </div>
                   </div>
-                  <button
+                  <Button
+                    size="sm"
                     onClick={() => {
                       const params = new URLSearchParams({
                         day: String(n.day),
@@ -71,10 +73,9 @@ export function TransportNeedsList({ day }: { day?: number }) {
                       });
                       navigate(`/trips/new?${params.toString()}`);
                     }}
-                    className="rounded-md bg-slate-900 px-3 py-1 text-sm text-white"
                   >
                     Créer un trajet
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>

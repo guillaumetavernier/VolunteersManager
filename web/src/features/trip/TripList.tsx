@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { navigate } from "@/lib/router";
 import { useVSList } from "@/features/vs/hooks";
 import { useVolunteers } from "@/features/volunteer/hooks";
@@ -31,16 +32,16 @@ export function TripList() {
     <main className="mx-auto max-w-4xl p-6">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Trajets</h1>
-        <nav className="flex items-center gap-3 text-sm">
-          <button onClick={() => navigate("/trips/new")} className="rounded-md bg-slate-900 px-3 py-1 text-white">
+        <nav className="flex items-center gap-2 text-sm">
+          <Button size="sm" onClick={() => navigate("/trips/new")}>
             Nouveau trajet
-          </button>
-          <button onClick={() => navigate("/travel-times")} className="underline">
+          </Button>
+          <Button variant="link" size="sm" onClick={() => navigate("/travel-times")}>
             Matrice
-          </button>
-          <button onClick={() => navigate("/transport-needs")} className="underline">
+          </Button>
+          <Button variant="link" size="sm" onClick={() => navigate("/transport-needs")}>
             Besoins
-          </button>
+          </Button>
         </nav>
       </header>
       {trips.isLoading && <p>Chargement…</p>}
