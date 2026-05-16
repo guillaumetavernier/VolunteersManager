@@ -18,6 +18,7 @@ The ordering reflects the layer-cake decision (foundation first, then geometry, 
 | [07](./07-timeline.md) | **Timeline** | Hand-rolled scrubber, front/tail runner animation along GPX, volunteer & car position sync |
 | [08](./08-roadbook.md) | **Roadbook** | maroto v2 PDFs, master document, golden-file determinism (mini-map is conditional — see M08 risks) |
 | [09](./09-archive-polish.md) | **Archive + polish** | Event zip export/import, daily auto-backup, performance pass, release pipeline |
+| [10](./10-navigation-rework.md) | **Navigation rework** | Map-is-home toolbar (VS / Trajets / Chronologie / Courses) + clean header pages; deletes `MapDrawer` / `PbEditPanel` / `MissionsPanel` and 10+ legacy routes |
 
 ## Conventions
 
@@ -40,6 +41,7 @@ These were settled during pre-implementation grilling (see [`../README.md`](../R
 8. **Constraint engine**: pure function, server-side full recompute, lives at `internal/domain/constraints`.
 9. **i18n**: FR only in v1; `t()` API in place for later EN.
 10. **Tests**: comprehensive — every handler, every store query, every component; table-driven constraints; golden-file PDFs; Playwright e2e on critical flows.
+11. **Frontend navigation shape**: map-is-home with a toolbar driving both map behavior and the right sidebar (4 tools: VS / Trajets / Chronologie / Courses); non-map flows live as header pages (Affectations / Ressources / Roadbooks / ⚙ Paramètres); warnings are a slide-over, not a page. Full target model — including the routes deleted and the components absorbed — is in [`../ui/navigation.md`](../ui/navigation.md). This is the authoritative shape; the current `web/src/App.tsx` is the legacy state to be migrated.
 
 If any future doc revision or PR contradicts the above, the decisions here take precedence unless explicitly overridden.
 
