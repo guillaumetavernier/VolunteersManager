@@ -40,17 +40,17 @@ interface Props {
 
 export function RaceDetail({ raceID, onBack }: Props) {
   const race = useRace(raceID);
-  if (race.isLoading) return <main className="p-6">Chargement…</main>;
+  if (race.isLoading) return <div className="p-4 text-sm">Chargement…</div>;
   if (race.error)
     return (
-      <main className="p-6 text-sm text-red-700">
+      <div className="p-4 text-sm text-red-700">
         Course introuvable.{" "}
         {onBack && (
           <button className="underline" onClick={onBack}>
             Retour
           </button>
         )}
-      </main>
+      </div>
     );
   if (!race.data) return null;
   return <Inner race={race.data} raceID={raceID} />;
@@ -58,11 +58,11 @@ export function RaceDetail({ raceID, onBack }: Props) {
 
 function Inner({ race, raceID }: { race: Race; raceID: number }) {
   return (
-    <main className="mx-auto max-w-4xl p-6">
+    <div className="grid gap-4 p-3">
       <RaceForm race={race} />
       <GPXSection raceID={raceID} />
       <VSListSection raceID={raceID} />
-    </main>
+    </div>
   );
 }
 

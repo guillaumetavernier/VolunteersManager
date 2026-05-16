@@ -235,7 +235,7 @@ export function TripEditor({ id }: { id?: number }) {
     try {
       if (isNew) {
         const t = await create.mutateAsync(input);
-        navigate(`/trips/${t.id}`);
+        navigate(`/trajets/${t.id}`);
       } else {
         await replace.mutateAsync(input);
       }
@@ -248,23 +248,13 @@ export function TripEditor({ id }: { id?: number }) {
     if (id == null) return;
     if (!confirm("Supprimer ce trajet ?")) return;
     await del.mutateAsync(id);
-    navigate("/trips");
+    navigate("/trajets");
   }
 
   return (
-    <main className="mx-auto max-w-6xl p-6">
-      <header className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">
-          {isNew ? "Nouveau trajet" : `Trajet n°${id}`}
-        </h1>
-        <nav className="flex items-center gap-2 text-sm">
-          <Button variant="link" size="sm" onClick={() => navigate("/trips")}>
-            Retour
-          </Button>
-        </nav>
-      </header>
-      {error && <p role="alert" className="mb-3 text-sm text-red-600">{error}</p>}
-      <div className="grid gap-4 md:grid-cols-[1fr_2fr_1fr]">
+    <div className="grid gap-4">
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+      <div className="grid gap-4">
         <section className="space-y-3" aria-label="Métadonnées du trajet">
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Jour</span>
@@ -453,7 +443,7 @@ export function TripEditor({ id }: { id?: number }) {
           )}
         </aside>
       </div>
-      <footer className="mt-6 flex items-center gap-3">
+      <footer className="mt-2 flex items-center gap-3">
         <Button onClick={onSave} data-testid="save-trip">
           {isNew ? "Créer" : "Enregistrer"}
         </Button>
@@ -467,7 +457,7 @@ export function TripEditor({ id }: { id?: number }) {
           </Button>
         )}
       </footer>
-    </main>
+    </div>
   );
 }
 

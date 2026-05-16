@@ -7,7 +7,7 @@ import { useVolunteers } from "@/features/volunteer/hooks";
 import { useTransportNeeds } from "./hooks";
 import type { TransportNeed } from "./api";
 
-export function TransportNeedsList({ day }: { day?: number }) {
+export function TransportNeedsList({ day }: { day?: number } = {}) {
   const needs = useTransportNeeds(day);
   const vs = useVSList();
   const vols = useVolunteers("all");
@@ -29,34 +29,26 @@ export function TransportNeedsList({ day }: { day?: number }) {
   }, [needs.data]);
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <header className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Besoins de transport</h1>
-        <nav className="flex items-center gap-2 text-sm">
-          <Button variant="link" size="sm" onClick={() => navigate("/trips")}>
-            Trajets
-          </Button>
-        </nav>
-      </header>
-      {needs.isLoading && <p>Chargement…</p>}
+    <div className="grid gap-3">
+      {needs.isLoading && <p className="text-sm">Chargement…</p>}
       {!needs.isLoading && (needs.data?.length ?? 0) === 0 && (
         <p className="text-sm text-slate-600">Aucun besoin actuel.</p>
       )}
       {Array.from(grouped.entries())
         .sort((a, b) => a[0] - b[0])
         .map(([d, list]) => (
-          <section key={d} className="mb-6" data-day={d}>
-            <h2 className="mb-2 text-lg font-semibold">Jour {d}</h2>
+          <section key={d} className="grid gap-1" data-day={d}>
+            <h3 className="text-sm font-semibold">Jour {d}</h3>
             <ul className="divide-y divide-slate-200 rounded-md border border-slate-200">
               {list.map((n, idx) => (
                 <li
                   key={`${n.volunteer_id}-${n.from_vs}-${n.to_vs}-${idx}`}
-                  className="flex items-center justify-between p-3"
+                  className="flex items-center justify-between gap-2 p-3"
                   data-need={`${n.volunteer_id}-${n.from_vs}-${n.to_vs}`}
                 >
-                  <div>
-                    <div className="font-medium">{volName(n.volunteer_id)}</div>
-                    <div className="text-xs text-slate-500">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">{volName(n.volunteer_id)}</div>
+                    <div className="truncate text-xs text-slate-500">
                       {vsName(n.from_vs)} ({n.from_time}) → {vsName(n.to_vs)} ({n.to_time})
                     </div>
                   </div>
@@ -71,7 +63,7 @@ export function TransportNeedsList({ day }: { day?: number }) {
                         from_time: n.from_time,
                         to_time: n.to_time,
                       });
-                      navigate(`/trips/new?${params.toString()}`);
+                      navigate(`/trajets/new?${params.toString()}`);
                     }}
                   >
                     Créer un trajet
@@ -81,6 +73,6 @@ export function TransportNeedsList({ day }: { day?: number }) {
             </ul>
           </section>
         ))}
-    </main>
+    </div>
   );
 }

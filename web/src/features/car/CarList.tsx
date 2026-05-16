@@ -86,7 +86,7 @@ export function CarList({ onSelect }: CarListProps = {}) {
           const driver = drivers.find((d) => d.id === c.default_driver_id);
           const open = () => {
             if (onSelect) onSelect(c.id);
-            else navigate(`/cars/${c.id}`);
+            else navigate(`/ressources/vehicules/${c.id}`);
           };
           return (
             <li key={c.id} className="flex items-center justify-between py-3" data-car-id={c.id}>

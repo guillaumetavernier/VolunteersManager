@@ -62,7 +62,7 @@ export function VolunteerDetail({ id, onBack }: { id: number; onBack?: () => voi
           })}
         </ul>
       </section>
-      <VolunteerForm existing={q.data} onSaved={() => navigate("/volunteers")} />
+      <VolunteerForm existing={q.data} onSaved={() => navigate("/ressources/benevoles")} />
     </main>
   );
 }

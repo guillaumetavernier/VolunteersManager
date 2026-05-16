@@ -33,19 +33,11 @@ export function GenerateRoadbooksPage() {
             type="button"
             variant="link"
             size="sm"
-            onClick={() => navigate("/settings/roadbook")}
+            onClick={() => navigate("/roadbooks/parametres")}
             className="h-auto px-0"
+            data-testid="roadbooks-parametres-link"
           >
             Paramètres
-          </Button>
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={() => navigate("/")}
-            className="h-auto px-0"
-          >
-            Carte
           </Button>
         </nav>
       </header>

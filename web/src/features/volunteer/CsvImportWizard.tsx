@@ -94,7 +94,7 @@ export function CsvImportWizard({ onClose }: CsvImportWizardProps = {}) {
 
   const handleCancel = () => {
     if (onClose) onClose();
-    else navigate("/volunteers");
+    else navigate("/ressources/benevoles");
   };
 
   const body = (
@@ -283,7 +283,7 @@ export function CsvImportWizard({ onClose }: CsvImportWizardProps = {}) {
                 Fermer
               </Button>
             ) : (
-              <Button variant="link" size="sm" onClick={() => navigate("/volunteers")}>
+              <Button variant="link" size="sm" onClick={() => navigate("/ressources/benevoles")}>
                 Retour aux bénévoles
               </Button>
             )}

@@ -43,7 +43,7 @@ export function VolunteerList({ onSelect }: VolunteerListProps = {}) {
   }, [query.data, search, roleFilter]);
 
   return (
-    <main className="mx-auto max-w-5xl p-6">
+    <main className="mx-auto max-w-5xl p-6" data-testid="volunteers-page">
       <header className="mb-6 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Bénévoles</h1>
         <nav className="flex items-center gap-1">
@@ -128,7 +128,7 @@ function Row({
 }) {
   const open = () => {
     if (onSelect) onSelect(v.id);
-    else navigate(`/volunteers/${v.id}`);
+    else navigate(`/ressources/benevoles/${v.id}`);
   };
   return (
     <li className="flex items-center justify-between gap-3 py-3" data-volunteer-id={v.id}>

@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { navigate } from "@/lib/router";
 import { useVSList } from "@/features/vs/hooks";
 import { useMatrix, usePatchCell, useRecomputeMatrix, type MatrixCell } from "./hooks";
 import type { TravelMode, TravelSource } from "./api";
@@ -53,19 +52,8 @@ export function MatrixView() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl p-6">
-      <header className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Matrice de trajets</h1>
-        <nav className="flex items-center gap-2 text-sm">
-          <Button variant="link" size="sm" onClick={() => navigate("/trips")}>
-            Trajets
-          </Button>
-          <Button variant="link" size="sm" onClick={() => navigate("/")}>
-            Carte
-          </Button>
-        </nav>
-      </header>
-      <div className="mb-4 flex items-center gap-3 text-sm">
+    <div className="grid gap-4">
+      <div className="flex items-center gap-3 text-sm">
         <label className="flex items-center gap-2">
           <span>Mode</span>
           <select
@@ -148,6 +136,6 @@ export function MatrixView() {
           </tbody>
         </table>
       </div>
-    </main>
+    </div>
   );
 }

@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { navigate } from "@/lib/router";
 import { useCreateRace, useDeleteRace, useRaces } from "./hooks";
 
 interface RaceListProps {
@@ -16,8 +15,7 @@ export function RaceList({ onSelect }: RaceListProps = {}) {
   const [name, setName] = useState("");
 
   function goToRace(id: number) {
-    if (onSelect) onSelect(id);
-    else navigate(`/races/${id}`);
+    onSelect?.(id);
   }
 
   async function onCreate(e: React.FormEvent) {
@@ -33,11 +31,8 @@ export function RaceList({ onSelect }: RaceListProps = {}) {
   }
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Courses</h1>
-      </header>
-      <form onSubmit={onCreate} className="mb-6 flex gap-2">
+    <div className="grid gap-3">
+      <form onSubmit={onCreate} className="flex gap-2">
         <Input
           className="flex-1"
           placeholder="Nom de la nouvelle course"
@@ -45,46 +40,47 @@ export function RaceList({ onSelect }: RaceListProps = {}) {
           onChange={(e) => setName(e.target.value)}
         />
         <Button type="submit" disabled={create.isPending}>
-          Ajouter une course
+          Ajouter
         </Button>
       </form>
       {create.isError && (
-        <p role="alert" className="mb-4 text-sm text-red-600">
+        <p role="alert" className="text-sm text-red-600">
           {(create.error as Error).message}
         </p>
       )}
-      {races.isLoading && <p>Chargement…</p>}
+      {races.isLoading && <p className="text-sm">Chargement…</p>}
       {races.data && races.data.length === 0 && (
-        <p className="text-sm text-slate-600">Aucune course pour l'instant. Ajoutez la première ci-dessus.</p>
+        <p className="text-sm text-slate-600">Aucune course pour l'instant.</p>
       )}
-      <ul className="divide-y divide-slate-200">
+      <ul className="divide-y divide-slate-200 rounded-md border border-slate-200">
         {races.data?.map((r) => (
-          <li key={r.id} className="flex items-center justify-between py-3">
+          <li key={r.id} className="flex items-center justify-between gap-2 p-2 text-sm">
             <button
               onClick={() => goToRace(r.id)}
-              className="flex items-center gap-3 text-left"
+              className="flex min-w-0 flex-1 items-center gap-2 text-left"
+              data-race-row={r.id}
             >
               <span
-                className="h-4 w-4 rounded-full border border-slate-300"
+                className="h-3 w-3 shrink-0 rounded-full border border-slate-300"
                 style={{ backgroundColor: r.color }}
                 aria-label={`couleur ${r.color}`}
               />
-              <span className="font-medium">{r.name}</span>
-              <span className="text-xs text-slate-500">
-                tête {r.front_pace} km/h · queue {r.tail_pace} km/h
+              <span className="truncate font-medium">{r.name}</span>
+              <span className="ml-auto shrink-0 text-xs text-slate-500">
+                {r.front_pace}/{r.tail_pace} km/h
               </span>
             </button>
             <button
               onClick={() => {
                 if (confirm(`Supprimer la course "${r.name}" ?`)) del.mutate(r.id);
               }}
-              className="text-sm text-red-700 hover:underline"
+              className="shrink-0 text-xs text-red-700 hover:underline"
             >
               Supprimer
             </button>
           </li>
         ))}
       </ul>
-    </main>
+    </div>
   );
 }

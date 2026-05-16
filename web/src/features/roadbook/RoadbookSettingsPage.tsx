@@ -6,8 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { putEvent } from "@/features/event/api";
 import { useEvent } from "@/features/event/hooks";
 import { useVolunteers } from "@/features/volunteer/hooks";
-import { navigate } from "@/lib/router";
-
 import {
   previewRoadbook,
   readRoadbookSettings,
@@ -134,26 +132,6 @@ export function RoadbookSettingsPage() {
       <section className="space-y-4">
         <header className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Roadbook — paramètres</h1>
-          <nav className="flex gap-3 text-sm text-slate-600">
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={() => navigate("/roadbooks")}
-              className="h-auto px-0"
-            >
-              Génération
-            </Button>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={() => navigate("/")}
-              className="h-auto px-0"
-            >
-              Carte
-            </Button>
-          </nav>
         </header>
 
         <label className="block">

@@ -91,12 +91,12 @@ function navigateTo(ents: EntityRef[]) {
   // Prefer the first volunteer ref, otherwise first mission, otherwise nothing.
   const vol = ents.find((e) => e.type === "volunteer");
   if (vol) {
-    window.location.hash = `/volunteers/${vol.id}`;
+    window.location.hash = `/ressources/benevoles/${vol.id}`;
     return;
   }
   const miss = ents.find((e) => e.type === "mission");
   if (miss) {
-    window.location.hash = `/missions/grid`;
+    window.location.hash = `/affectations`;
     return;
   }
 }
