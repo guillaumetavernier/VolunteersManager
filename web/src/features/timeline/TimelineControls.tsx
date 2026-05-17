@@ -47,12 +47,20 @@ export function TimelineControls({ data }: Props) {
     };
   }, [tick]);
 
-  // Initialize cursor to the window start once data lands; also re-seek if the
-  // cursor is sitting before the window (e.g. after the window expands to
-  // include race data that loaded after the event row).
+  // Initialize cursor to the window start once data lands; also re-seek if
+  // the cursor is sitting on a previous auto-seek target that has since
+  // shifted — e.g. trial/race timings land after trip stops, shrinking the
+  // window leftward so cursor < newStartMs is *false* but the cursor is now
+  // stuck a full day past the new start. Tracking the last auto-target lets
+  // us distinguish "user hasn't scrubbed yet" from "user picked this value."
+  const lastAutoSeekRef = useRef<number | null>(null);
   useEffect(() => {
-    if (data.startMs > 0 && (cursor === 0 || cursor < data.startMs)) {
+    if (data.startMs <= 0) return;
+    const isAutoState =
+      cursor === 0 || cursor === lastAutoSeekRef.current || cursor < data.startMs;
+    if (isAutoState && cursor !== data.startMs) {
       seek(data.startMs);
+      lastAutoSeekRef.current = data.startMs;
     }
   }, [data.startMs, cursor, seek]);
 

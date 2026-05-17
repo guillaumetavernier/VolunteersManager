@@ -1,7 +1,10 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import { ensureEventInitialized, resetState, unwrap } from "./helpers";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 test.describe.configure({ mode: "serial" });
 
