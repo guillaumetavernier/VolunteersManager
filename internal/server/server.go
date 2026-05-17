@@ -30,15 +30,17 @@ import (
 )
 
 type Config struct {
-	Logger        *slog.Logger
-	I18n          *i18n.Catalog
-	DB            *sql.DB
-	AssetDir      string // where photo uploads land
-	ExportDir     string // where roadbook PDFs land (typically <data-dir>/exports)
-	UploadDir     string // where imported archive DBs land (typically <data-dir>/imports)
-	TileDir       string // where pmtiles files live
-	TileBaseURL   string // upstream prefix for downloads; empty disables remote fetch
-	FrontendProxy string // when non-empty, "/" is proxied to this URL (dev only)
+	Logger          *slog.Logger
+	I18n            *i18n.Catalog
+	DB              *sql.DB
+	AssetDir        string // where photo uploads land
+	ExportDir       string // where roadbook PDFs land (typically <data-dir>/exports)
+	UploadDir       string // where imported archive DBs land (typically <data-dir>/imports)
+	TileDir         string // where pmtiles files live
+	TileBaseURL     string // upstream prefix for downloads; empty disables remote fetch
+	TileMode        string // "auto" | "pmtiles" | "online"; controls /api/tiles/source resolution
+	ProtomapsAPIKey string // required when resolving to online mode
+	FrontendProxy   string // when non-empty, "/" is proxied to this URL (dev only)
 }
 
 func New(cfg Config) (http.Handler, error) {
@@ -147,7 +149,10 @@ func New(cfg Config) (http.Handler, error) {
 		}
 	}
 	if cfg.TileDir != "" {
-		NewTileService(cfg.TileDir, cfg.TileBaseURL).Mount(r)
+		svc := NewTileService(cfg.TileDir, cfg.TileBaseURL)
+		svc.Mode = cfg.TileMode
+		svc.ProtomapsAPIKey = cfg.ProtomapsAPIKey
+		svc.Mount(r)
 	}
 
 	frontend, err := frontendHandler(cfg.FrontendProxy)

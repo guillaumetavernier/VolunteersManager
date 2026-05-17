@@ -4,10 +4,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { MapWorkspace } from "@/components/shell/MapWorkspace";
 import { classify, type AppRoute } from "@/components/shell/routes";
 import { AffectationsPage } from "@/features/affectations/AffectationsPage";
-import {
-  eventRegion,
-  useEvent,
-} from "@/features/event/hooks";
+import { useEvent, useTileSource } from "@/features/event/hooks";
 import { EventInitWizard } from "@/features/event/EventInitWizard";
 import { RessourcesPage } from "@/features/ressources/RessourcesPage";
 import { GenerateRoadbooksPage } from "@/features/roadbook/GenerateRoadbooksPage";
@@ -31,27 +28,34 @@ export default function App() {
 
 function AppRouter() {
   const ev = useEvent();
+  const tileSource = useTileSource();
   const route = classify(useRoute());
-  if (ev.isLoading) {
+  if (ev.isLoading || tileSource.isLoading) {
     return <FullScreenStatus message="Loading…" />;
   }
   if (!ev.data) {
     return <EventInitWizard />;
   }
-  const region = eventRegion(ev.data);
-  if (!region) {
+  if (!tileSource.data || tileSource.data.kind === "missing") {
     return (
-      <FullScreenStatus message="Event initialized without a tile region. Re-run the wizard or set settings.region manually." />
+      <FullScreenStatus message="Source de tuiles introuvable. Démarrez avec --tile-mode=online --protomaps-api-key=... ou placez un fichier .pmtiles dans le dossier tiles/." />
     );
   }
+  const source = tileSource.data;
   return (
     <AppShell isMap={route.kind === "map"} tool={route.kind === "map" ? route.tool : undefined}>
-      <Body route={route} region={region} />
+      <Body route={route} source={source} />
     </AppShell>
   );
 }
 
-function Body({ route, region }: { route: AppRoute; region: string }) {
+function Body({
+  route,
+  source,
+}: {
+  route: AppRoute;
+  source: Exclude<ReturnType<typeof useTileSource>["data"], undefined | null | { kind: "missing" }>;
+}) {
   if (route.kind === "issues") {
     return <IssuesPanel />;
   }
@@ -83,7 +87,7 @@ function Body({ route, region }: { route: AppRoute; region: string }) {
         return <SettingsPage />;
     }
   }
-  return <MapWorkspace region={region} tool={route.tool} sub={route.sub} />;
+  return <MapWorkspace source={source} tool={route.tool} sub={route.sub} />;
 }
 
 function FullScreenStatus({ message }: { message: string }) {

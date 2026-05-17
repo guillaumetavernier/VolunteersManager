@@ -1,21 +1,56 @@
 import { layers, namedTheme } from "protomaps-themes-base";
 import type { StyleSpecification } from "maplibre-gl";
 
-// Locked theme variant for M01: "light". See docs/milestones/STATE.md open
-// questions for the prior options.
+// Locked theme variant: "light". Same name on both code paths so vector
+// schema, fonts, and sprites stay consistent between pmtiles and online.
 const THEME = namedTheme("light");
 
-export function buildMapStyle(region: string): StyleSpecification {
+const GLYPHS = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf";
+const SPRITE = "https://protomaps.github.io/basemaps-assets/sprites/v4/light";
+const PROTOMAPS_ATTRIBUTION =
+  '<a href="https://protomaps.com">Protomaps</a> &copy; <a href="https://openstreetmap.org">OpenStreetMap</a>';
+
+export type TileSource =
+  | { kind: "pmtiles"; region: string; attribution?: string }
+  | { kind: "online"; url_template: string; attribution?: string };
+
+// buildMapStyle dispatches to the right MapLibre style based on the tile
+// source resolved by the backend at /api/tiles/source.
+export function buildMapStyle(source: TileSource): StyleSpecification {
+  if (source.kind === "online") {
+    return buildOnlineStyle(source.url_template, source.attribution);
+  }
+  return buildOfflineStyle(source.region, source.attribution);
+}
+
+export function buildOfflineStyle(region: string, attribution?: string): StyleSpecification {
   return {
     version: 8,
-    glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
-    sprite: "https://protomaps.github.io/basemaps-assets/sprites/v4/light",
+    glyphs: GLYPHS,
+    sprite: SPRITE,
     sources: {
       protomaps: {
         type: "vector",
         url: `pmtiles://${pmtilesAbsoluteURL(region)}`,
-        attribution:
-          '<a href="https://protomaps.com">Protomaps</a> &copy; <a href="https://openstreetmap.org">OpenStreetMap</a>',
+        attribution: attribution || PROTOMAPS_ATTRIBUTION,
+      },
+    },
+    layers: layers("protomaps", THEME, { lang: "fr" }),
+  };
+}
+
+export function buildOnlineStyle(urlTemplate: string, attribution?: string): StyleSpecification {
+  return {
+    version: 8,
+    glyphs: GLYPHS,
+    sprite: SPRITE,
+    sources: {
+      protomaps: {
+        type: "vector",
+        tiles: [urlTemplate],
+        minzoom: 0,
+        maxzoom: 15,
+        attribution: attribution || PROTOMAPS_ATTRIBUTION,
       },
     },
     layers: layers("protomaps", THEME, { lang: "fr" }),

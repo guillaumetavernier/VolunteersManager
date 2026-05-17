@@ -4,7 +4,7 @@ import { PMTiles, Protocol } from "pmtiles";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
-import { buildMapStyle } from "@/features/map/style";
+import { buildMapStyle, type TileSource } from "@/features/map/style";
 
 import { useTimelineCursor } from "./useTimelineCursor";
 import { useTimelineSelection } from "./useTimelineSelection";
@@ -18,7 +18,7 @@ import {
 import type { TimelineData } from "./useTimelineData";
 
 interface Props {
-  region: string;
+  source: TileSource;
   data: TimelineData;
 }
 
@@ -36,17 +36,18 @@ interface ReusableCollection {
   features: ReusableFeature[];
 }
 
-export function TimelineMap({ region, data }: Props) {
+export function TimelineMap({ source, data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const styleReadyRef = useRef(false);
 
-  const style = useMemo(() => buildMapStyle(region), [region]);
+  const style = useMemo(() => buildMapStyle(source), [source]);
 
   useEffect(() => {
-    const archive = new PMTiles(`/tiles/${region}.pmtiles`);
+    if (source.kind !== "pmtiles" || !source.region) return;
+    const archive = new PMTiles(`/tiles/${source.region}.pmtiles`);
     pmtilesProtocol.add(archive);
-  }, [region]);
+  }, [source]);
 
   useEffect(() => {
     if (!containerRef.current) return;

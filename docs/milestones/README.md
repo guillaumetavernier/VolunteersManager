@@ -35,7 +35,7 @@ These were settled during pre-implementation grilling (see [`../README.md`](../R
 2. **Backend layout is feature-oriented**: `internal/features/<resource>/` for CRUD; `internal/domain/constraints` cross-cutting; `internal/{gpx,routing,roadbook,csv,archive,store,server}` for subsystems.
 3. **PDF: maroto v2 + go-staticmaps.** No chromedp; pure Go.
 4. **Frontend stack is full from day one**: React 18 + Vite + TS + TanStack Router + TanStack Query + Zustand + Tailwind + shadcn/ui (vendored) + dnd-kit + RHF + Zod + MapLibre GL JS + lucide-react.
-5. **Map tiles**: Protomaps `.pmtiles` always, dev and prod.
+5. **Map tiles**: Protomaps schema, two transport modes. `--tile-mode=auto` (default) prefers a local `.pmtiles` archive when present, falls back to the Protomaps online API when `--protomaps-api-key=` is set, and otherwise reports `kind=missing` so the user can drop one in. Both code paths must keep working. Detail + rationale in [`../research/online-tile-fallback.md`](../research/online-tile-fallback.md). *(Pre-2026-05-17 wording was "Protomaps `.pmtiles` always, dev and prod" — revised when the 8.7 GB archive turned out to be a punishing onboarding tax for the much-more-common planning-with-internet path.)*
 6. **Routing**: haversine-only in v1; schema has `source` column for later ORS/OSRM.
 7. **Auth**: none; bind to `127.0.0.1`.
 8. **Constraint engine**: pure function, server-side full recompute, lives at `internal/domain/constraints`.

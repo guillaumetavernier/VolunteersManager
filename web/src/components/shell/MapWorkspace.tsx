@@ -6,6 +6,7 @@ import { rememberTool, type Tool, type MapSub } from "./routes";
 import { useMapLayers } from "./useMapLayers";
 
 import { useTileDownloadStatus } from "@/features/event/hooks";
+import type { TileSource } from "@/features/map/style";
 import { MapView } from "@/features/map/MapView";
 import { ChronologieToolSidebar } from "@/features/map/tools/ChronologieToolSidebar";
 import { CoursesToolSidebar } from "@/features/map/tools/CoursesToolSidebar";
@@ -20,12 +21,12 @@ import { makeDraft } from "@/features/vs/VSForm";
 import { navigate } from "@/lib/router";
 
 interface Props {
-  region: string;
+  source: TileSource;
   tool: Tool;
   sub: MapSub | undefined;
 }
 
-export function MapWorkspace({ region, tool, sub }: Props) {
+export function MapWorkspace({ source, tool, sub }: Props) {
   useEffect(() => {
     rememberTool(tool);
   }, [tool]);
@@ -34,14 +35,14 @@ export function MapWorkspace({ region, tool, sub }: Props) {
   const onToggleRace = useMapLayers((s) => s.toggleRace);
 
   if (tool === "chronologie") {
-    return <ChronologieWorkspace region={region} />;
+    return <ChronologieWorkspace source={source} />;
   }
 
   return (
     <div className="flex h-full min-h-0">
       <div className="relative min-h-0 flex-1">
         <ToolMap
-          region={region}
+          source={source}
           tool={tool}
           sub={sub}
           raceVisibility={raceVisibility}
@@ -50,7 +51,7 @@ export function MapWorkspace({ region, tool, sub }: Props) {
           raceVisibility={raceVisibility}
           onToggleRace={onToggleRace}
         />
-        <TileDownloadBadge />
+        {source.kind === "pmtiles" && <TileDownloadBadge />}
       </div>
       <Sidebar>
         <ToolSidebar tool={tool} sub={sub} />
@@ -60,18 +61,22 @@ export function MapWorkspace({ region, tool, sub }: Props) {
 }
 
 function ToolMap({
-  region,
+  source,
   tool,
   sub,
   raceVisibility,
 }: {
-  region: string;
+  source: TileSource;
   tool: Tool;
   sub: MapSub | undefined;
   raceVisibility: Record<number, boolean>;
 }) {
   const selectedVSID = useMemo(() => {
     if (sub?.tool === "vs" && sub.sub === "detail") return sub.id;
+    return null;
+  }, [sub]);
+  const selectedRaceID = useMemo(() => {
+    if (sub?.tool === "courses" && sub.sub === "detail") return sub.id;
     return null;
   }, [sub]);
 
@@ -106,10 +111,11 @@ function ToolMap({
 
   return (
     <MapView
-      region={region}
+      source={source}
       onClickEmpty={onClickEmpty}
       onClickVS={onClickVS}
       selectedVSID={selectedVSID}
+      selectedRaceID={selectedRaceID}
       raceVisibility={raceVisibility}
     />
   );
@@ -183,7 +189,7 @@ function VSSidebarController({ sub }: { sub: MapSub | undefined }) {
   );
 }
 
-function ChronologieWorkspace({ region }: { region: string }) {
+function ChronologieWorkspace({ source }: { source: TileSource }) {
   const data = useTimelineData();
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -194,9 +200,9 @@ function ChronologieWorkspace({ region }: { region: string }) {
               Chargement de la chronologie…
             </div>
           ) : (
-            <TimelineMap region={region} data={data} />
+            <TimelineMap source={source} data={data} />
           )}
-          <TileDownloadBadge />
+          {source.kind === "pmtiles" && <TileDownloadBadge />}
         </div>
         <Sidebar>
           <ChronologieToolSidebar data={data} />

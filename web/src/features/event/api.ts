@@ -65,6 +65,15 @@ export async function getTileDownloadStatus(): Promise<TileDownloadStatus> {
   return apiFetch<TileDownloadStatus>("/api/tiles/download/status");
 }
 
+export type TileSourceResponse =
+  | { kind: "pmtiles"; region: string; attribution: string }
+  | { kind: "online"; url_template: string; attribution: string }
+  | { kind: "missing"; attribution: string };
+
+export async function getTileSource(): Promise<TileSourceResponse> {
+  return apiFetch<TileSourceResponse>("/api/tiles/source");
+}
+
 export interface TileRegion {
   slug: string;
   available: boolean;

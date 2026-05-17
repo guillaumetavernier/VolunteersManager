@@ -7,16 +7,24 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useVSList } from "@/features/vs/hooks";
 import { usePatchVS } from "@/features/vs/hooks";
 import type { VS } from "@/features/vs/api";
-import { useRaces } from "@/features/race/hooks";
+import { useRaces, useRaceTrack } from "@/features/race/hooks";
 import { RacePolyline } from "@/features/race/RacePolylines";
 
-import { buildMapStyle } from "./style";
+import {
+  FALLBACK_CENTER,
+  computeInitialCamera,
+  loadPersistedCamera,
+  savePersistedCamera,
+  type RaceTrack,
+} from "./camera";
+import { buildMapStyle, type TileSource } from "./style";
 
 interface Props {
-  region: string;
+  source: TileSource;
   onClickEmpty?: (loc: { lat: number; lon: number }) => void;
   onClickVS?: (vs: VS) => void;
   selectedVSID?: number | null;
+  selectedRaceID?: number | null;
   raceVisibility: Record<number, boolean>;
 }
 
@@ -24,10 +32,11 @@ const pmtilesProtocol = new Protocol();
 maplibregl.addProtocol("pmtiles", pmtilesProtocol.tile);
 
 export function MapView({
-  region,
+  source,
   onClickEmpty,
   onClickVS,
   selectedVSID,
+  selectedRaceID,
   raceVisibility,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -36,26 +45,35 @@ export function MapView({
   const [mapInstance, setMapInstance] = useState<MLMap | null>(null);
   const [styleReady, setStyleReady] = useState(false);
   const [tilesMissing, setTilesMissing] = useState(false);
+  // Initial-camera bookkeeping. The two refs together let the auto-fit effect
+  // run at most once, and only if the user hasn't already started panning
+  // during the data-loading window.
+  const hasFittedRef = useRef(false);
+  const hasUserMovedRef = useRef(false);
 
   const vsQuery = useVSList();
   const patch = usePatchVS();
   const races = useRaces();
+  const raceTrack = useRaceTrack(selectedRaceID ?? 0);
 
   // Latest callbacks via a ref so the map's `click` handler always sees the
   // current closure without forcing a teardown.
   const cbRef = useRef({ onClickEmpty, onClickVS });
   cbRef.current = { onClickEmpty, onClickVS };
 
-  // Register the pmtiles archive so MapLibre can read its directory in one round-trip.
+  // Register the pmtiles archive so MapLibre can read its directory in one
+  // round-trip. Online mode hits api.protomaps.com directly via the style's
+  // tiles[] URL template — no protocol registration needed.
   useEffect(() => {
-    const archive = new PMTiles(`/tiles/${region}.pmtiles`);
+    if (source.kind !== "pmtiles" || !source.region) return;
+    const archive = new PMTiles(`/tiles/${source.region}.pmtiles`);
     pmtilesProtocol.add(archive);
     return () => {
       // pmtiles has no removeArchive; leaving it cached is fine on unmount.
     };
-  }, [region]);
+  }, [source]);
 
-  const style = useMemo(() => buildMapStyle(region), [region]);
+  const style = useMemo(() => buildMapStyle(source), [source]);
 
   // Boot MapLibre once.
   useEffect(() => {
@@ -63,13 +81,28 @@ export function MapView({
     const m = new maplibregl.Map({
       container: containerRef.current,
       style,
-      center: [2.349014, 48.864716],
-      zoom: 5,
+      center: [FALLBACK_CENTER.lng, FALLBACK_CENTER.lat],
+      zoom: FALLBACK_CENTER.zoom,
     });
     mapRef.current = m;
     setMapInstance(m);
     (window as unknown as { __map?: MLMap }).__map = m;
     m.addControl(new maplibregl.NavigationControl(), "top-right");
+
+    // `originalEvent` is populated for DOM-originated moves (drag, wheel,
+    // pinch) and undefined for programmatic ones (jumpTo, fitBounds). This
+    // distinction lets us (1) stop auto-fitting once the user takes over and
+    // (2) persist only user-driven framing as the "home" view.
+    const onMoveStart = (e: maplibregl.MapLibreEvent & { originalEvent?: Event }) => {
+      if (e.originalEvent) hasUserMovedRef.current = true;
+    };
+    const onMoveEnd = (e: maplibregl.MapLibreEvent & { originalEvent?: Event }) => {
+      if (!e.originalEvent) return;
+      const c = m.getCenter();
+      savePersistedCamera({ lng: c.lng, lat: c.lat, zoom: m.getZoom() });
+    };
+    m.on("movestart", onMoveStart);
+    m.on("moveend", onMoveEnd);
 
     const markStyleReady = () => {
       if (m.isStyleLoaded()) setStyleReady(true);
@@ -94,6 +127,8 @@ export function MapView({
 
     return () => {
       m.off("click", onClick);
+      m.off("movestart", onMoveStart);
+      m.off("moveend", onMoveEnd);
       for (const mk of markersRef.current.values()) mk.remove();
       markersRef.current.clear();
       m.remove();
@@ -156,16 +191,65 @@ export function MapView({
     markersRef.current = next;
   }, [vsQuery.data, patch, mapInstance, selectedVSID]);
 
+  // Initial-camera framing. Runs whenever data lands; bails after the first
+  // successful fit, or once the user starts panning. `styleReady` matters
+  // because fitBounds before the style is loaded silently no-ops.
+  useEffect(() => {
+    const map = mapInstance;
+    if (!map || !styleReady) return;
+    if (hasFittedRef.current || hasUserMovedRef.current) return;
+
+    const racesGpx: RaceTrack[] = [];
+    if (selectedRaceID != null && raceTrack.data) {
+      const coords: Array<[number, number]> = [];
+      for (const f of raceTrack.data.features) {
+        for (const c of f.geometry.coordinates) coords.push([c[0], c[1]]);
+      }
+      if (coords.length > 0) racesGpx.push({ coords });
+    }
+
+    const result = computeInitialCamera({
+      selectedVSID: selectedVSID ?? null,
+      selectedRaceID: selectedRaceID ?? null,
+      vsList: vsQuery.data ?? [],
+      racesGpx,
+      raceGpxLoading: selectedRaceID != null && raceTrack.isLoading,
+      persisted: loadPersistedCamera(),
+    });
+
+    if (result.kind === "none") return;
+    if (result.kind === "center") {
+      map.jumpTo({ center: [result.lng, result.lat], zoom: result.zoom });
+    } else {
+      map.fitBounds(
+        [
+          [result.minLng, result.minLat],
+          [result.maxLng, result.maxLat],
+        ],
+        { padding: 60, maxZoom: 14, animate: false },
+      );
+    }
+    hasFittedRef.current = true;
+  }, [
+    mapInstance,
+    styleReady,
+    selectedVSID,
+    selectedRaceID,
+    vsQuery.data,
+    raceTrack.data,
+    raceTrack.isLoading,
+  ]);
+
   const visibleFor = (id: number) => raceVisibility[id] ?? true;
 
   return (
     <div className="relative h-full w-full">
       <div ref={containerRef} className="absolute inset-0" />
-      {tilesMissing && (
+      {tilesMissing && source.kind === "pmtiles" && (
         <div className="absolute left-4 bottom-4 max-w-md rounded-md bg-amber-100 p-4 text-sm text-amber-900 shadow">
           <strong>Map tiles missing.</strong> The pmtiles archive for region{" "}
-          <code>{region}</code> isn't available. Wait for the download to finish or copy it into
-          the <code>tiles/</code> directory.
+          <code>{source.region}</code> isn't available. Wait for the download to finish or copy it
+          into the <code>tiles/</code> directory.
         </div>
       )}
       {races.data?.map((r) => (

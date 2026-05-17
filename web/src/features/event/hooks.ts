@@ -2,11 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getEvent,
   getTileDownloadStatus,
+  getTileSource,
   listTiles,
   putEvent,
   startTileDownload,
 } from "./api";
-import type { Event, EventInput } from "./api";
+import type { Event, EventInput, TileSourceResponse } from "./api";
 
 export const eventQueryKey = ["event"] as const;
 
@@ -115,6 +116,14 @@ function mergeRegion(eventSettings: string, region: string): string {
   }
   top.region = region;
   return JSON.stringify(top);
+}
+
+export function useTileSource() {
+  return useQuery<TileSourceResponse>({
+    queryKey: ["tiles", "source"],
+    queryFn: getTileSource,
+    staleTime: Infinity,
+  });
 }
 
 export function useTileDownloadStatus(enabled: boolean) {

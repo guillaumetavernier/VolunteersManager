@@ -130,3 +130,97 @@ func TestTiles_AreTilesEmpty(t *testing.T) {
 		t.Fatalf("dir with a pmtiles should not report empty")
 	}
 }
+
+func decodeSource(t *testing.T, rr *httptest.ResponseRecorder) TileSource {
+	t.Helper()
+	if rr.Code != 200 {
+		t.Fatalf("status = %d, body = %s", rr.Code, rr.Body.String())
+	}
+	var got TileSource
+	if err := json.NewDecoder(rr.Body).Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	return got
+}
+
+func sourceRequest(t *testing.T, svc *TileService) TileSource {
+	t.Helper()
+	r := mountSvc(t, svc)
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, httptest.NewRequest("GET", "/api/tiles/source", nil))
+	return decodeSource(t, rr)
+}
+
+func TestTileSource_AutoEmptyDirNoKey_FallsBackToPmtiles(t *testing.T) {
+	dir := t.TempDir()
+	svc := NewTileService(dir, "")
+	svc.Mode = "auto"
+	got := sourceRequest(t, svc)
+	if got.Kind != "pmtiles" {
+		t.Fatalf("kind = %q, want pmtiles", got.Kind)
+	}
+	if got.Region != "" {
+		t.Fatalf("region = %q, want empty (no pmtiles on disk)", got.Region)
+	}
+}
+
+func TestTileSource_AutoWithPmtilesOnDisk_PrefersOffline(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "europe-france.pmtiles"), []byte("PMTilesx"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	svc := NewTileService(dir, "")
+	svc.Mode = "auto"
+	svc.ProtomapsAPIKey = "ignored-when-tiles-exist"
+	got := sourceRequest(t, svc)
+	if got.Kind != "pmtiles" {
+		t.Fatalf("kind = %q, want pmtiles (auto prefers on-disk)", got.Kind)
+	}
+	if got.Region != "europe-france" {
+		t.Fatalf("region = %q, want europe-france", got.Region)
+	}
+}
+
+func TestTileSource_AutoEmptyDirWithKey_PicksOnline(t *testing.T) {
+	dir := t.TempDir()
+	svc := NewTileService(dir, "")
+	svc.Mode = "auto"
+	svc.ProtomapsAPIKey = "pk_test_abcdef"
+	got := sourceRequest(t, svc)
+	if got.Kind != "online" {
+		t.Fatalf("kind = %q, want online", got.Kind)
+	}
+	if !strings.Contains(got.URLTemplate, "api.protomaps.com") {
+		t.Fatalf("url template = %q, want api.protomaps.com", got.URLTemplate)
+	}
+	if !strings.Contains(got.URLTemplate, "pk_test_abcdef") {
+		t.Fatalf("url template = %q, want embedded key", got.URLTemplate)
+	}
+}
+
+func TestTileSource_ExplicitOnlineWithoutKey_ReportsMissing(t *testing.T) {
+	dir := t.TempDir()
+	svc := NewTileService(dir, "")
+	svc.Mode = "online"
+	got := sourceRequest(t, svc)
+	if got.Kind != "missing" {
+		t.Fatalf("kind = %q, want missing (online mode without key)", got.Kind)
+	}
+}
+
+func TestTileSource_ExplicitPmtilesIgnoresKey(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "europe-belgium.pmtiles"), []byte("PMTilesx"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	svc := NewTileService(dir, "")
+	svc.Mode = "pmtiles"
+	svc.ProtomapsAPIKey = "should-be-ignored"
+	got := sourceRequest(t, svc)
+	if got.Kind != "pmtiles" {
+		t.Fatalf("kind = %q, want pmtiles (explicit mode ignores key)", got.Kind)
+	}
+	if got.Region != "europe-belgium" {
+		t.Fatalf("region = %q, want europe-belgium", got.Region)
+	}
+}

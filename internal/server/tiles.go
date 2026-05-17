@@ -35,6 +35,11 @@ type TileService struct {
 	Dir     string // absolute path to the tiles directory
 	BaseURL string // URL prefix prepended to regionCatalog entries when downloading
 
+	// Mode is "auto", "pmtiles", or "online". Empty defaults to "auto".
+	Mode string
+	// ProtomapsAPIKey is required when resolving to online mode.
+	ProtomapsAPIKey string
+
 	mu     sync.Mutex
 	status DownloadStatus
 }
@@ -65,8 +70,77 @@ func NewTileService(dir, baseURL string) *TileService {
 func (s *TileService) Mount(r chi.Router) {
 	r.Get("/tiles/{region}.pmtiles", s.serve)
 	r.Get("/api/tiles", s.listRegions)
+	r.Get("/api/tiles/source", s.tileSource)
 	r.Post("/api/tiles/download", s.download)
 	r.Get("/api/tiles/download/status", s.statusJSON)
+}
+
+// TileSource describes the resolved tile source the frontend should use.
+// One of the two object shapes is returned. The frontend treats the URL
+// template verbatim — the API key (when present) is already embedded.
+type TileSource struct {
+	Kind        string `json:"kind"`                   // "pmtiles" | "online" | "missing"
+	Region      string `json:"region,omitempty"`       // pmtiles only
+	URLTemplate string `json:"url_template,omitempty"` // online only
+	Attribution string `json:"attribution"`
+}
+
+// tileSource resolves the configured mode + on-disk state into a concrete
+// TileSource the frontend can render against. See docs/research/online-tile-
+// fallback.md for the design.
+func (s *TileService) tileSource(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	src := s.resolveTileSource()
+	_ = json.NewEncoder(w).Encode(src)
+}
+
+func (s *TileService) resolveTileSource() TileSource {
+	const protomapsAttribution = `<a href="https://protomaps.com">Protomaps</a> &copy; <a href="https://openstreetmap.org">OpenStreetMap</a>`
+	mode := s.Mode
+	if mode == "" {
+		mode = "auto"
+	}
+	online := func() TileSource {
+		return TileSource{
+			Kind:        "online",
+			URLTemplate: "https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=" + s.ProtomapsAPIKey,
+			Attribution: protomapsAttribution,
+		}
+	}
+	pmtiles := func() TileSource {
+		region := s.firstAvailableRegion()
+		return TileSource{
+			Kind:        "pmtiles",
+			Region:      region,
+			Attribution: protomapsAttribution,
+		}
+	}
+	switch mode {
+	case "online":
+		if s.ProtomapsAPIKey == "" {
+			return TileSource{Kind: "missing", Attribution: protomapsAttribution}
+		}
+		return online()
+	case "pmtiles":
+		return pmtiles()
+	default: // "auto"
+		if !AreTilesEmpty(s.Dir) {
+			return pmtiles()
+		}
+		if s.ProtomapsAPIKey != "" {
+			return online()
+		}
+		return pmtiles()
+	}
+}
+
+func (s *TileService) firstAvailableRegion() string {
+	for slug := range regionCatalog {
+		if _, err := os.Stat(filepath.Join(s.Dir, slug+".pmtiles")); err == nil {
+			return slug
+		}
+	}
+	return ""
 }
 
 type tileError struct {

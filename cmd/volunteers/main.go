@@ -40,6 +40,8 @@ func run() error {
 		dataDir       = flag.String("data-dir", ".", "directory containing event.db, tiles/ and assets/")
 		offlineTiles  = flag.String("offline-tiles", "", "if set, use this directory for .pmtiles instead of <data-dir>/tiles")
 		tileBaseURL   = flag.String("tile-base-url", "https://build.protomaps.com", "upstream prefix used by POST /api/tiles/download")
+		tileMode      = flag.String("tile-mode", "auto", "tile source policy: auto|pmtiles|online (auto picks pmtiles if any are on disk, else online if --protomaps-api-key is set, else pmtiles with a missing-tiles badge)")
+		protomapsKey  = flag.String("protomaps-api-key", "", "Protomaps API key for online tile mode; required when --tile-mode=online")
 		logLevel      = flag.String("log-level", "info", "log level: debug|info|warn|error")
 		frontendProxy = flag.String("frontend-proxy", "", "if set, proxy non-API requests to this URL (dev only)")
 		openBrowser   = flag.Bool("open", true, "open the default browser on startup")
@@ -100,15 +102,17 @@ func run() error {
 	}
 
 	handler, err := server.New(server.Config{
-		Logger:        logger,
-		I18n:          cat,
-		DB:            st.DB,
-		AssetDir:      assetDir,
-		ExportDir:     exportDir,
-		UploadDir:     uploadDir,
-		TileDir:       tileDir,
-		TileBaseURL:   *tileBaseURL,
-		FrontendProxy: *frontendProxy,
+		Logger:          logger,
+		I18n:            cat,
+		DB:              st.DB,
+		AssetDir:        assetDir,
+		ExportDir:       exportDir,
+		UploadDir:       uploadDir,
+		TileDir:         tileDir,
+		TileBaseURL:     *tileBaseURL,
+		TileMode:        *tileMode,
+		ProtomapsAPIKey: *protomapsKey,
+		FrontendProxy:   *frontendProxy,
 	})
 	if err != nil {
 		return err
