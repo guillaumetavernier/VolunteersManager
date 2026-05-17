@@ -104,15 +104,6 @@ const fixtureGPX = `<?xml version="1.0" encoding="UTF-8"?>
   </trkseg></trk>
 </gpx>`
 
-func uploadGPXForRace(t *testing.T, r chi.Router, raceID int64, body string) int {
-	t.Helper()
-	// GPX is now trial-scoped; this helper is used only via the track endpoint test.
-	_ = body
-	_ = raceID
-	_ = r
-	return http.StatusCreated
-}
-
 func TestRace_TrackReturnsFeatureCollection(t *testing.T) {
 	r, _, _ := newTestRig(t)
 	ra := createRace(t, r, `{"name":"42km"}`)

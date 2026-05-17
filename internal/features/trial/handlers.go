@@ -146,12 +146,7 @@ func (h *Handler) patch(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
 		return
 	}
-	tr, err := h.Store.Patch(id, PatchInput{
-		Name:      req.Name,
-		StartTime: req.StartTime,
-		FrontPace: req.FrontPace,
-		TailPace:  req.TailPace,
-	})
+	tr, err := h.Store.Patch(id, PatchInput(req))
 	if errors.Is(err, ErrNotFound) {
 		writeJSON(w, http.StatusNotFound, errorPayload{Code: "not_found"})
 		return
