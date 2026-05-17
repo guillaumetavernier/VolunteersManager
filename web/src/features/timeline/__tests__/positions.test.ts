@@ -209,3 +209,53 @@ describe("carPosition with cross-midnight trip", () => {
     expect(out.lon).toBeCloseTo(2.0);
   });
 });
+
+describe("runnerFrontPosition — multi-trial continuous interpolation", () => {
+  // Two trials share the same GPX; timings span across both.
+  // Trial 1: VS at proj_dist=500m, first_in=1000ms.
+  // Trial 2: VS at proj_dist=600m, first_in=3000ms.
+  // Between the trials the runner continues moving along the track (no gap).
+  const race: RaceTimeline = {
+    id: 1,
+    start_ms: 0,
+    total_distance_m: 1000,
+    points: makePoints([
+      [0, 0, 0],
+      [10, 0, 500],
+      [12, 0, 600],
+      [20, 0, 1000],
+    ]),
+    frontTimings: [
+      { vs_id: 1, projected_dist_m: 500, first_in_ms: 1000, last_in_ms: 1200 },
+      { vs_id: 2, projected_dist_m: 600, first_in_ms: 3000, last_in_ms: 4000 },
+    ],
+    tailTimings: [],
+  };
+
+  it("runner is visible at end of trial 1", () => {
+    const out: LonLat = { lon: 0, lat: 0 };
+    expect(runnerFrontPosition(race, 1000, out)).toBe(true);
+    expect(out.lon).toBeCloseTo(10);
+  });
+
+  it("runner continues moving between trials (interpolated)", () => {
+    const out: LonLat = { lon: 0, lat: 0 };
+    // At t=2000ms: halfway between trial 1 VS (1000ms, 500m) and trial 2 VS (3000ms, 600m).
+    // dist = 500 + (600-500) * 0.5 = 550m → lon between 10 and 12.
+    expect(runnerFrontPosition(race, 2000, out)).toBe(true);
+    expect(out.lon).toBeGreaterThan(10);
+    expect(out.lon).toBeLessThan(12);
+  });
+
+  it("runner arrives at trial 2 VS", () => {
+    const out: LonLat = { lon: 0, lat: 0 };
+    expect(runnerFrontPosition(race, 3000, out)).toBe(true);
+    expect(out.lon).toBeCloseTo(12);
+  });
+
+  it("runner is not visible after last trial VS", () => {
+    const out: LonLat = { lon: 0, lat: 0 };
+    // After 4000ms (last timing in all trials) the runner leaves the window.
+    expect(runnerFrontPosition(race, 5000, out)).toBe(false);
+  });
+});

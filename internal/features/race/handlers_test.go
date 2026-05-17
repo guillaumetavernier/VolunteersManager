@@ -56,12 +56,9 @@ func createRace(t *testing.T, r chi.Router, body string) Race {
 func TestRace_CreateGetPatchDelete(t *testing.T) {
 	r, _, _ := newTestRig(t)
 
-	ra := createRace(t, r, `{"name":"100km","color":"#ff0000","front_pace":15,"tail_pace":6,"start_time":"2026-06-01T05:00:00Z"}`)
+	ra := createRace(t, r, `{"name":"100km","color":"#ff0000"}`)
 	if ra.Name != "100km" || ra.Color != "#ff0000" {
 		t.Fatalf("create returned %+v", ra)
-	}
-	if ra.FrontPace != 15 || ra.TailPace != 6 {
-		t.Fatalf("paces = %v/%v", ra.FrontPace, ra.TailPace)
 	}
 
 	// Duplicate name → 409.
@@ -72,16 +69,16 @@ func TestRace_CreateGetPatchDelete(t *testing.T) {
 		t.Fatalf("dup status = %d, want 409", rec.Code)
 	}
 
-	// Patch.
+	// Patch name.
 	rec = httptest.NewRecorder()
 	r.ServeHTTP(rec, httptest.NewRequest(http.MethodPatch, "/api/races/"+strconv.FormatInt(ra.ID, 10),
-		strings.NewReader(`{"front_pace":14}`)))
+		strings.NewReader(`{"name":"Ultra"}`)))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("patch status = %d, body=%s", rec.Code, rec.Body.String())
 	}
 	got := decodeJSON[Race](t, rec.Body)
-	if got.FrontPace != 14 {
-		t.Fatalf("after patch front_pace = %v, want 14", got.FrontPace)
+	if got.Name != "Ultra" {
+		t.Fatalf("after patch name = %q, want Ultra", got.Name)
 	}
 
 	// Delete + 404.
@@ -107,6 +104,34 @@ const fixtureGPX = `<?xml version="1.0" encoding="UTF-8"?>
   </trkseg></trk>
 </gpx>`
 
+func uploadGPXForRace(t *testing.T, r chi.Router, raceID int64, body string) int {
+	t.Helper()
+	// GPX is now trial-scoped; this helper is used only via the track endpoint test.
+	_ = body
+	_ = raceID
+	_ = r
+	return http.StatusCreated
+}
+
+func TestRace_TrackReturnsFeatureCollection(t *testing.T) {
+	r, _, _ := newTestRig(t)
+	ra := createRace(t, r, `{"name":"42km"}`)
+
+	// No GPX yet → empty FeatureCollection.
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/races/"+strconv.FormatInt(ra.ID, 10)+"/track", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("track status = %d", rec.Code)
+	}
+	var fc map[string]any
+	if err := json.NewDecoder(rec.Body).Decode(&fc); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if fc["type"] != "FeatureCollection" {
+		t.Fatalf("type = %v, want FeatureCollection", fc["type"])
+	}
+}
+
 func uploadGPX(t *testing.T, r chi.Router, raceID int64, body string) int {
 	t.Helper()
 	var buf bytes.Buffer
@@ -128,42 +153,14 @@ func uploadGPX(t *testing.T, r chi.Router, raceID int64, body string) int {
 	return rec.Code
 }
 
-func TestRace_GPXUploadStoresFileAndPoints(t *testing.T) {
-	r, db, assetDir := newTestRig(t)
+func TestRace_OldGPXEndpointGone(t *testing.T) {
+	// The old race-scoped GPX upload endpoint no longer exists (moved to trial).
+	// Posting to the old path should get a 404.
+	r, _, _ := newTestRig(t)
 	ra := createRace(t, r, `{"name":"42km"}`)
 	code := uploadGPX(t, r, ra.ID, fixtureGPX)
-	if code != http.StatusCreated {
-		t.Fatalf("upload status = %d, want 201", code)
-	}
-
-	var n int
-	if err := db.QueryRow(`SELECT count(*) FROM gpx_files WHERE race_id = ?`, ra.ID).Scan(&n); err != nil {
-		t.Fatalf("count: %v", err)
-	}
-	if n != 1 {
-		t.Fatalf("gpx_files rows = %d, want 1", n)
-	}
-
-	var filePath string
-	var total float64
-	if err := db.QueryRow(`SELECT file_path, total_distance_m FROM gpx_files WHERE race_id = ?`, ra.ID).Scan(&filePath, &total); err != nil {
-		t.Fatalf("read: %v", err)
-	}
-	if !strings.HasPrefix(filePath, "/assets/gpx/") {
-		t.Fatalf("file_path = %q, want /assets/gpx/* prefix", filePath)
-	}
-	if total <= 0 {
-		t.Fatalf("total_distance_m = %v, want > 0", total)
-	}
-	_ = assetDir
-}
-
-func TestRace_GPXUploadRejectsGarbage(t *testing.T) {
-	r, _, _ := newTestRig(t)
-	ra := createRace(t, r, `{"name":"trail"}`)
-	code := uploadGPX(t, r, ra.ID, `not even xml`)
-	if code != http.StatusUnprocessableEntity {
-		t.Fatalf("status = %d, want 422", code)
+	if code != http.StatusNotFound {
+		t.Fatalf("old gpx upload path: status = %d, want 404", code)
 	}
 }
 

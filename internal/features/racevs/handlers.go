@@ -2,7 +2,6 @@ package racevs
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -26,8 +25,6 @@ func NewHandler(s *Store, rc Recomputer) *Handler {
 func (h *Handler) Mount(r chi.Router) {
 	r.Get("/api/races/{id}/vs", h.list)
 	r.Put("/api/races/{id}/vs", h.replace)
-	r.Patch("/api/races/{id}/vs/{vsId}", h.patch)
-	r.Delete("/api/races/{id}/vs/{vsId}/manual", h.clearManual)
 }
 
 type errorPayload struct {
@@ -78,56 +75,6 @@ func (h *Handler) replace(w http.ResponseWriter, r *http.Request) {
 		xs = []Entry{}
 	}
 	writeJSON(w, http.StatusOK, xs)
-}
-
-func (h *Handler) patch(w http.ResponseWriter, r *http.Request) {
-	raceID, ok := parseID(w, r, "id")
-	if !ok {
-		return
-	}
-	vsID, ok := parseID(w, r, "vsId")
-	if !ok {
-		return
-	}
-	var p PatchTimes
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		writeJSON(w, http.StatusBadRequest, errorPayload{Code: "bad_request", Message: err.Error()})
-		return
-	}
-	e, err := h.Store.PatchTimes(raceID, vsID, p)
-	if errors.Is(err, ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, errorPayload{Code: "not_found"})
-		return
-	}
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
-		return
-	}
-	writeJSON(w, http.StatusOK, e)
-}
-
-func (h *Handler) clearManual(w http.ResponseWriter, r *http.Request) {
-	raceID, ok := parseID(w, r, "id")
-	if !ok {
-		return
-	}
-	vsID, ok := parseID(w, r, "vsId")
-	if !ok {
-		return
-	}
-	q := r.URL.Query()
-	first := q.Get("first") == "1"
-	last := q.Get("last") == "1"
-	e, err := h.Store.ClearManual(raceID, vsID, first, last)
-	if errors.Is(err, ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, errorPayload{Code: "not_found"})
-		return
-	}
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
-		return
-	}
-	writeJSON(w, http.StatusOK, e)
 }
 
 func parseID(w http.ResponseWriter, r *http.Request, param string) (int64, bool) {

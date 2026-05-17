@@ -2,24 +2,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createRace,
   deleteRace,
-  deleteRaceGPX,
   getRace,
   getRaceTrack,
-  listRaceGPX,
   listRaceVS,
   listRaces,
   patchRace,
-  patchRaceVSTimes,
   replaceRaceVS,
-  uploadRaceGPX,
-  clearRaceVSManual,
   type RaceCreate,
   type RacePatch,
 } from "./api";
 
 export const racesKey = ["races"] as const;
 export const raceKey = (id: number) => ["races", id] as const;
-export const raceGPXKey = (id: number) => ["races", id, "gpx"] as const;
 export const raceVSKey = (id: number) => ["races", id, "vs"] as const;
 export const raceTrackKey = (id: number) => ["races", id, "track"] as const;
 
@@ -50,7 +44,6 @@ export function usePatchRace(id: number) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: racesKey });
       qc.invalidateQueries({ queryKey: raceKey(id) });
-      qc.invalidateQueries({ queryKey: raceVSKey(id) });
     },
   });
 }
@@ -60,32 +53,6 @@ export function useDeleteRace() {
   return useMutation({
     mutationFn: (id: number) => deleteRace(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: racesKey }),
-  });
-}
-
-export function useRaceGPX(id: number) {
-  return useQuery({ queryKey: raceGPXKey(id), queryFn: () => listRaceGPX(id), enabled: id > 0 });
-}
-
-export function useUploadRaceGPX(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ file, day }: { file: File; day?: number | null }) => uploadRaceGPX(id, file, day),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: raceGPXKey(id) });
-      qc.invalidateQueries({ queryKey: raceVSKey(id) });
-    },
-  });
-}
-
-export function useDeleteRaceGPX(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (gpxID: number) => deleteRaceGPX(id, gpxID),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: raceGPXKey(id) });
-      qc.invalidateQueries({ queryKey: raceVSKey(id) });
-    },
   });
 }
 
@@ -100,23 +67,5 @@ export function useReplaceRaceVS(id: number) {
     onSuccess: (data) => {
       qc.setQueryData(raceVSKey(id), data);
     },
-  });
-}
-
-export function useOverrideRaceVSTimes(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ vsID, patch }: { vsID: number; patch: { manual_first_in?: string | null; manual_last_in?: string | null } }) =>
-      patchRaceVSTimes(id, vsID, patch),
-    onSuccess: () => qc.invalidateQueries({ queryKey: raceVSKey(id) }),
-  });
-}
-
-export function useClearRaceVSManual(id: number) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ vsID, fields }: { vsID: number; fields: { first?: boolean; last?: boolean } }) =>
-      clearRaceVSManual(id, vsID, fields),
-    onSuccess: () => qc.invalidateQueries({ queryKey: raceVSKey(id) }),
   });
 }

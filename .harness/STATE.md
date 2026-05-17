@@ -2,8 +2,8 @@
 
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
-**Last updated:** 2026-05-16
-**Current milestone:** **[10-navigation-rework](../docs/milestones/10-navigation-rework.md)** — completed.
+**Last updated:** 2026-05-17
+**Current milestone:** **[11-trials](../docs/milestones/11-trials.md)** — completed.
 
 ## Status legend
 
@@ -27,6 +27,7 @@
 | 08 | 08-roadbook                   | 🟢 completed   | All acceptance criteria pass; mini-map shipped force-off per locked v1 decision (stub `ErrMiniMapNotImplemented`). |
 | 09 | 09-archive-polish             | 🟢 completed   | All acceptance criteria pass except the deploy-time tag-push check; harness + Playwright e2e green. |
 | 10 | 10-navigation-rework          | 🟢 completed   | Map-is-home toolbar shipped; AppShell + MapWorkspace + four tool sidebars; legacy MapDrawer/PbEditPanel/MissionsPanel removed; 30 Playwright tests + 87 Vitest tests green. |
+| 11 | 11-trials                     | 🟢 completed   | All acceptance criteria pass; harness green. |
 
 ## Acceptance criteria — per-milestone checklist
 
@@ -176,3 +177,22 @@ When an open question gets answered, move it into the relevant milestone file an
   2. `CLAUDE.md` "Hard rules"
   3. `scripts/harness/lint_docs.py` (`FORBIDDEN_IN_MILESTONES` or a new `check_*`)
 - Adding a new milestone? Update both the table above **and** the milestone index in `docs/milestones/README.md`. The harness verifies that every milestone file is in both.
+
+### 11-trials
+
+- [x] `GET /api/races/{id}/trials` returns an ordered list of trials.
+- [x] `POST /api/races/{id}/trials`, `PATCH /api/trials/{id}`, `DELETE /api/trials/{id}` work.
+- [x] `PUT /api/races/{id}/trials/reorder` reorders and triggers recompute.
+- [x] `POST /api/trials/{id}/gpx` / `DELETE /api/trials/{trialId}/gpx/{gpxId}` work.
+- [x] `GET /api/races/{id}/vs` returns `earliest_first_in` / `latest_last_in`.
+- [x] `PUT /api/race_trial_vs/{id}` persists source/manual times.
+- [x] `RecomputeRace` walks trials in sequence, propagates envelope, respects manual_exclude.
+- [x] Race model has no `FrontPace`/`TailPace`/`StartTime`.
+- [x] RaceVSEntry model has no timing columns.
+- [x] Frontend `RaceForm` shows only name + color.
+- [x] Frontend `TrialsSection` renders with dnd-kit drag-to-reorder.
+- [x] Frontend `VSListSection` shows aggregated timing summary.
+- [x] Timeline badge strip renders per trial.
+- [x] Multi-trial continuous interpolation: runner moves between trials; gap only after last trial VS.
+- [x] `go test ./...` green; `pnpm test` green.
+- [x] `./scripts/harness/check.sh` green.

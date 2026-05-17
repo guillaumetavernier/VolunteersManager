@@ -5,14 +5,20 @@ import { useTimelineSelection } from "./useTimelineSelection";
 import type { TimelineData } from "./useTimelineData";
 
 const ROW_H = 22;
+const BADGE_ROW_H = 12;
 const HEADER_H = 28;
 const LEFT_GUTTER = 140;
 
 type Row =
+  | { kind: "race-badge"; raceID: number; label: string }
   | { kind: "race-front"; raceID: number; label: string; color: string }
   | { kind: "race-tail"; raceID: number; label: string; color: string }
   | { kind: "missions-vs"; vsID: number; label: string }
   | { kind: "trips-car"; carID: number; label: string };
+
+function rowH(r: Row): number {
+  return r.kind === "race-badge" ? BADGE_ROW_H : ROW_H;
+}
 
 interface Bar {
   rowIndex: number;
@@ -21,7 +27,7 @@ interface Bar {
   fill: string;
   stroke?: string;
   title: string;
-  kind: "mission" | "trip-leg" | "race-front" | "race-tail";
+  kind: "mission" | "trip-leg" | "race-front" | "race-tail" | "race-badge";
   payload?: { raceID?: number; fromVsID?: number; toVsID?: number };
 }
 
@@ -39,8 +45,11 @@ export function TimelineView({ data }: Props) {
   const setSelected = useTimelineSelection((s) => s.setSelected);
   const visibleRaces = useTimelineSelection((s) => s.visibleRaces);
 
-  const { rows, bars, timeBounds } = useMemo(() => buildRowsAndBars(data, visibleRaces), [data, visibleRaces]);
-  const contentH = HEADER_H + rows.length * ROW_H;
+  const { rows, bars, rowOffsets, totalContentH, timeBounds } = useMemo(
+    () => buildRowsAndBars(data, visibleRaces),
+    [data, visibleRaces],
+  );
+  const contentH = HEADER_H + totalContentH;
 
   // Resize observer keeps the canvas in step with its parent.
   useEffect(() => {
@@ -66,10 +75,10 @@ export function TimelineView({ data }: Props) {
     const g = off.getContext("2d");
     if (!g) return;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawStatic(g, size.w, size.h, rows, bars, timeBounds);
+    drawStatic(g, size.w, size.h, rows, rowOffsets, bars, timeBounds);
     drawDynamic();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [size, rows, bars, timeBounds]);
+  }, [size, rows, bars, timeBounds, rowOffsets]);
 
   // Redraw on cursor change (composite only).
   useEffect(() => {
@@ -97,8 +106,17 @@ export function TimelineView({ data }: Props) {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     if (x < LEFT_GUTTER) return;
-    const rowI = Math.floor((y - HEADER_H) / ROW_H);
-    if (rowI < 0 || rowI >= rows.length) return;
+    // Find row by offset.
+    const relY = y - HEADER_H;
+    let rowI = -1;
+    for (let i = 0; i < rowOffsets.length; i++) {
+      const h = rowH(rows[i]);
+      if (relY >= rowOffsets[i] && relY < rowOffsets[i] + h) {
+        rowI = i;
+        break;
+      }
+    }
+    if (rowI < 0) return;
     const w = size.w - LEFT_GUTTER;
     const t = timeBounds.start + ((x - LEFT_GUTTER) / w) * (timeBounds.end - timeBounds.start);
     // Race-front row → select sub-segment under cursor.
@@ -171,17 +189,35 @@ interface TimeBounds {
 function buildRowsAndBars(
   data: TimelineData,
   visibleRaces: Record<number, boolean>,
-): { rows: Row[]; bars: Bar[]; timeBounds: TimeBounds } {
+): { rows: Row[]; bars: Bar[]; rowOffsets: number[]; totalContentH: number; timeBounds: TimeBounds } {
   const rows: Row[] = [];
   const bars: Bar[] = [];
   const start = data.startMs;
   const end = data.endMs;
 
-  // Race rows (front + tail) for each race.
+  // Race rows: badge strip + front + tail for each race.
   for (const r of data.races) {
     const on = visibleRaces[r.id] ?? true;
     if (!on) continue;
     const tl = data.raceTimelines.get(r.id);
+    const badges = data.trialBadgesByRace.get(r.id) ?? [];
+
+    // Badge row (thin strip showing trial spans).
+    const badgeRow = rows.length;
+    rows.push({ kind: "race-badge", raceID: r.id, label: "" });
+    for (const b of badges) {
+      if (b.startMs == null) continue;
+      const eMs = b.endMs ?? b.startMs;
+      bars.push({
+        rowIndex: badgeRow,
+        startMs: b.startMs,
+        endMs: eMs,
+        fill: b.color,
+        title: b.name,
+        kind: "race-badge",
+      });
+    }
+
     const frontRow = rows.length;
     rows.push({ kind: "race-front", raceID: r.id, label: r.name + " (front)", color: r.color });
     const tailRow = rows.length;
@@ -283,7 +319,15 @@ function buildRowsAndBars(
     }
   }
 
-  return { rows, bars, timeBounds: { start, end } };
+  // Compute row offsets (variable height for badge rows).
+  const rowOffsets: number[] = [];
+  let cum = 0;
+  for (const r of rows) {
+    rowOffsets.push(cum);
+    cum += rowH(r);
+  }
+
+  return { rows, bars, rowOffsets, totalContentH: cum, timeBounds: { start, end } };
 }
 
 function drawStatic(
@@ -291,6 +335,7 @@ function drawStatic(
   w: number,
   h: number,
   rows: Row[],
+  rowOffsets: number[],
   bars: Bar[],
   tb: TimeBounds,
 ) {
@@ -346,26 +391,50 @@ function drawStatic(
   g.stroke();
 
   g.font = "11px system-ui, sans-serif";
-  g.fillStyle = "#0f172a";
   for (let i = 0; i < rows.length; i++) {
-    const y = HEADER_H + i * ROW_H;
-    g.fillStyle = i % 2 === 0 ? "#ffffff" : "#f8fafc";
-    g.fillRect(LEFT_GUTTER, y, innerW, ROW_H);
-    g.fillStyle = "#0f172a";
-    g.fillText(rows[i].label.slice(0, 22), 6, y + 14);
+    const y = HEADER_H + rowOffsets[i];
+    const rh = rowH(rows[i]);
+    // Row background (alternating for regular rows only).
+    if (rows[i].kind !== "race-badge") {
+      g.fillStyle = i % 2 === 0 ? "#ffffff" : "#f8fafc";
+      g.fillRect(LEFT_GUTTER, y, innerW, rh);
+      g.fillStyle = "#0f172a";
+      g.fillText(rows[i].label.slice(0, 22), 6, y + 14);
+    } else {
+      // Badge strip: very light background.
+      g.fillStyle = "#f1f5f9";
+      g.fillRect(LEFT_GUTTER, y, innerW, rh);
+    }
   }
 
   // Bars.
   for (let i = 0; i < bars.length; i++) {
     const b = bars[i];
-    const y = HEADER_H + b.rowIndex * ROW_H + 3;
+    const y = HEADER_H + rowOffsets[b.rowIndex];
+    const rh = rowH(rows[b.rowIndex]);
     const x0 = LEFT_GUTTER + ((b.startMs - tb.start) / range) * innerW;
     const x1 = LEFT_GUTTER + ((b.endMs - tb.start) / range) * innerW;
     const bw = Math.max(2, x1 - x0);
-    g.fillStyle = b.fill;
-    g.globalAlpha = b.kind === "race-tail" ? 0.55 : 0.85;
-    g.fillRect(x0, y, bw, ROW_H - 6);
-    g.globalAlpha = 1;
+
+    if (b.kind === "race-badge") {
+      // Full-height chip in the badge strip.
+      g.fillStyle = b.fill;
+      g.globalAlpha = 0.75;
+      g.fillRect(x0, y + 1, bw, rh - 2);
+      // Trial name label if wide enough.
+      if (bw > 30) {
+        g.globalAlpha = 1;
+        g.fillStyle = "#ffffff";
+        g.font = "9px system-ui, sans-serif";
+        g.fillText(b.title.slice(0, Math.floor(bw / 6)), x0 + 2, y + rh - 2);
+      }
+      g.globalAlpha = 1;
+    } else {
+      g.fillStyle = b.fill;
+      g.globalAlpha = b.kind === "race-tail" ? 0.55 : 0.85;
+      g.fillRect(x0, y + 3, bw, rh - 6);
+      g.globalAlpha = 1;
+    }
   }
 }
 

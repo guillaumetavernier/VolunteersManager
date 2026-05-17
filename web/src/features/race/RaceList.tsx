@@ -66,9 +66,6 @@ export function RaceList({ onSelect }: RaceListProps = {}) {
                 aria-label={`couleur ${r.color}`}
               />
               <span className="truncate font-medium">{r.name}</span>
-              <span className="ml-auto shrink-0 text-xs text-slate-500">
-                {r.front_pace}/{r.tail_pace} km/h
-              </span>
             </button>
             <button
               onClick={() => {
