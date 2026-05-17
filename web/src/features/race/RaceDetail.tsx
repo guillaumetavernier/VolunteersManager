@@ -203,18 +203,27 @@ function GPXSection({ raceID }: { raceID: number }) {
         )}
       </div>
       {gpx.data && gpx.data.length === 0 && <p className="text-sm text-slate-500">Aucun GPX importé pour l'instant.</p>}
-      <ul className="divide-y divide-slate-200 text-sm">
+      <ul className="grid min-w-0 divide-y divide-slate-200 text-sm">
         {gpx.data?.map((g) => (
-          <li key={g.id} className="flex items-center justify-between gap-2 py-2">
-            <span className="min-w-0 flex-1 truncate">
-              <code>{g.file_path.split("/").pop()}</code>
-              {" — "}
-              {(g.total_distance_m / 1000).toFixed(2)} km
-              {g.day != null && ` · jour ${g.day}`}
-            </span>
-            <button onClick={() => del.mutate(g.id)} className="shrink-0 text-red-700 hover:underline">
-              Supprimer
-            </button>
+          <li key={g.id} className="grid min-w-0 gap-1 py-2">
+            <code
+              className="block min-w-0 truncate text-xs text-slate-700"
+              title={g.file_path.split("/").pop()}
+            >
+              {g.file_path.split("/").pop()}
+            </code>
+            <div className="flex min-w-0 items-center justify-between gap-2">
+              <span className="min-w-0 truncate text-xs text-slate-500">
+                {(g.total_distance_m / 1000).toFixed(2)} km
+                {g.day != null && ` · jour ${g.day}`}
+              </span>
+              <button
+                onClick={() => del.mutate(g.id)}
+                className="shrink-0 text-xs text-red-700 hover:underline"
+              >
+                Supprimer
+              </button>
+            </div>
           </li>
         ))}
       </ul>
