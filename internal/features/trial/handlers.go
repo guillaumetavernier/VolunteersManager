@@ -47,6 +47,7 @@ func (h *Handler) Mount(r chi.Router) {
 	r.Delete("/api/trials/{trialId}/gpx/{gpxId}", h.deleteGPX)
 
 	r.Put("/api/race_trial_vs/{id}", h.putTrialVS)
+	r.Get("/api/trials/{id}/vs", h.listTrialVS)
 }
 
 type errorPayload struct {
@@ -341,6 +342,22 @@ func (h *Handler) deleteGPX(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) listTrialVS(w http.ResponseWriter, r *http.Request) {
+	trialID, ok := parseID(w, r, "id")
+	if !ok {
+		return
+	}
+	xs, err := h.Store.ListTrialVS(trialID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, errorPayload{Code: "internal", Message: err.Error()})
+		return
+	}
+	if xs == nil {
+		xs = []TrialVS{}
+	}
+	writeJSON(w, http.StatusOK, xs)
 }
 
 func (h *Handler) putTrialVS(w http.ResponseWriter, r *http.Request) {

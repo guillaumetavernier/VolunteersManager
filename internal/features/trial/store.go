@@ -192,6 +192,25 @@ func (s *Store) DeleteGPX(trialID, gpxID int64) error {
 	return nil
 }
 
+// ListTrialVS returns all race_trial_vs rows for a trial.
+func (s *Store) ListTrialVS(trialID int64) ([]TrialVS, error) {
+	const q = `SELECT id, trial_id, vs_id, source, dist_in_trial_m, auto_first_in, auto_last_in, manual_first_in, manual_last_in FROM race_trial_vs WHERE trial_id = ? ORDER BY dist_in_trial_m ASC NULLS LAST`
+	rows, err := s.DB.Query(q, trialID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	var out []TrialVS
+	for rows.Next() {
+		tv, err := scanTrialVS(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, tv)
+	}
+	return out, rows.Err()
+}
+
 // GetTrialVS returns one race_trial_vs row by ID.
 func (s *Store) GetTrialVS(id int64) (TrialVS, error) {
 	const q = `SELECT id, trial_id, vs_id, source, dist_in_trial_m, auto_first_in, auto_last_in, manual_first_in, manual_last_in FROM race_trial_vs WHERE id = ?`

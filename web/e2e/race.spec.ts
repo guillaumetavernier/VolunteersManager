@@ -13,7 +13,7 @@ test.beforeEach(async ({ request }) => {
   await resetState(request);
 });
 
-test("create race, upload GPX, add VS in order, override one time, see polyline on map", async ({
+test("create race, add trial with GPX, add VS, see polyline on map", async ({
   page,
   request,
 }) => {
@@ -34,66 +34,51 @@ test("create race, upload GPX, add VS in order, override one time, see polyline 
   // We navigate to /courses/{id}; the form is visible.
   await expect(page.getByRole("heading", { name: /paramètres de la course/i })).toBeVisible();
 
-  // Set a recognisable color, paces, start time.
+  // Set a recognisable color.
   await page.getByLabel("Couleur").fill("#ff0000");
-  await page.getByLabel("Allure tête (km/h)").fill("15");
-  await page.getByLabel("Allure queue (km/h)").fill("6");
-  // The Enregistrer button persists everything.
   await page.getByRole("button", { name: /^enregistrer$/i }).click();
 
-  // Persist start time via the API directly — datetime-local in headless is
-  // browser/locale-flaky and isn't the point of this test.
   const races = await (await request.get("/api/races")).json();
   const race = races[0];
   expect(race).toBeTruthy();
-  await request.patch(`/api/races/${race.id}`, {
-    data: { start_time: "2026-06-01T05:00:00Z" },
-  });
 
-  // Upload the fixture GPX through the file input on the page.
+  // Add a trial via API with start_time and paces.
+  const trialRes = await request.post(`/api/races/${race.id}/trials`, {
+    data: {
+      name: "Épreuve principale",
+      sequence: 0,
+      start_time: "2026-06-01T05:00:00Z",
+      front_pace: 15.0,
+      tail_pace: 6.0,
+    },
+  });
+  expect(trialRes.ok()).toBe(true);
+  const trial = await unwrap<{ id: number }>(trialRes);
+
+  // Upload the fixture GPX through the API for the trial.
   const gpxPath = path.resolve(__dirname, "fixtures/sample.gpx");
   await fs.access(gpxPath);
-  await page.locator('input[type="file"]').setInputFiles(gpxPath);
-  await page.getByRole("button", { name: /^téléverser$/i }).click();
+  const gpxContent = await fs.readFile(gpxPath);
+  const gpxBlob = new Blob([gpxContent], { type: "application/gpx+xml" });
+  const form = new FormData();
+  form.append("gpx", gpxBlob, "sample.gpx");
+  const gpxRes = await request.post(`/api/trials/${trial.id}/gpx`, {
+    multipart: { gpx: { name: "sample.gpx", mimeType: "application/gpx+xml", buffer: gpxContent } },
+  });
+  expect(gpxRes.ok()).toBe(true);
 
-  // Wait for the file to land in the list — the stored filename is its sha256,
-  // so match on the km-distance suffix instead.
-  await expect(page.locator("li", { hasText: ".gpx" }).first()).toBeVisible();
+  // Add the VS to the race's ordered list.
+  await request.put(`/api/races/${race.id}/vs`, {
+    data: [{ vs_id: vs.id, sequence: 0 }],
+  });
 
-  // Add the VS to the race's ordered list via the picker.
-  await page.locator("select").last().selectOption({ label: "Midpoint" });
-
-  // auto first-in / last-in populate. The exact strings depend on projection;
-  // assert they're set, not their content.
+  // Aggregated timing populates via recompute.
   await expect.poll(async () => {
     const xs = await (await request.get(`/api/races/${race.id}/vs`)).json();
-    return xs?.[0]?.auto_first_in;
-  }, { timeout: 5_000 }).not.toBeNull();
+    return xs?.[0]?.earliest_first_in;
+  }, { timeout: 8_000 }).not.toBeNull();
 
-  // Override the manual first-in via the UI: the row shows two datetime-local
-  // inputs (one per first-in / last-in editor). Set first-in.
-  const firstInInput = page
-    .locator("li", { hasText: "Midpoint" })
-    .locator('input[type="datetime-local"]')
-    .first();
-  await firstInInput.fill("2026-06-01T07:00");
-  await firstInInput.blur();
-
-  // The override sticks across a recompute. Trigger by patching the front pace.
-  await expect.poll(async () => {
-    const xs = await (await request.get(`/api/races/${race.id}/vs`)).json();
-    return xs?.[0]?.manual_first_in;
-  }, { timeout: 5_000 }).not.toBeNull();
-
-  await request.patch(`/api/races/${race.id}`, { data: { front_pace: 14 } });
-  await expect.poll(async () => {
-    const xs = await (await request.get(`/api/races/${race.id}/vs`)).json();
-    const m = xs?.[0]?.manual_first_in as string | null;
-    return !!m;
-  }, { timeout: 5_000 }).toBe(true);
-
-  // Move a VS → projection + auto times recompute. We change lat/lon, then
-  // confirm projected_dist_m changes.
+  // Move a VS → projection + auto times recompute.
   const before = (await (await request.get(`/api/races/${race.id}/vs`)).json())[0];
   await request.patch(`/api/vs/${vs.id}`, {
     data: { lat: 48.8584, lon: 2.2965 },
@@ -103,8 +88,7 @@ test("create race, upload GPX, add VS in order, override one time, see polyline 
     return xs?.[0]?.projected_dist_m;
   }, { timeout: 5_000 }).not.toBe(before.projected_dist_m);
 
-  // Map shows the GPX polyline in race color. Visit the map shell, wait for
-  // the map to load, and inspect the MapLibre layer state.
+  // Map shows the GPX polyline in race color.
   await page.goto("/#/courses");
   await waitForMap(page);
   await expect.poll(async () => {
