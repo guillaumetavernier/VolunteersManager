@@ -105,15 +105,16 @@ function TrialForm({ trial, raceID }: Props) {
         </label>
         <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Heure de départ</span>
+          {/* Store the raw datetime-local value (naive local time). Wrapping
+              it in `new Date(...).toISOString()` would re-interpret the input
+              as local then convert to UTC, dropping the offset back into the
+              stored string — the user enters 08:00 Paris and sees 06:00 on
+              reload. The backend accepts both naive 'YYYY-MM-DDTHH:MM' and
+              RFC3339 (see internal/features/race/recompute.go parseStart). */}
           <Input
             type="datetime-local"
             value={form.start_time.slice(0, 16)}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                start_time: e.target.value ? new Date(e.target.value).toISOString() : "",
-              })
-            }
+            onChange={(e) => setForm({ ...form, start_time: e.target.value })}
           />
         </label>
         <div className="grid min-w-0 grid-cols-2 gap-2">
