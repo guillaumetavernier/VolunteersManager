@@ -86,7 +86,7 @@ func (s *Service) RecomputeRace(raceID int64) error {
 
 			if len(track.Points) == 0 {
 				// No GPX for this trial — only manual_include rows survive.
-				if !(existingErr == nil && existing.source == "manual_include") {
+				if existingErr != nil || existing.source != "manual_include" {
 					continue
 				}
 			}
