@@ -39,7 +39,7 @@ export function ArchivePage() {
       <section className="space-y-3 rounded border p-4">
         <h2 className="text-lg font-medium">Exporter</h2>
         <p className="text-sm text-slate-600">
-          Le fichier .zip contient le dump SQL, les photos VS, le logo, le sponsor et les fichiers
+          Le fichier .zip contient le dump SQL, les photos PB, le logo, le sponsor et les fichiers
           GPX. Les tuiles cartographiques sont exclues (trop volumineuses).
         </p>
         <Button asChild>

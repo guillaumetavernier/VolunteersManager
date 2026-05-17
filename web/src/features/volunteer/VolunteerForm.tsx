@@ -163,7 +163,7 @@ export function VolunteerForm({ existing, onSaved, onCancel }: Props) {
         />
       </Field>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="VS par défaut">
+        <Field label="PB par défaut">
           <Controller
             name="default_vs_id"
             control={form.control}

@@ -130,7 +130,7 @@ export function MapView({
         el.className = markerClass(v.id === selectedVSID);
         el.setAttribute("data-vs-name", v.name);
         el.setAttribute("data-vs-id", String(v.id));
-        el.title = `VS ${v.name}`;
+        el.title = `PB ${v.name}`;
         marker = new maplibregl.Marker({ element: el, draggable: true })
           .setLngLat([v.lon, v.lat])
           .addTo(map);

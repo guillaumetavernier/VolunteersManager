@@ -25,7 +25,7 @@ export const SECTION_LABELS: Record<SectionKind, string> = {
   general_info: "Informations générales",
   customizable_message: "Message personnalisé",
   emergency_contact: "Contact d'urgence",
-  vs_reference: "Points VS",
+  vs_reference: "Points PB",
   sponsor: "Sponsor",
   footer: "Pied de page",
 };

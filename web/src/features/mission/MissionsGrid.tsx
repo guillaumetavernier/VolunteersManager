@@ -54,7 +54,7 @@ export function MissionsGrid() {
         <table className="w-full border-collapse text-xs" data-missions-grid>
           <thead>
             <tr className="bg-slate-50">
-              <th className="sticky left-0 z-10 bg-slate-50 px-2 py-1 text-left">VS</th>
+              <th className="sticky left-0 z-10 bg-slate-50 px-2 py-1 text-left">PB</th>
               {buckets.map((b) => (
                 <th key={b.label} className="px-1 py-1 text-left text-[10px] font-normal text-slate-500">
                   {b.label}
@@ -83,7 +83,7 @@ export function MissionsGrid() {
             {vsList.length === 0 && (
               <tr>
                 <td colSpan={buckets.length + 1} className="px-2 py-4 text-center text-sm text-slate-500">
-                  Aucun VS encore.
+                  Aucun PB encore.
                 </td>
               </tr>
             )}

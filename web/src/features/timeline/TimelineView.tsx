@@ -216,7 +216,7 @@ function buildRowsAndBars(
           startMs: a.t,
           endMs: b.t,
           fill: r.color,
-          title: `${r.name} front: VS ${from} → VS ${to}`,
+          title: `${r.name} front: PB ${from} → PB ${to}`,
           kind: "race-front",
           payload: { raceID: r.id, fromVsID: from, toVsID: to },
         });
@@ -241,7 +241,7 @@ function buildRowsAndBars(
   for (const [vsID, missions] of vsWithMissions) {
     const vs = data.vsById.get(vsID);
     const row = rows.length;
-    rows.push({ kind: "missions-vs", vsID, label: vs ? vs.name : `VS ${vsID}` });
+    rows.push({ kind: "missions-vs", vsID, label: vs ? vs.name : `PB ${vsID}` });
     for (const m of missions) {
       const s = Date.parse(m.start_time);
       const e = Date.parse(m.end_time);

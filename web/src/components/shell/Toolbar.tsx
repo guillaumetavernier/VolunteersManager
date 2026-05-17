@@ -8,7 +8,7 @@ interface Props {
 }
 
 const TABS: { id: Tool; label: string }[] = [
-  { id: "vs", label: "VS" },
+  { id: "vs", label: "PB" },
   { id: "trajets", label: "Trajets" },
   { id: "chronologie", label: "Chronologie" },
   { id: "courses", label: "Courses" },
