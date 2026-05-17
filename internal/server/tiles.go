@@ -76,12 +76,13 @@ func (s *TileService) Mount(r chi.Router) {
 }
 
 // TileSource describes the resolved tile source the frontend should use.
-// One of the two object shapes is returned. The frontend treats the URL
-// template verbatim — the API key (when present) is already embedded.
+// The frontend treats URLTemplate / StyleURL verbatim — any API key is
+// already embedded.
 type TileSource struct {
-	Kind        string `json:"kind"`                   // "pmtiles" | "online" | "missing"
+	Kind        string `json:"kind"`                   // "pmtiles" | "online" | "openfreemap" | "missing"
 	Region      string `json:"region,omitempty"`       // pmtiles only
-	URLTemplate string `json:"url_template,omitempty"` // online only
+	URLTemplate string `json:"url_template,omitempty"` // online (Protomaps API) only
+	StyleURL    string `json:"style_url,omitempty"`    // openfreemap only — hosted MapLibre style JSON
 	Attribution string `json:"attribution"`
 }
 
@@ -96,6 +97,11 @@ func (s *TileService) tileSource(w http.ResponseWriter, _ *http.Request) {
 
 func (s *TileService) resolveTileSource() TileSource {
 	const protomapsAttribution = `<a href="https://protomaps.com">Protomaps</a> &copy; <a href="https://openstreetmap.org">OpenStreetMap</a>`
+	const openFreeMapAttribution = `<a href="https://openfreemap.org">OpenFreeMap</a> &copy; <a href="https://openstreetmap.org">OpenStreetMap</a>`
+	// Positron is the lightest of OpenFreeMap's hosted styles and matches the
+	// look of the Protomaps "light" theme most closely. The style JSON is
+	// served by openfreemap.org and resolved by MapLibre at runtime.
+	const openFreeMapStyle = "https://tiles.openfreemap.org/styles/positron"
 	mode := s.Mode
 	if mode == "" {
 		mode = "auto"
@@ -115,6 +121,13 @@ func (s *TileService) resolveTileSource() TileSource {
 			Attribution: protomapsAttribution,
 		}
 	}
+	openFreeMap := func() TileSource {
+		return TileSource{
+			Kind:        "openfreemap",
+			StyleURL:    openFreeMapStyle,
+			Attribution: openFreeMapAttribution,
+		}
+	}
 	switch mode {
 	case "online":
 		if s.ProtomapsAPIKey == "" {
@@ -123,6 +136,8 @@ func (s *TileService) resolveTileSource() TileSource {
 		return online()
 	case "pmtiles":
 		return pmtiles()
+	case "openfreemap":
+		return openFreeMap()
 	default: // "auto"
 		if !AreTilesEmpty(s.Dir) {
 			return pmtiles()
@@ -130,7 +145,10 @@ func (s *TileService) resolveTileSource() TileSource {
 		if s.ProtomapsAPIKey != "" {
 			return online()
 		}
-		return pmtiles()
+		// Zero-config fallback: OpenFreeMap is free, no key, no rate limits.
+		// Means the binary always renders something on the map even with no
+		// pmtiles archive and no API key.
+		return openFreeMap()
 	}
 }
 

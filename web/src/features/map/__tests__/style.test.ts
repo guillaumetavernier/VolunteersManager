@@ -26,8 +26,20 @@ describe("style builders", () => {
       kind: "online",
       url_template: "https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=pk_x",
     });
+    // Narrow off/on to StyleSpecification (not the string variant).
+    if (typeof off === "string" || typeof on === "string") {
+      throw new Error("expected StyleSpecification, got URL");
+    }
     expect((off.sources.protomaps as { url?: string }).url).toContain("europe-uk.pmtiles");
     expect((on.sources.protomaps as { tiles?: string[] }).tiles?.[0]).toContain("pk_x");
+  });
+
+  it("buildMapStyle returns the hosted style URL for openfreemap", () => {
+    const result = buildMapStyle({
+      kind: "openfreemap",
+      style_url: "https://tiles.openfreemap.org/styles/positron",
+    });
+    expect(result).toBe("https://tiles.openfreemap.org/styles/positron");
   });
 
   it("both styles share the same glyphs and sprite endpoints", () => {

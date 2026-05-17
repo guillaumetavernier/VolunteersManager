@@ -12,11 +12,17 @@ const PROTOMAPS_ATTRIBUTION =
 
 export type TileSource =
   | { kind: "pmtiles"; region: string; attribution?: string }
-  | { kind: "online"; url_template: string; attribution?: string };
+  | { kind: "online"; url_template: string; attribution?: string }
+  | { kind: "openfreemap"; style_url: string; attribution?: string };
 
 // buildMapStyle dispatches to the right MapLibre style based on the tile
-// source resolved by the backend at /api/tiles/source.
-export function buildMapStyle(source: TileSource): StyleSpecification {
+// source resolved by the backend at /api/tiles/source. OpenFreeMap returns
+// a string URL — MapLibre fetches the hosted style JSON at runtime and
+// resolves its own glyphs, sprites, sources, and layers.
+export function buildMapStyle(source: TileSource): StyleSpecification | string {
+  if (source.kind === "openfreemap") {
+    return source.style_url;
+  }
   if (source.kind === "online") {
     return buildOnlineStyle(source.url_template, source.attribution);
   }

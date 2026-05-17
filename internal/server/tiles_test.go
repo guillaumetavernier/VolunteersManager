@@ -151,16 +151,16 @@ func sourceRequest(t *testing.T, svc *TileService) TileSource {
 	return decodeSource(t, rr)
 }
 
-func TestTileSource_AutoEmptyDirNoKey_FallsBackToPmtiles(t *testing.T) {
+func TestTileSource_AutoEmptyDirNoKey_FallsBackToOpenFreeMap(t *testing.T) {
 	dir := t.TempDir()
 	svc := NewTileService(dir, "")
 	svc.Mode = "auto"
 	got := sourceRequest(t, svc)
-	if got.Kind != "pmtiles" {
-		t.Fatalf("kind = %q, want pmtiles", got.Kind)
+	if got.Kind != "openfreemap" {
+		t.Fatalf("kind = %q, want openfreemap (zero-config fallback)", got.Kind)
 	}
-	if got.Region != "" {
-		t.Fatalf("region = %q, want empty (no pmtiles on disk)", got.Region)
+	if !strings.Contains(got.StyleURL, "openfreemap.org") {
+		t.Fatalf("style url = %q, want openfreemap.org", got.StyleURL)
 	}
 }
 
@@ -205,6 +205,23 @@ func TestTileSource_ExplicitOnlineWithoutKey_ReportsMissing(t *testing.T) {
 	got := sourceRequest(t, svc)
 	if got.Kind != "missing" {
 		t.Fatalf("kind = %q, want missing (online mode without key)", got.Kind)
+	}
+}
+
+func TestTileSource_ExplicitOpenFreeMap(t *testing.T) {
+	dir := t.TempDir()
+	svc := NewTileService(dir, "")
+	svc.Mode = "openfreemap"
+	svc.ProtomapsAPIKey = "should-be-ignored"
+	got := sourceRequest(t, svc)
+	if got.Kind != "openfreemap" {
+		t.Fatalf("kind = %q, want openfreemap", got.Kind)
+	}
+	if got.StyleURL == "" {
+		t.Fatalf("style url is empty")
+	}
+	if got.URLTemplate != "" || got.Region != "" {
+		t.Fatalf("openfreemap mode must not leak protomaps fields, got %+v", got)
 	}
 }
 

@@ -1,6 +1,6 @@
 # Online tile fallback — feasibility study
 
-> Status: research, not yet decided. Pushes against locked decision #5 ("Map tiles: Protomaps `.pmtiles` always"). Read this end-to-end before changing the decision.
+> Status: shipped (commits 6df902e, cc79173, and the openfreemap follow-up). Locked decision #5 revised twice — once to add Protomaps online, once to add OpenFreeMap as the zero-config fallback. This doc retains the original feasibility study for context.
 
 ## Context
 
