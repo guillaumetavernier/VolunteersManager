@@ -6,33 +6,46 @@ planning volunteer logistics for multi-day trail races.
 > v1 is single-tenant, single-event, FR-only, bound to `127.0.0.1`. There is
 > no authentication, no telemetry, and no cloud dependency.
 
-## Features
+## What you can do
 
-- **Map-is-home UI.** MapLibre GL JS with a toolbar driving four tools (VS,
-  Trajets, Chronologie, Courses) and a persistent right sidebar.
-- **Races with multiple trials (épreuves).** Each trial has its own GPX,
-  start time, and front/tail paces; the engine propagates a dwell-at-PB
-  envelope across the ordered sequence to compute per-VS earliest/latest
-  times.
-- **Volunteers, cars, missions, assignments.** Drag-drop assignment UI,
-  role-filtered candidate picker, CSV import (with ambiguity resolution) and
-  export, photo-attached VS markers.
-- **Constraint engine.** Pure-function full recompute on every mutation —
-  double-bookings, role mismatches, capacity overruns, stranded volunteers
-  surface as warnings on badges and an issues slide-over.
-- **Trips + travel-time matrix.** Haversine matrix with manual overrides;
-  trip editor with board/alight per stop; transport-needs view derived from
-  consecutive missions at different VS.
-- **Timeline.** Canvas scrubber animating runner front/tail, volunteer, and
-  car positions along their GPX, with per-trial badge strips and 30× playback.
-- **Roadbook PDFs.** maroto v2 + go-staticmaps, byte-deterministic golden
-  output, per-volunteer + master document, customizable primary color and
-  toggleable sections.
-- **Archive + backup.** One-file `event.db` plus zip export/import covering
-  GPX and assets; daily auto-backup; pre-migration `event.db.bak`.
-- **Offline-first.** Local `.pmtiles` when present, otherwise online tiles
-  (Protomaps with a key, or zero-config OpenFreeMap) — see
-  [Tile sources](#tile-sources).
+- **Plan everything on a map.** Drop aid stations (VS) by clicking the map,
+  attach photos, drag to reposition. The map is the home screen — switch
+  between aid stations, vehicle trips, the race-day timeline, and race setup
+  from one toolbar.
+- **Model multi-stage races.** A race can have several ordered trials
+  (épreuves), each with its own GPX, start time, and front/tail paces. The
+  app computes when the first and last runner reach every aid station,
+  including dwell time at runners' personal bests.
+- **Manage volunteers and vehicles.** Track availability windows, roles,
+  driving ability, phone numbers. Import a roster from CSV (with a preview
+  step that resolves duplicates and ambiguous matches) and export it back.
+- **Assign volunteers to missions by drag-and-drop.** Each aid station hosts
+  missions for specific roles and time windows. The candidate picker
+  pre-filters to volunteers who are role-compatible and available.
+- **Catch scheduling conflicts automatically.** Double-bookings, role
+  mismatches, missing drivers, capacity overruns, and stranded volunteers
+  surface as warnings on the relevant entity — no separate "validate" step.
+- **Plan inter-station vehicle trips.** Build trips with multiple stops,
+  pick who boards and alights at each stop, and see travel-time estimates
+  derived from straight-line distance (overridable per leg). A
+  transport-needs view lists volunteers whose consecutive missions are at
+  different aid stations.
+- **Replay race day before it happens.** A canvas timeline scrubs through
+  the whole event; runner fronts and tails, volunteers, and vehicles all
+  move on the map in sync. Play at 30× to spot quiet hours and pressure
+  points.
+- **Hand each volunteer a personalized roadbook PDF.** Per-volunteer
+  documents include their day-by-day schedule, co-staff phone numbers, and
+  (for drivers) their trip itinerary. A master document collects everyone
+  plus a grid sheet. Customizable colors and toggleable sections; bytes are
+  deterministic for repeatable regeneration.
+- **Move a whole event in one file.** Everything lives in `event.db`. Export
+  a zip (database + GPX + photos + logos) to archive or migrate; daily
+  auto-backups keep history; a pre-migration `.bak` is the rollback safety
+  net.
+- **Run fully offline.** Drop a regional `.pmtiles` archive in `tiles/` and
+  the map needs no internet. Without one, the binary falls back to hosted
+  tiles automatically — see [Tile sources](#tile-sources).
 
 ## Quickstart
 
