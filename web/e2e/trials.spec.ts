@@ -1,3 +1,5 @@
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
 import { expect, test } from "@playwright/test";
 import { ensureEventInitialized, resetState, unwrap } from "./helpers";
 
@@ -12,9 +14,11 @@ test("create race, add two trials, reorder them, see VS timing populated", async
   page,
   request,
 }) => {
-  // Seed a VS.
+  // Seed a VS sitting on the sample GPX line (Paris fixture) so projection
+  // can match it; otherwise RecomputeRace would skip it and earliest_first_in
+  // would stay null forever.
   const vsRes = await request.post("/api/vs", {
-    data: { name: "Col du Galibier", lat: 45.064, lon: 6.407 },
+    data: { name: "PB sur tracé", lat: 48.8584, lon: 2.296 },
   });
   expect(vsRes.ok()).toBe(true);
   const vs = await unwrap<{ id: number }>(vsRes);
@@ -61,8 +65,18 @@ test("create race, add two trials, reorder them, see VS timing populated", async
     },
   });
 
+  // Attach a GPX to the first trial — without a polyline, RecomputeRace
+  // can't project the PB onto the trial, so race_trial_vs stays empty and
+  // the aggregated earliest_first_in below never populates.
+  const gpxPath = path.resolve(__dirname, "fixtures/sample.gpx");
+  const buf = await fs.readFile(gpxPath);
+  const upload = await request.post(`/api/trials/${trials[0].id}/gpx`, {
+    multipart: { gpx: { name: "sample.gpx", mimeType: "application/gpx+xml", buffer: buf } },
+  });
+  expect(upload.ok()).toBe(true);
+
   // Verify VS entry now has aggregated timing after recompute.
-  // (Recompute fires on patch trial.)
+  // (Recompute fires on GPX upload.)
   await expect.poll(async () => {
     const xs = await (await request.get(`/api/races/${race.id}/vs`)).json() as Array<{ earliest_first_in: string | null }>;
     return xs?.[0]?.earliest_first_in;

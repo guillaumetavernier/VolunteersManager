@@ -27,18 +27,27 @@ test("timeline renders bars, plays, scrubs, sub-race zooms, race toggle hides ba
   );
 
   const raceRes = await request.post("/api/races", {
-    data: { name: "42km", color: "#ff0000", front_pace: 15, tail_pace: 6 },
+    data: { name: "42km", color: "#ff0000" },
   });
   const race = await unwrap<{ id: number }>(raceRes);
-  await request.patch(`/api/races/${race.id}`, {
-    data: { start_time: "2026-06-01T05:00:00Z" },
-  });
 
-  // Upload sample GPX to give the race a polyline.
+  // Post-M11 the race is just metadata; pace + start + GPX live on a trial.
+  const trialRes = await request.post(`/api/races/${race.id}/trials`, {
+    data: {
+      name: "Étape 1",
+      sequence: 0,
+      start_time: "2026-06-01T05:00:00Z",
+      front_pace: 15,
+      tail_pace: 6,
+    },
+  });
+  const trial = await unwrap<{ id: number }>(trialRes);
+
+  // Upload sample GPX to give the trial a polyline.
   const gpxPath = path.resolve(__dirname, "fixtures/sample.gpx");
   await fs.access(gpxPath);
   const buf = await fs.readFile(gpxPath);
-  const upload = await request.post(`/api/races/${race.id}/gpx`, {
+  const upload = await request.post(`/api/trials/${trial.id}/gpx`, {
     multipart: { gpx: { name: "sample.gpx", mimeType: "application/gpx+xml", buffer: buf } },
   });
   expect(upload.ok()).toBe(true);
