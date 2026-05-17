@@ -16,6 +16,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DayChips } from "@/features/event/DayChips";
 import { useVSList } from "@/features/vs/hooks";
 import type { VS } from "@/features/vs/api";
 
@@ -168,12 +169,12 @@ function GPXSection({ raceID }: { raceID: number }) {
   const upload = useUploadRaceGPX(raceID);
   const del = useDeleteRaceGPX(raceID);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [day, setDay] = useState<string>("");
+  const [day, setDay] = useState<number | null>(null);
 
   async function onUpload() {
     const f = fileRef.current?.files?.[0];
     if (!f) return;
-    await upload.mutateAsync({ file: f, day: day ? Number(day) : null });
+    await upload.mutateAsync({ file: f, day });
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -187,12 +188,18 @@ function GPXSection({ raceID }: { raceID: number }) {
           accept=".gpx,application/gpx+xml,application/xml"
           className="block w-full text-sm"
         />
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center text-sm text-slate-600">
-            Jour&nbsp;
-            <Input className="w-16" type="number" min={1} value={day} onChange={(e) => setDay(e.target.value)} />
+        <div className="grid min-w-0 gap-2">
+          <label className="grid min-w-0 gap-1 text-sm text-slate-600">
+            <span>Jour</span>
+            <DayChips
+              value={day}
+              onChange={setDay}
+              includeNone
+              noneLabel="Tous"
+              testidPrefix="gpx-day"
+            />
           </label>
-          <Button onClick={onUpload} size="sm" disabled={upload.isPending}>
+          <Button onClick={onUpload} size="sm" disabled={upload.isPending} className="justify-self-start">
             {upload.isPending ? "Envoi…" : "Téléverser"}
           </Button>
         </div>

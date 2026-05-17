@@ -5,8 +5,9 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { DayChips } from "@/features/event/DayChips";
 import { useEvent } from "@/features/event/hooks";
-import { composeISO, dayCount, extractHHMM } from "@/features/event/eventcal";
+import { composeISO, extractHHMM } from "@/features/event/eventcal";
 import { useRoleTypes } from "@/features/volunteer/hooks";
 import { useRaces } from "@/features/race/hooks";
 import { useCreateMission, usePatchMission } from "./hooks";
@@ -38,8 +39,6 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
   const event = useEvent();
   const create = useCreateMission(vsID);
   const patch = usePatchMission(existing?.id ?? 0);
-
-  const totalDays = event.data ? dayCount(event.data) : 1;
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -82,28 +81,11 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
           name="day"
           control={form.control}
           render={({ field }) => (
-            <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Jour">
-              {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => {
-                const active = field.value === d;
-                return (
-                  <button
-                    key={d}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    data-testid={`mission-day-${d}`}
-                    onClick={() => field.onChange(d)}
-                    className={`rounded-md border px-3 py-1 text-xs font-medium ${
-                      active
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    J{d}
-                  </button>
-                );
-              })}
-            </div>
+            <DayChips
+              value={field.value}
+              onChange={(d) => field.onChange(d ?? 1)}
+              testidPrefix="mission-day"
+            />
           )}
         />
       </Field>
