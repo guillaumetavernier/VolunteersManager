@@ -29,7 +29,7 @@ export function TransportNeedsList({ day }: { day?: number } = {}) {
   }, [needs.data]);
 
   return (
-    <div className="grid gap-3" data-testid="transport-needs-list">
+    <div className="grid min-w-0 gap-3" data-testid="transport-needs-list">
       {needs.isLoading && <p className="text-sm">Chargement…</p>}
       {!needs.isLoading && (needs.data?.length ?? 0) === 0 && (
         <div className="grid gap-1 text-sm text-slate-600">
@@ -44,13 +44,13 @@ export function TransportNeedsList({ day }: { day?: number } = {}) {
       {Array.from(grouped.entries())
         .sort((a, b) => a[0] - b[0])
         .map(([d, list]) => (
-          <section key={d} className="grid gap-1" data-day={d}>
+          <section key={d} className="grid min-w-0 gap-1" data-day={d}>
             <h3 className="text-sm font-semibold">Jour {d}</h3>
-            <ul className="divide-y divide-slate-200 rounded-md border border-slate-200">
+            <ul className="min-w-0 divide-y divide-slate-200 rounded-md border border-slate-200">
               {list.map((n, idx) => (
                 <li
                   key={`${n.volunteer_id}-${n.from_vs}-${n.to_vs}-${idx}`}
-                  className="flex items-center justify-between gap-2 p-3"
+                  className="grid min-w-0 gap-2 p-3"
                   data-need={`${n.volunteer_id}-${n.from_vs}-${n.to_vs}`}
                 >
                   <div className="min-w-0">
@@ -61,6 +61,7 @@ export function TransportNeedsList({ day }: { day?: number } = {}) {
                   </div>
                   <Button
                     size="sm"
+                    className="justify-self-start"
                     onClick={() => {
                       const params = new URLSearchParams({
                         day: String(n.day),
