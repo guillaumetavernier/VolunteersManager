@@ -59,6 +59,49 @@ func TestComputeTransportNeeds_FiltersOverlappingMissions(t *testing.T) {
 	}
 }
 
+func TestComputeTransportNeeds_KeepsBackToBackLegs(t *testing.T) {
+	// Back-to-back missions (prev ends at the exact instant cur starts) are
+	// not a double-booking — the volunteer still needs travel time between
+	// the two VS, so the leg must remain in the Besoins list.
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "test.db"))
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+	if err := s.Migrate(); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+
+	resA, _ := s.DB.Exec(`INSERT INTO vs (name, lat, lon) VALUES ('A', 48.0, 2.0)`)
+	resB, _ := s.DB.Exec(`INSERT INTO vs (name, lat, lon) VALUES ('B', 48.1, 2.1)`)
+	aID, _ := resA.LastInsertId()
+	bID, _ := resB.LastInsertId()
+	resV, _ := s.DB.Exec(`INSERT INTO volunteers (first_name, last_name, phone) VALUES ('Léa','Test','+33611111111')`)
+	volID, _ := resV.LastInsertId()
+	mA, _ := s.DB.Exec(`INSERT INTO missions (vs_id, day, start_time, end_time, role_type, headcount) VALUES (?, 1, '2026-06-01T08:00', '2026-06-01T09:00', 'R', 1)`, aID)
+	mB, _ := s.DB.Exec(`INSERT INTO missions (vs_id, day, start_time, end_time, role_type, headcount) VALUES (?, 1, '2026-06-01T09:00', '2026-06-01T10:00', 'R', 1)`, bID)
+	mAID, _ := mA.LastInsertId()
+	mBID, _ := mB.LastInsertId()
+	_, _ = s.DB.Exec(`INSERT INTO assignments (volunteer_id, mission_id) VALUES (?, ?)`, volID, mAID)
+	_, _ = s.DB.Exec(`INSERT INTO assignments (volunteer_id, mission_id) VALUES (?, ?)`, volID, mBID)
+
+	h := NewHandler(NewStore(s.DB), s.DB)
+	router := chi.NewRouter()
+	h.Mount(router)
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/api/transport-needs?day=1", nil)
+	router.ServeHTTP(rr, req)
+	if rr.Code != 200 {
+		t.Fatalf("status = %d, body = %s", rr.Code, rr.Body.String())
+	}
+	body := rr.Body.String()
+	if body == "[]" || body == "[]\n" {
+		t.Fatalf("expected one transport need (back-to-back legs keep the gap), got empty")
+	}
+}
+
 func TestComputeTransportNeeds_KeepsActionableLegs(t *testing.T) {
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))

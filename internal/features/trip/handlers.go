@@ -226,15 +226,15 @@ func (h *Handler) computeTransportNeeds(day *int) ([]TransportNeed, error) {
 			if prev.vsID == cur.vsID {
 				continue
 			}
-			// Overlapping missions (prev ends after cur starts) are a
-			// double-booking, which the constraint engine surfaces under
+			// Overlapping missions (prev ends STRICTLY after cur starts) are
+			// a double-booking, which the constraint engine surfaces under
 			// KindDoubleBooking. Skipping them here keeps the Besoins list
 			// to actionable transport gaps — physically impossible legs are
-			// not transport problems. Compare the raw ISO strings: they share
-			// a fixed YYYY-MM-DDTHH:MM format so lexicographic order matches
-			// chronological order, and unlike parseHM it also handles legs
-			// that cross calendar days.
-			if prev.endTime >= cur.startTime {
+			// not transport problems. Back-to-back (prev.end == cur.start)
+			// is still a real need: the volunteer needs travel time to get
+			// between the two VS, so we leave it in. Compare raw ISO strings
+			// since YYYY-MM-DDTHH:MM is fixed-width zero-padded.
+			if prev.endTime > cur.startTime {
 				continue
 			}
 			if covered[legKey{vol: volID, from: prev.vsID, to: cur.vsID}] {
