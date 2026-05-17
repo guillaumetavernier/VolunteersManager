@@ -58,7 +58,7 @@ export function RaceDetail({ raceID, onBack }: Props) {
 
 function Inner({ race, raceID }: { race: Race; raceID: number }) {
   return (
-    <div className="grid min-w-0 gap-4 p-3">
+    <div className="grid min-w-0 gap-3 p-3">
       <RaceForm race={race} />
       <GPXSection raceID={raceID} />
       <VSListSection raceID={raceID} />
@@ -98,27 +98,26 @@ function RaceForm({ race }: { race: Race }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mb-8 grid gap-4 rounded-md border border-slate-200 p-4">
+    <form onSubmit={onSubmit} className="grid min-w-0 gap-3 rounded-md border border-slate-200 p-3">
       <h2 className="text-lg font-semibold">Paramètres de la course</h2>
-      <div className="grid grid-cols-2 gap-4">
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium">Nom</span>
+      <label className="grid min-w-0 gap-1 text-sm">
+        <span className="font-medium">Nom</span>
+        <div className="flex min-w-0 items-center gap-2">
           <Input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
-        </label>
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium">Couleur</span>
-          <Input
+          <input
             type="color"
+            aria-label="Couleur"
             value={form.color}
             onChange={(e) => setForm({ ...form, color: e.target.value })}
+            className="h-10 w-10 shrink-0 cursor-pointer rounded-md border border-input bg-background p-1"
           />
-        </label>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <label className="grid gap-1 text-sm">
+        </div>
+      </label>
+      <div className="grid min-w-0 grid-cols-2 gap-3">
+        <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Allure tête (km/h)</span>
           <Input
             type="number"
@@ -127,7 +126,7 @@ function RaceForm({ race }: { race: Race }) {
             onChange={(e) => setForm({ ...form, front_pace: Number(e.target.value) })}
           />
         </label>
-        <label className="grid gap-1 text-sm">
+        <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Allure queue (km/h)</span>
           <Input
             type="number"
@@ -136,20 +135,20 @@ function RaceForm({ race }: { race: Race }) {
             onChange={(e) => setForm({ ...form, tail_pace: Number(e.target.value) })}
           />
         </label>
-        <label className="col-span-2 grid gap-1 text-sm">
-          <span className="font-medium">Heure de départ</span>
-          <Input
-            type="datetime-local"
-            value={form.start_time.slice(0, 16)}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                start_time: e.target.value ? new Date(e.target.value).toISOString() : "",
-              })
-            }
-          />
-        </label>
       </div>
+      <label className="grid min-w-0 gap-1 text-sm">
+        <span className="font-medium">Heure de départ</span>
+        <Input
+          type="datetime-local"
+          value={form.start_time.slice(0, 16)}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              start_time: e.target.value ? new Date(e.target.value).toISOString() : "",
+            })
+          }
+        />
+      </label>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={patch.isPending}>
           Enregistrer
@@ -179,7 +178,7 @@ function GPXSection({ raceID }: { raceID: number }) {
   }
 
   return (
-    <section className="mb-8 grid gap-3 rounded-md border border-slate-200 p-4">
+    <section className="grid min-w-0 gap-3 rounded-md border border-slate-200 p-3">
       <h2 className="text-lg font-semibold">Fichiers GPX</h2>
       <div className="flex flex-wrap items-center gap-2">
         <input
@@ -260,7 +259,7 @@ function VSListSection({ raceID }: { raceID: number }) {
   const candidates = (allVS.data ?? []).filter((v) => !data.find((e) => e.vs_id === v.id));
 
   return (
-    <section className="grid gap-3 rounded-md border border-slate-200 p-4">
+    <section className="grid min-w-0 gap-3 rounded-md border border-slate-200 p-3">
       <h2 className="text-lg font-semibold">Points bénévoles le long de la course</h2>
       {data.length === 0 && (
         <p className="text-sm text-slate-500">Aucun PB pour l'instant. Ajoutez-en un via le sélecteur ci-dessous.</p>
@@ -326,7 +325,7 @@ function SortableRow({
     <li
       ref={setNodeRef}
       style={style}
-      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-slate-200 bg-white p-3"
+      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-slate-200 bg-white p-2"
     >
       <button
         {...attributes}
@@ -336,8 +335,8 @@ function SortableRow({
       >
         ⋮⋮
       </button>
-      <div className="grid gap-1">
-        <div className="font-medium">
+      <div className="grid min-w-0 gap-1">
+        <div className="min-w-0 truncate font-medium">
           #{entry.sequence + 1} · {vsName}
           {entry.projected_dist_m != null && (
             <span className="ml-2 text-xs text-slate-500">
@@ -384,27 +383,25 @@ function TimeEditor({
 }) {
   const effective = manual ?? auto;
   return (
-    <div className="grid gap-1">
+    <div className="grid min-w-0 gap-1">
       <span className="text-slate-500">
         {label} {manual ? "(manuel)" : "(auto)"}
       </span>
-      <div className="flex items-center gap-1">
-        <Input
-          className="text-xs"
-          type="datetime-local"
-          value={effective ? effective.slice(0, 16) : ""}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (!v) return;
-            onSet(new Date(v).toISOString());
-          }}
-        />
-        {manual && (
-          <button onClick={onClear} className="text-xs text-slate-500 underline">
-            réinitialiser
-          </button>
-        )}
-      </div>
+      <Input
+        className="text-xs"
+        type="datetime-local"
+        value={effective ? effective.slice(0, 16) : ""}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (!v) return;
+          onSet(new Date(v).toISOString());
+        }}
+      />
+      {manual && (
+        <button onClick={onClear} className="justify-self-start text-xs text-slate-500 underline">
+          réinitialiser
+        </button>
+      )}
     </div>
   );
 }

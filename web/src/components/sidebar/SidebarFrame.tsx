@@ -31,7 +31,7 @@ export function SidebarFrame({ title, onBack, actions, children, testid }: Props
         <h2 className="flex-1 truncate text-sm font-semibold text-slate-700">{title}</h2>
         {actions}
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">{children}</div>
     </section>
   );
 }
