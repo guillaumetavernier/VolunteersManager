@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { composeISO, dateForDay, dayCount, extractHHMM } from "../eventcal";
+import { composeISO, dateForDay, dayCount, dayForDate, extractHHMM } from "../eventcal";
 
 const ev = { start_date: "2026-06-01", end_date: "2026-06-03" };
 
@@ -39,5 +39,22 @@ describe("eventcal", () => {
 
   it("dayCount handles malformed dates by returning 1", () => {
     expect(dayCount({ start_date: "garbage", end_date: "2026-06-02" })).toBe(1);
+  });
+
+  it("dayForDate is the inverse of dateForDay", () => {
+    expect(dayForDate(ev, "2026-06-01")).toBe(1);
+    expect(dayForDate(ev, "2026-06-02T08:30")).toBe(2);
+    expect(dayForDate(ev, "2026-06-03T18:00:00")).toBe(3);
+  });
+
+  it("dayForDate accepts dates outside the event window", () => {
+    expect(dayForDate(ev, "2026-05-31")).toBe(0);
+    expect(dayForDate(ev, "2026-06-04")).toBe(4);
+  });
+
+  it("dayForDate returns null on garbage", () => {
+    expect(dayForDate(ev, "")).toBe(null);
+    expect(dayForDate(ev, null)).toBe(null);
+    expect(dayForDate(ev, "not-a-date")).toBe(null);
   });
 });

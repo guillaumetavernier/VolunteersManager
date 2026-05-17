@@ -26,6 +26,21 @@ export function dateForDay(
   return d.toISOString().slice(0, 10);
 }
 
+// dayForDate is the inverse of dateForDay: given a "YYYY-MM-DD" (or a longer
+// ISO string), return the 1-indexed day index relative to the event start.
+// Returns null if the input can't be parsed or falls outside the event range.
+export function dayForDate(
+  event: Pick<Event, "start_date">,
+  iso: string | null | undefined,
+): number | null {
+  if (!iso) return null;
+  const s = parseDate(event.start_date);
+  const d = parseDate(iso);
+  if (s == null || d == null) return null;
+  const diff = Math.round((d - s) / 86_400_000);
+  return diff + 1;
+}
+
 // composeISO builds "YYYY-MM-DDTHH:MM" from a day index + HH:MM.
 export function composeISO(
   event: Pick<Event, "start_date">,
