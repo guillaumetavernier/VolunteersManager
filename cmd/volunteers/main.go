@@ -40,8 +40,8 @@ func run() error {
 		dataDir       = flag.String("data-dir", ".", "directory containing event.db, tiles/ and assets/")
 		offlineTiles  = flag.String("offline-tiles", "", "if set, use this directory for .pmtiles instead of <data-dir>/tiles")
 		tileBaseURL   = flag.String("tile-base-url", "https://build.protomaps.com", "upstream prefix used by POST /api/tiles/download")
-		tileMode      = flag.String("tile-mode", "auto", "tile source policy: auto|pmtiles|online (auto picks pmtiles if any are on disk, else online if --protomaps-api-key is set, else pmtiles with a missing-tiles badge)")
-		protomapsKey  = flag.String("protomaps-api-key", "", "Protomaps API key for online tile mode; required when --tile-mode=online")
+		tileMode      = flag.String("tile-mode", envDefault("VM_TILE_MODE", "auto"), "tile source policy: auto|pmtiles|online (default $VM_TILE_MODE or auto)")
+		protomapsKey  = flag.String("protomaps-api-key", os.Getenv("PROTOMAPS_API_KEY"), "Protomaps API key for online tile mode (default $PROTOMAPS_API_KEY)")
 		logLevel      = flag.String("log-level", "info", "log level: debug|info|warn|error")
 		frontendProxy = flag.String("frontend-proxy", "", "if set, proxy non-API requests to this URL (dev only)")
 		openBrowser   = flag.Bool("open", true, "open the default browser on startup")
@@ -203,6 +203,18 @@ func backupEnabled(dbPath string) (bool, error) {
 		return false, nil
 	}
 	return b.Daily, nil
+}
+
+// envDefault returns the value of the env var if non-empty, otherwise the
+// fallback. Used as a flag default so users can ship secrets / config via
+// systemd EnvironmentFile or .env files without exposing them in `ps`
+// output or the unit's ExecStart line. A flag value on the command line
+// still overrides because flag.Parse runs after this.
+func envDefault(name, fallback string) string {
+	if v := os.Getenv(name); v != "" {
+		return v
+	}
+	return fallback
 }
 
 func openURL(logger *slog.Logger, url string) {
