@@ -180,20 +180,22 @@ function GPXSection({ raceID }: { raceID: number }) {
   return (
     <section className="grid min-w-0 gap-3 rounded-md border border-slate-200 p-3">
       <h2 className="text-lg font-semibold">Fichiers GPX</h2>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="grid min-w-0 gap-2">
         <input
           ref={fileRef}
           type="file"
           accept=".gpx,application/gpx+xml,application/xml"
-          className="min-w-0 max-w-full text-sm"
+          className="block w-full text-sm"
         />
-        <label className="flex items-center text-sm text-slate-600">
-          Jour&nbsp;
-          <Input className="w-16" type="number" min={1} value={day} onChange={(e) => setDay(e.target.value)} />
-        </label>
-        <Button onClick={onUpload} size="sm" disabled={upload.isPending}>
-          {upload.isPending ? "Envoi…" : "Téléverser"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center text-sm text-slate-600">
+            Jour&nbsp;
+            <Input className="w-16" type="number" min={1} value={day} onChange={(e) => setDay(e.target.value)} />
+          </label>
+          <Button onClick={onUpload} size="sm" disabled={upload.isPending}>
+            {upload.isPending ? "Envoi…" : "Téléverser"}
+          </Button>
+        </div>
         {upload.isError && (
           <span role="alert" className="text-sm text-red-600">
             {(upload.error as Error).message}
