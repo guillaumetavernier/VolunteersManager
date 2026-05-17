@@ -1,22 +1,24 @@
 import { ArchivePage } from "@/features/archive/ArchivePage";
 import { BackupSettingsPage } from "@/features/archive/BackupSettingsPage";
+import { EventSettingsPage } from "@/features/event/EventSettingsPage";
 import { RoadbookSettingsPage } from "@/features/roadbook/RoadbookSettingsPage";
 import { navigate, useRoute } from "@/lib/router";
 
-type Tab = "roadbook" | "donnees";
+type Tab = "evenement" | "roadbook" | "donnees";
 
 function readTab(path: string): Tab {
   const q = path.split("?")[1];
-  if (!q) return "roadbook";
+  if (!q) return "evenement";
   const v = new URLSearchParams(q).get("tab");
-  return v === "donnees" ? "donnees" : "roadbook";
+  if (v === "roadbook" || v === "donnees" || v === "evenement") return v;
+  return "evenement";
 }
 
 export function SettingsPage() {
   const route = useRoute();
   const tab = readTab(route.path);
   const setTab = (next: Tab) =>
-    navigate(next === "roadbook" ? "/parametres" : `/parametres?tab=${next}`);
+    navigate(next === "evenement" ? "/parametres" : `/parametres?tab=${next}`);
   return (
     <div className="mx-auto flex h-full w-full max-w-5xl flex-col" data-testid="settings-page">
       <nav
@@ -24,6 +26,13 @@ export function SettingsPage() {
         role="tablist"
         aria-label="Paramètres"
       >
+        <TabBtn
+          active={tab === "evenement"}
+          onClick={() => setTab("evenement")}
+          testid="settings-tab-evenement"
+        >
+          Événement
+        </TabBtn>
         <TabBtn
           active={tab === "roadbook"}
           onClick={() => setTab("roadbook")}
@@ -40,7 +49,13 @@ export function SettingsPage() {
         </TabBtn>
       </nav>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {tab === "roadbook" ? <RoadbookSettingsPage /> : <DonneesPanel />}
+        {tab === "evenement" ? (
+          <EventSettingsPage />
+        ) : tab === "roadbook" ? (
+          <RoadbookSettingsPage />
+        ) : (
+          <DonneesPanel />
+        )}
       </div>
     </div>
   );

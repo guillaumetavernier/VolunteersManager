@@ -52,6 +52,33 @@ export function useTilesList(enabled = true) {
   });
 }
 
+export function useUpdateEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      event,
+      patch,
+    }: {
+      event: Event;
+      patch: Partial<Pick<EventInput, "name" | "start_date" | "end_date" | "coordinator_name" | "coordinator_phone">>;
+    }) => {
+      return putEvent({
+        name: patch.name ?? event.name,
+        start_date: patch.start_date ?? event.start_date,
+        end_date: patch.end_date ?? event.end_date,
+        timezone: event.timezone,
+        country_code: event.country_code,
+        settings: event.settings,
+        coordinator_name: patch.coordinator_name ?? event.coordinator_name,
+        coordinator_phone: patch.coordinator_phone ?? event.coordinator_phone,
+      });
+    },
+    onSuccess: (ev) => {
+      qc.setQueryData(eventQueryKey, ev);
+    },
+  });
+}
+
 export function useAdoptRegion() {
   const qc = useQueryClient();
   return useMutation({

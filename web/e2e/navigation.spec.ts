@@ -135,10 +135,18 @@ test("layers control popover toggles and flips race-line visibility", async ({
   await expect(page.getByTestId("layers-control-popover")).toHaveCount(0);
 });
 
-test("/#/parametres has Roadbook and Données tabs with merged content", async ({ page }) => {
+test("/#/parametres exposes Événement, Roadbook and Données tabs", async ({ page }) => {
   await page.goto("/#/parametres");
+  await expect(page.getByTestId("settings-tab-evenement")).toBeVisible();
   await expect(page.getByTestId("settings-tab-roadbook")).toBeVisible();
   await expect(page.getByTestId("settings-tab-donnees")).toBeVisible();
+  // Default tab is Événement.
+  await expect(page.getByTestId("settings-tab-evenement")).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.getByTestId("event-settings")).toBeVisible();
+
   await page.getByTestId("settings-tab-donnees").click();
   await expect(page).toHaveURL(/#\/parametres\?tab=donnees$/);
   await expect(page.getByTestId("backup-settings")).toBeVisible();
