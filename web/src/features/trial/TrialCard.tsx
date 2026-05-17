@@ -33,8 +33,8 @@ export function TrialCard({ trial, raceID }: Props) {
   };
 
   return (
-    <li ref={setNodeRef} style={style} className="rounded-md border border-slate-200 bg-white">
-      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 p-2">
+    <li ref={setNodeRef} style={style} className="min-w-0 rounded-md border border-slate-200 bg-white">
+      <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 p-2">
         <button
           {...attributes}
           {...listeners}
@@ -97,13 +97,13 @@ function TrialForm({ trial, raceID }: Props) {
   const currentGPX = gpx.data?.[0];
 
   return (
-    <div className="grid gap-3 border-t border-slate-100 p-3">
-      <form onSubmit={onSubmit} className="grid gap-2">
-        <label className="grid gap-1 text-sm">
+    <div className="grid min-w-0 gap-3 border-t border-slate-100 p-3">
+      <form onSubmit={onSubmit} className="grid min-w-0 gap-2">
+        <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Nom</span>
           <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </label>
-        <label className="grid gap-1 text-sm">
+        <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Heure de départ</span>
           <Input
             type="datetime-local"
@@ -116,8 +116,8 @@ function TrialForm({ trial, raceID }: Props) {
             }
           />
         </label>
-        <div className="grid grid-cols-2 gap-2">
-          <label className="grid gap-1 text-sm">
+        <div className="grid min-w-0 grid-cols-2 gap-2">
+          <label className="grid min-w-0 gap-1 text-sm">
             <span className="font-medium">Allure tête (km/h)</span>
             <Input
               type="number"
@@ -126,7 +126,7 @@ function TrialForm({ trial, raceID }: Props) {
               onChange={(e) => setForm({ ...form, front_pace: Number(e.target.value) })}
             />
           </label>
-          <label className="grid gap-1 text-sm">
+          <label className="grid min-w-0 gap-1 text-sm">
             <span className="font-medium">Allure queue (km/h)</span>
             <Input
               type="number"
@@ -136,7 +136,7 @@ function TrialForm({ trial, raceID }: Props) {
             />
           </label>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button type="submit" size="sm" disabled={patch.isPending}>
             Enregistrer
           </Button>
@@ -152,19 +152,19 @@ function TrialForm({ trial, raceID }: Props) {
         </div>
       </form>
 
-      <section className="grid gap-2">
+      <section className="grid min-w-0 gap-2">
         <h4 className="text-sm font-medium">Fichier GPX</h4>
         {currentGPX ? (
-          <div className="flex items-center gap-2 text-sm">
-            <code className="min-w-0 truncate text-xs text-slate-600">
+          <div className="flex min-w-0 items-center gap-2 text-sm">
+            <code className="min-w-0 flex-1 truncate text-xs text-slate-600">
               {currentGPX.file_path.split("/").pop()}
             </code>
-            <span className="text-xs text-slate-500">
+            <span className="shrink-0 text-xs text-slate-500">
               {(currentGPX.total_distance_m / 1000).toFixed(2)} km
             </span>
             <button
               onClick={() => delGPX.mutate(currentGPX.id)}
-              className="ml-auto shrink-0 text-xs text-red-700 hover:underline"
+              className="shrink-0 text-xs text-red-700 hover:underline"
             >
               Supprimer
             </button>
@@ -173,12 +173,12 @@ function TrialForm({ trial, raceID }: Props) {
           <p className="text-xs text-slate-500">Aucun GPX pour cette épreuve.</p>
         )}
         {!currentGPX && (
-          <div className="grid gap-2">
+          <div className="grid min-w-0 gap-2">
             <input
               ref={fileRef}
               type="file"
               accept=".gpx,application/gpx+xml,application/xml"
-              className="block w-full text-sm"
+              className="block w-full min-w-0 text-sm"
             />
             <Button size="sm" onClick={onUpload} disabled={upload.isPending} className="justify-self-start">
               {upload.isPending ? "Envoi…" : "Téléverser GPX"}
@@ -204,9 +204,9 @@ function TrialVSChips({ trialID, raceID }: { trialID: number; raceID: number }) 
   }
 
   return (
-    <section className="grid gap-1">
+    <section className="grid min-w-0 gap-1">
       <h4 className="text-sm font-medium">Points bénévoles</h4>
-      <ul className="grid gap-1">
+      <ul className="grid min-w-0 gap-1">
         {trialVS.data.map((tv) => (
           <TrialVSChip key={tv.id} tv={tv} vsName={vsById.get(tv.vs_id)?.name ?? `PB ${tv.vs_id}`} onPut={putTV.mutate} />
         ))}
@@ -251,19 +251,19 @@ function TrialVSChip({
         : "bg-red-100 text-red-700";
 
   return (
-    <li className="flex items-center gap-2 rounded border border-slate-100 bg-slate-50 px-2 py-1 text-xs">
+    <li className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded border border-slate-100 bg-slate-50 px-2 py-1 text-xs">
       <span className="min-w-0 flex-1 truncate font-medium">{vsName}</span>
       {tv.dist_in_trial_m != null && (
-        <span className="text-slate-400">km {(tv.dist_in_trial_m / 1000).toFixed(2)}</span>
+        <span className="shrink-0 text-slate-400">km {(tv.dist_in_trial_m / 1000).toFixed(2)}</span>
       )}
       {effFirst && (
-        <span className="text-slate-500">{effFirst.slice(11, 16)}</span>
+        <span className="shrink-0 text-slate-500">{effFirst.slice(11, 16)}</span>
       )}
       {effLast && effLast !== effFirst && (
-        <span className="text-slate-400">→ {effLast.slice(11, 16)}</span>
+        <span className="shrink-0 text-slate-400">→ {effLast.slice(11, 16)}</span>
       )}
       <button
-        className={`rounded px-1 py-0.5 text-xs font-medium ${srcColor}`}
+        className={`shrink-0 rounded px-1 py-0.5 text-xs font-medium ${srcColor}`}
         onClick={() => onPut({ id: tv.id, patch: { source: nextSource(tv.source) } })}
         title={`Source: ${tv.source} — cliquer pour basculer`}
       >

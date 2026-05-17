@@ -135,7 +135,7 @@ function TrialsSection({ raceID }: { raceID: number }) {
       )}
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <SortableContext items={data.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-          <ul className="grid gap-2">
+          <ul className="grid min-w-0 gap-2">
             {data.map((tr) => (
               <TrialCard key={tr.id} trial={tr} raceID={raceID} />
             ))}
