@@ -47,9 +47,13 @@ export function TimelineControls({ data }: Props) {
     };
   }, [tick]);
 
-  // Initialize cursor to event start once data lands.
+  // Initialize cursor to the window start once data lands; also re-seek if the
+  // cursor is sitting before the window (e.g. after the window expands to
+  // include race data that loaded after the event row).
   useEffect(() => {
-    if (cursor === 0 && data.startMs > 0) seek(data.startMs);
+    if (data.startMs > 0 && (cursor === 0 || cursor < data.startMs)) {
+      seek(data.startMs);
+    }
   }, [data.startMs, cursor, seek]);
 
   const dayBoundaries = computeDayBoundaries(data.startMs, data.totalDays);

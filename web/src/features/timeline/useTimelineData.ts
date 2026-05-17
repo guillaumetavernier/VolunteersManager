@@ -94,14 +94,31 @@ export function useTimelineData(): TimelineData {
 
     const eventStart = ev.data?.start_date ?? "";
     const eventEnd = ev.data?.end_date ?? "";
-    const startMs = eventStart ? Date.parse(`${eventStart}T00:00:00Z`) : 0;
-    const endMs = eventEnd ? Date.parse(`${eventEnd}T23:59:59Z`) : startMs + 86_400_000;
-    const totalDays = eventStart && eventEnd
-      ? Math.max(1, Math.floor((Date.parse(eventEnd) - Date.parse(eventStart)) / 86_400_000) + 1)
-      : 1;
+    // Compute the tightest bounding window over real activity (races, missions,
+    // trips). If anything exists, the window snaps to those bounds — even when
+    // they fall outside the event window — so off-event-window data is still
+    // visible without padding the timeline with empty days. If no activity
+    // exists yet, fall back to the event window so the canvas isn't empty.
+    let dataStart = Number.POSITIVE_INFINITY;
+    let dataEnd = Number.NEGATIVE_INFINITY;
+    const considerMs = (s: string | null | undefined) => {
+      if (!s) return;
+      const t = Date.parse(s);
+      if (!Number.isFinite(t)) return;
+      if (t < dataStart) dataStart = t;
+      if (t > dataEnd) dataEnd = t;
+    };
 
     const racesArr = races.data ?? [];
     const racesById = new Map(racesArr.map((r) => [r.id, r] as const));
+    for (const r of racesArr) considerMs(r.start_time);
+    for (let i = 0; i < racesArr.length; i++) {
+      const entries = raceVSEntries[i]?.data ?? [];
+      for (const e of entries) {
+        considerMs(e.manual_first_in ?? e.auto_first_in);
+        considerMs(e.manual_last_in ?? e.auto_last_in);
+      }
+    }
     const vsArr = vs.data ?? [];
     const vsById = new Map(vsArr.map((v) => [v.id, v] as const));
     const volArr = volunteers.data ?? [];
@@ -118,6 +135,8 @@ export function useTimelineData(): TimelineData {
         missionsByVS.set(m.vs_id, bucket);
       }
       bucket.push(m);
+      considerMs(m.start_time);
+      considerMs(m.end_time);
     }
 
     const tripsArr = trips.data ?? [];
@@ -129,7 +148,24 @@ export function useTimelineData(): TimelineData {
         tripsByCar.set(t.car_id, bucket);
       }
       bucket.push(t);
+      for (const s of t.stops) considerMs(s.time);
     }
+
+    let startMs: number;
+    let endMs: number;
+    if (Number.isFinite(dataStart) && Number.isFinite(dataEnd)) {
+      // Snap to UTC-day boundaries containing the activity so day gridlines and
+      // the day picker remain aligned.
+      startMs = Math.floor(dataStart / 86_400_000) * 86_400_000;
+      endMs = (Math.floor(dataEnd / 86_400_000) + 1) * 86_400_000 - 1;
+    } else if (eventStart && eventEnd) {
+      startMs = Date.parse(`${eventStart}T00:00:00Z`);
+      endMs = Date.parse(`${eventEnd}T23:59:59Z`);
+    } else {
+      startMs = 0;
+      endMs = startMs + 86_400_000;
+    }
+    const totalDays = Math.max(1, Math.floor((endMs - startMs) / 86_400_000) + 1);
 
     // Build race timelines (flattened GPX + projected timings).
     const raceTimelines = new Map<number, RaceTimeline>();

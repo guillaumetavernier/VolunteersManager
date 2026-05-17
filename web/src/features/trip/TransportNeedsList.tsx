@@ -32,7 +32,14 @@ export function TransportNeedsList({ day }: { day?: number } = {}) {
     <div className="grid gap-3" data-testid="transport-needs-list">
       {needs.isLoading && <p className="text-sm">Chargement…</p>}
       {!needs.isLoading && (needs.data?.length ?? 0) === 0 && (
-        <p className="text-sm text-slate-600">Aucun besoin actuel.</p>
+        <div className="grid gap-1 text-sm text-slate-600">
+          <p>Aucun besoin de transport.</p>
+          <p className="text-xs text-slate-500">
+            Cette liste affiche les bénévoles affectés à deux missions consécutives
+            sur des PB différents qu&apos;aucun trajet ne couvre. Pour signaler les
+            missions en sous-effectif, voir l&apos;icône ⚠ de l&apos;en-tête.
+          </p>
+        </div>
       )}
       {Array.from(grouped.entries())
         .sort((a, b) => a[0] - b[0])
