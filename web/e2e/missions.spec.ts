@@ -47,11 +47,11 @@ test("VS missions: create 3, drag-assign, 409 on dup, grid view, cascade-delete"
     const startH = String(8 + i).padStart(2, "0");
     const endH = String(9 + i).padStart(2, "0");
     await page.locator('[data-action="add-mission"]').click();
-    await page.getByLabel("Jour", { exact: true }).fill("1");
+    await page.getByTestId("mission-day-1").click();
     await page.getByLabel("Effectif", { exact: true }).fill("1");
     await page.getByLabel("Rôle", { exact: true }).fill("Ravitaillement");
-    await page.getByLabel("Début", { exact: true }).fill(`2026-06-01T${startH}:00`);
-    await page.getByLabel("Fin", { exact: true }).fill(`2026-06-01T${endH}:00`);
+    await page.getByLabel("Début", { exact: true }).fill(`${startH}:00`);
+    await page.getByLabel("Fin", { exact: true }).fill(`${endH}:00`);
     await page.getByRole("button", { name: /créer la mission/i }).click();
     // Wait for the new card to appear; we expect at least i+1 cards.
     await expect(page.locator("[data-mission-id]")).toHaveCount(i + 1);

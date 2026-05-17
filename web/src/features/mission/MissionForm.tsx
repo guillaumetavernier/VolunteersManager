@@ -5,6 +5,8 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useEvent } from "@/features/event/hooks";
+import { composeISO, dayCount, extractHHMM } from "@/features/event/eventcal";
 import { useRoleTypes } from "@/features/volunteer/hooks";
 import { useRaces } from "@/features/race/hooks";
 import { useCreateMission, usePatchMission } from "./hooks";
@@ -33,15 +35,18 @@ interface Props {
 export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
   const roleTypes = useRoleTypes();
   const races = useRaces();
+  const event = useEvent();
   const create = useCreateMission(vsID);
   const patch = usePatchMission(existing?.id ?? 0);
+
+  const totalDays = event.data ? dayCount(event.data) : 1;
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       day: existing?.day ?? 1,
-      start_time: existing?.start_time ?? "",
-      end_time: existing?.end_time ?? "",
+      start_time: extractHHMM(existing?.start_time) || "08:00",
+      end_time: extractHHMM(existing?.end_time) || "12:00",
       role_type: existing?.role_type ?? "",
       headcount: existing?.headcount ?? 1,
       title: existing?.title ?? "",
@@ -51,10 +56,11 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
   });
 
   async function onSubmit(values: Values) {
+    if (!event.data) return;
     const payload = {
       day: values.day,
-      start_time: values.start_time,
-      end_time: values.end_time,
+      start_time: composeISO(event.data, values.day, values.start_time),
+      end_time: composeISO(event.data, values.day, values.end_time),
       role_type: values.role_type,
       headcount: values.headcount,
       title: values.title || null,
@@ -71,10 +77,37 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="grid min-w-0 gap-3 rounded-md border border-slate-200 p-3 text-sm" data-mission-form>
-      <div className="grid grid-cols-3 gap-2">
-        <Field label="Jour" error={form.formState.errors.day?.message}>
-          <Input className="w-full min-w-0" type="number" min={1} {...form.register("day")} aria-label="Jour" />
-        </Field>
+      <Field label="Jour" error={form.formState.errors.day?.message}>
+        <Controller
+          name="day"
+          control={form.control}
+          render={({ field }) => (
+            <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Jour">
+              {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => {
+                const active = field.value === d;
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    data-testid={`mission-day-${d}`}
+                    onClick={() => field.onChange(d)}
+                    className={`rounded-md border px-3 py-1 text-xs font-medium ${
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    J{d}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        />
+      </Field>
+      <div className="grid grid-cols-2 gap-2">
         <Field label="Effectif" error={form.formState.errors.headcount?.message}>
           <Input className="w-full min-w-0" type="number" min={1} {...form.register("headcount")} aria-label="Effectif" />
         </Field>
@@ -94,10 +127,10 @@ export function MissionForm({ vsID, existing, onSaved, onCancel }: Props) {
       </div>
       <div className="grid grid-cols-2 gap-2">
         <Field label="Début" error={form.formState.errors.start_time?.message}>
-          <Input className="w-full min-w-0" type="datetime-local" {...form.register("start_time")} aria-label="Début" />
+          <Input className="w-full min-w-0" type="time" {...form.register("start_time")} aria-label="Début" />
         </Field>
         <Field label="Fin" error={form.formState.errors.end_time?.message}>
-          <Input className="w-full min-w-0" type="datetime-local" {...form.register("end_time")} aria-label="Fin" />
+          <Input className="w-full min-w-0" type="time" {...form.register("end_time")} aria-label="Fin" />
         </Field>
       </div>
       <Field label="Titre">
