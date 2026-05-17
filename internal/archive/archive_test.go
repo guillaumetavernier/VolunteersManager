@@ -40,12 +40,12 @@ func seedFixture(t *testing.T, db *sql.DB, assetsDir string) {
 		(2, 'VS Beta',  45.2, 6.2, NULL)`); err != nil {
 		t.Fatalf("seed vs: %v", err)
 	}
-	if _, err := db.Exec(`INSERT INTO races (id, name, color, front_pace, tail_pace, start_time) VALUES
-		(1, '80K', '#ff0000', 12, 5, '2026-06-01T06:00:00Z')`); err != nil {
+	if _, err := db.Exec(`INSERT INTO races (id, name, color) VALUES
+		(1, '80K', '#ff0000')`); err != nil {
 		t.Fatalf("seed races: %v", err)
 	}
-	if _, err := db.Exec(`INSERT INTO gpx_files (id, race_id, day, file_path, points, total_distance_m) VALUES
-		(1, 1, 1, '/assets/gpx/1/deadbeef.gpx', '[[45.1,6.1,1000],[45.2,6.2,1200]]', 12345.6)`); err != nil {
+	if _, err := db.Exec(`INSERT INTO gpx_files (id, race_id, file_path, points, total_distance_m) VALUES
+		(1, 1, '/assets/gpx/1/deadbeef.gpx', '[[45.1,6.1,1000],[45.2,6.2,1200]]', 12345.6)`); err != nil {
 		t.Fatalf("seed gpx_files: %v", err)
 	}
 	if _, err := db.Exec(`INSERT INTO volunteers (id, first_name, last_name, phone) VALUES

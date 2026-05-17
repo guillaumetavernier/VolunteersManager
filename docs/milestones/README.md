@@ -19,6 +19,7 @@ The ordering reflects the layer-cake decision (foundation first, then geometry, 
 | [08](./08-roadbook.md) | **Roadbook** | maroto v2 PDFs, master document, golden-file determinism (mini-map is conditional — see M08 risks) |
 | [09](./09-archive-polish.md) | **Archive + polish** | Event zip export/import, daily auto-backup, performance pass, release pipeline |
 | [10](./10-navigation-rework.md) | **Navigation rework** | Map-is-home toolbar (VS / Trajets / Chronologie / Courses) + clean header pages; deletes `MapDrawer` / `PbEditPanel` / `MissionsPanel` and 10+ legacy routes |
+| [11](./11-trials.md) | **Épreuves (Trials)** | Ordered trials per race with own start_time/paces/GPX; `race_trial_vs` timing table; dwell-at-PB envelope propagation; timeline badge strip |
 
 ## Conventions
 

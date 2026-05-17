@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -82,74 +81,52 @@ func TestRaceVS_ReplaceTriggersRecomputeAndOrdersBySequence(t *testing.T) {
 	}
 }
 
-func TestRaceVS_ReplacePreservesManualOverrides(t *testing.T) {
+func TestRaceVS_ReplaceReturnsAggregatedTiming(t *testing.T) {
 	r, db, _ := setupRig(t)
-	// Seed an entry with a manual override.
-	if _, err := db.Exec(`INSERT INTO race_vs_entries (race_id, vs_id, sequence, manual_first_in) VALUES (1, 1, 0, '2026-06-01T07:00:00Z')`); err != nil {
+
+	// Seed a trial with known timing data.
+	if _, err := db.Exec(`INSERT INTO trials (race_id, sequence, name, front_pace, tail_pace) VALUES (1, 0, 'T1', 12, 6)`); err != nil {
 		t.Fatal(err)
 	}
-	// Replace order — VS 1 is now at sequence 2.
+	// Add VS 1 to race, then seed a race_trial_vs row.
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, httptest.NewRequest(http.MethodPut, "/api/races/1/vs",
-		strings.NewReader(`[{"vs_id":2,"sequence":0},{"vs_id":3,"sequence":1},{"vs_id":1,"sequence":2}]`)))
+		strings.NewReader(`[{"vs_id":1,"sequence":0}]`)))
 	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d", rec.Code)
+		t.Fatalf("replace status = %d", rec.Code)
+	}
+	if _, err := db.Exec(`INSERT INTO race_trial_vs (trial_id, vs_id, source, auto_first_in, auto_last_in) VALUES (1, 1, 'auto', '2026-06-01T06:00:00Z', '2026-06-01T07:00:00Z')`); err != nil {
+		t.Fatal(err)
+	}
+
+	// List and check aggregated timing.
+	rec = httptest.NewRecorder()
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/races/1/vs", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("list status = %d", rec.Code)
 	}
 	xs := decodeJSON[[]Entry](t, rec.Body)
-	var got *Entry
-	for i := range xs {
-		if xs[i].VSID == 1 {
-			got = &xs[i]
-		}
+	if len(xs) != 1 {
+		t.Fatalf("entries = %d, want 1", len(xs))
 	}
-	if got == nil {
-		t.Fatalf("VS 1 missing from replaced list")
+	if xs[0].EarliestFirstIn == nil || *xs[0].EarliestFirstIn != "2026-06-01T06:00:00Z" {
+		t.Fatalf("earliest_first_in = %v, want 2026-06-01T06:00:00Z", xs[0].EarliestFirstIn)
 	}
-	if got.ManualFirstIn == nil || *got.ManualFirstIn != "2026-06-01T07:00:00Z" {
-		t.Fatalf("manual_first_in not preserved: %v", got.ManualFirstIn)
+	if xs[0].LatestLastIn == nil || *xs[0].LatestLastIn != "2026-06-01T07:00:00Z" {
+		t.Fatalf("latest_last_in = %v, want 2026-06-01T07:00:00Z", xs[0].LatestLastIn)
 	}
 }
 
-func TestRaceVS_PatchSetsManualTimes(t *testing.T) {
+func TestRaceVS_PatchAndClearManualEndpointsGone(t *testing.T) {
 	r, db, _ := setupRig(t)
 	if _, err := db.Exec(`INSERT INTO race_vs_entries (race_id, vs_id, sequence) VALUES (1, 1, 0)`); err != nil {
 		t.Fatal(err)
 	}
+	// The old PATCH /api/races/{id}/vs/{vsId} endpoint is gone.
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, httptest.NewRequest(http.MethodPatch, "/api/races/1/vs/1",
 		strings.NewReader(`{"manual_first_in":"2026-06-01T07:00:00Z"}`)))
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, body=%s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusNotFound && rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("old patch endpoint returned %d, want 404 or 405", rec.Code)
 	}
-	got := decodeJSON[Entry](t, rec.Body)
-	if got.ManualFirstIn == nil || *got.ManualFirstIn != "2026-06-01T07:00:00Z" {
-		t.Fatalf("manual_first_in = %v, want set", got.ManualFirstIn)
-	}
-}
-
-func TestRaceVS_PatchUnknownEntry_404(t *testing.T) {
-	r, _, _ := setupRig(t)
-	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, httptest.NewRequest(http.MethodPatch, "/api/races/1/vs/99",
-		strings.NewReader(`{"manual_first_in":"x"}`)))
-	if rec.Code != http.StatusNotFound {
-		t.Fatalf("status = %d, want 404", rec.Code)
-	}
-}
-
-func TestRaceVS_ClearManualNullsTheField(t *testing.T) {
-	r, db, _ := setupRig(t)
-	if _, err := db.Exec(`INSERT INTO race_vs_entries (race_id, vs_id, sequence, manual_first_in) VALUES (1, 1, 0, '2026-06-01T07:00:00Z')`); err != nil {
-		t.Fatal(err)
-	}
-	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/api/races/1/vs/1/manual?first=1", nil))
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, body=%s", rec.Code, rec.Body.String())
-	}
-	got := decodeJSON[Entry](t, rec.Body)
-	if got.ManualFirstIn != nil {
-		t.Fatalf("manual_first_in = %v, want nil", got.ManualFirstIn)
-	}
-	_ = strconv.Itoa // keep import
 }

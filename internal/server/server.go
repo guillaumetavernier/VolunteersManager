@@ -21,6 +21,7 @@ import (
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/race"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/racevs"
 	roadbookfeature "github.com/guillaumetavernier/volunteersmanager/internal/features/roadbook"
+	"github.com/guillaumetavernier/volunteersmanager/internal/features/trial"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/trip"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/volunteer"
 	"github.com/guillaumetavernier/volunteersmanager/internal/features/vs"
@@ -53,9 +54,6 @@ func New(cfg Config) (http.Handler, error) {
 	var warnStore *warnings.Store
 	if cfg.DB != nil {
 		warnStore = warnings.NewStore(cfg.DB)
-		// Scope constraint middleware to the /api subtree only. Non-/api paths
-		// (SPA fallback, /tiles/*.pmtiles, /assets/vs/*) must not trigger
-		// LoadState/Compute.
 		r.Use(apiOnly(constraintMiddleware(cfg.DB, warnStore, cfg.Logger)))
 	}
 
@@ -123,6 +121,7 @@ func New(cfg Config) (http.Handler, error) {
 		}
 		raceHandler.Mount(r)
 		racevs.NewHandler(racevs.NewStore(cfg.DB), raceSvc).Mount(r)
+		trial.NewHandler(trial.NewStore(cfg.DB), raceSvc, cfg.AssetDir).Mount(r)
 
 		volStore := volunteer.NewStore(cfg.DB)
 		volHandler := volunteer.NewHandler(volStore, eventStore)
