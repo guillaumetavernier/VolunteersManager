@@ -3,8 +3,8 @@
 # --- frontend build ---------------------------------------------------------
 FROM node:22-bookworm AS frontend
 WORKDIR /src
-RUN corepack enable
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json* ./
+RUN corepack enable && corepack prepare pnpm@10.22.0 --activate
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY web/package.json web/
 RUN pnpm install --frozen-lockfile --filter ./web...
 COPY web/ web/
