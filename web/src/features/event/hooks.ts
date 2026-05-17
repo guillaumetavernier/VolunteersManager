@@ -35,16 +35,6 @@ export function useInitializeEvent() {
   });
 }
 
-export function eventRegion(ev: Event | null | undefined): string | null {
-  if (!ev?.settings) return null;
-  try {
-    const parsed = JSON.parse(ev.settings) as { region?: string };
-    return parsed.region ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export function useTilesList(enabled = true) {
   return useQuery({
     queryKey: ["tiles", "list"],
@@ -80,43 +70,6 @@ export function useUpdateEvent() {
   });
 }
 
-export function useAdoptRegion() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ event, region }: { event: Event; region: string }) => {
-      const merged = mergeRegion(event.settings, region);
-      return putEvent({
-        name: event.name,
-        start_date: event.start_date,
-        end_date: event.end_date,
-        timezone: event.timezone,
-        country_code: event.country_code,
-        settings: merged,
-        coordinator_name: event.coordinator_name,
-        coordinator_phone: event.coordinator_phone,
-      });
-    },
-    onSuccess: (ev) => {
-      qc.setQueryData(eventQueryKey, ev);
-    },
-  });
-}
-
-function mergeRegion(eventSettings: string, region: string): string {
-  let top: Record<string, unknown> = {};
-  if (eventSettings) {
-    try {
-      const parsed = JSON.parse(eventSettings);
-      if (parsed && typeof parsed === "object") {
-        top = parsed as Record<string, unknown>;
-      }
-    } catch {
-      top = {};
-    }
-  }
-  top.region = region;
-  return JSON.stringify(top);
-}
 
 export function useTileSource() {
   return useQuery<TileSourceResponse>({

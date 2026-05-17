@@ -71,7 +71,7 @@ export function EventInitWizard() {
             <Input maxLength={2} {...form.register("country_code")} />
           </Field>
         </div>
-        <Field label="Map region (for tile download)" error={form.formState.errors.region?.message}>
+        <Field label="Région cartographique (téléchargement hors-ligne)" error={form.formState.errors.region?.message}>
           <select
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             {...form.register("region")}
