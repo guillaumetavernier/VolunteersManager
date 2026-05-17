@@ -1,7 +1,7 @@
 #syntax=docker/dockerfile:1.7
 
 # --- frontend build ---------------------------------------------------------
-FROM node:20-bookworm AS frontend
+FROM node:22-bookworm AS frontend
 WORKDIR /src
 RUN corepack enable
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json* ./
