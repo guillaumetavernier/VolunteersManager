@@ -20,6 +20,7 @@ The ordering reflects the layer-cake decision (foundation first, then geometry, 
 | [09](./09-archive-polish.md) | **Archive + polish** | Event zip export/import, daily auto-backup, performance pass, release pipeline |
 | [10](./10-navigation-rework.md) | **Navigation rework** | Map-is-home toolbar (VS / Trajets / Chronologie / Courses) + clean header pages; deletes `MapDrawer` / `PbEditPanel` / `MissionsPanel` and 10+ legacy routes |
 | [11](./11-trials.md) | **Épreuves (Trials)** | Ordered trials per race with own start_time/paces/GPX; `race_trial_vs` timing table; dwell-at-PB envelope propagation; timeline badge strip |
+| [12](./12-timeline-diagnostic.md) | **Timeline diagnostic overlay + resizable gantt** | Warning borders on mission/trip-leg bars; hover tooltips; click-to-editor; mission/trip-leg selection with map echoes (VS pulse, volunteer rings, trip polylines); resizable + scrollable gantt with `Tout / Jn` day window; `space` / `←` / `→` keys |
 
 ## Conventions
 

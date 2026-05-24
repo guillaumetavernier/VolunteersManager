@@ -2,8 +2,8 @@
 
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
-**Last updated:** 2026-05-17
-**Current milestone:** **[11-trials](../docs/milestones/11-trials.md)** — completed.
+**Last updated:** 2026-05-24
+**Current milestone:** **[12-timeline-diagnostic](../docs/milestones/12-timeline-diagnostic.md)** — not started.
 
 ## Status legend
 
@@ -28,6 +28,7 @@
 | 09 | 09-archive-polish             | 🟢 completed   | All acceptance criteria pass except the deploy-time tag-push check; harness + Playwright e2e green. |
 | 10 | 10-navigation-rework          | 🟢 completed   | Map-is-home toolbar shipped; AppShell + MapWorkspace + four tool sidebars; legacy MapDrawer/PbEditPanel/MissionsPanel removed; 30 Playwright tests + 87 Vitest tests green. |
 | 11 | 11-trials                     | 🟢 completed   | All acceptance criteria pass; harness green. |
+| 12 | 12-timeline-diagnostic        | ⚪ not_started | Planned post-M11. Frontend-only: warning overlays on bars, click-to-editor, map echoes, resizable + scrollable gantt, `Tout / Jn` day window, space/←/→ keys. See HANDOFF.md. |
 
 ## Acceptance criteria — per-milestone checklist
 
@@ -177,6 +178,27 @@ When an open question gets answered, move it into the relevant milestone file an
   2. `CLAUDE.md` "Hard rules"
   3. `scripts/harness/lint_docs.py` (`FORBIDDEN_IN_MILESTONES` or a new `check_*`)
 - Adding a new milestone? Update both the table above **and** the milestone index in `docs/milestones/README.md`. The harness verifies that every milestone file is in both.
+
+### 12-timeline-diagnostic
+
+- [ ] A mission bar referenced by at least one `error`-severity warning renders with a 2 px red border. Same for `warn` (amber) and `info` (blue).
+- [ ] A trip-leg bar referenced by `capacity_exceeded` for `trip_stop` *S* shows a red border on the single leg that includes stop *S* — no border on the trip's other legs.
+- [ ] `driver_double_book` / `passenger_double_book` borders every leg of the trip.
+- [ ] A `stranded` warning renders a right-edge triangle on the *from* mission bar and a left-edge triangle on the *to* mission bar.
+- [ ] `understaffed` / `overstaffed` mission bars keep their amber/red fill; no border overlay is added.
+- [ ] `unassigned` and `missing_phone_with_assignments` warnings produce no visual change on the timeline.
+- [ ] Hovering a warned bar shows a tooltip listing each warning's localized kind label and `message`. Tooltip flips when near the right edge.
+- [ ] Clicking a mission bar opens the mission editor in the sidebar; clicking a trip-leg opens the trip editor; clicking elsewhere seeks the cursor.
+- [ ] Selecting a mission pulses the mission's VS marker and rings the assigned-volunteer dots on the map.
+- [ ] Selecting a trip-leg draws the trip polyline (selected leg thicker) and pulses from-VS / to-VS markers.
+- [ ] Dragging the handle on the gantt's top border resizes the gantt; the map absorbs the delta. Reload preserves the height.
+- [ ] Double-clicking the handle collapses the gantt to 80 px and restores on the next double-click.
+- [ ] When row content exceeds gantt height, the canvas scrolls vertically inside the container; the day-header strip stays at the top.
+- [ ] `space` toggles play unless focus is inside an input/select/textarea.
+- [ ] `←/→` step the cursor by 15 min, clamped to `[startMs, endMs]`, with the same focus guard.
+- [ ] Segmented control `Tout / J1 / Jn` constrains `timeBounds` accordingly; cursor auto-seeks to the new window start when it falls outside.
+- [ ] `pnpm test` green; Playwright `e2e/timeline-diagnostic.spec.ts` green.
+- [ ] `./scripts/harness/check.sh` green.
 
 ### 11-trials
 
