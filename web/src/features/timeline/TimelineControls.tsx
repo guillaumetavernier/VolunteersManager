@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 
 import { SPEEDS, useTimelineCursor, type Speed } from "./useTimelineCursor";
 import { useTimelineSelection } from "./useTimelineSelection";
+import { effectiveTimeBounds, useTimelineWindow } from "./useTimelineWindow";
 import type { TimelineData } from "./useTimelineData";
 
 interface Props {
@@ -22,6 +23,8 @@ export function TimelineControls({ data }: Props) {
   const setSelected = useTimelineSelection((s) => s.setSelected);
   const toggleRace = useTimelineSelection((s) => s.toggleRace);
   const isVisible = useTimelineSelection((s) => s.isVisible);
+  const window = useTimelineWindow((s) => s.window);
+  const setWindow = useTimelineWindow((s) => s.setWindow);
 
   // RAF loop — 30 fps throttle, deltas in real ms; cursor advances scaled.
   const last = useRef<number>(0);
@@ -64,11 +67,43 @@ export function TimelineControls({ data }: Props) {
     }
   }, [data.startMs, cursor, seek]);
 
-  const dayBoundaries = computeDayBoundaries(data.startMs, data.totalDays);
-  const currentDay = Math.min(
-    data.totalDays,
-    Math.max(1, Math.floor((cursor - data.startMs) / 86_400_000) + 1),
-  );
+  useEffect(() => {
+    if (data.dataStartMs <= 0) return;
+    const { startMs, endMs } = effectiveTimeBounds(window, data.dataStartMs, data.dataEndMs);
+    if (cursor < startMs || cursor > endMs) {
+      seek(startMs);
+      lastAutoSeekRef.current = startMs;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [window, data.dataStartMs, data.dataEndMs]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (document.activeElement as HTMLElement | null)?.tagName ?? "";
+      if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+      if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        toggle();
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        const next = Math.max(data.startMs, useTimelineCursor.getState().cursorTime - 15 * 60_000);
+        seek(next);
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        const next = Math.min(data.endMs, useTimelineCursor.getState().cursorTime + 15 * 60_000);
+        seek(next);
+        return;
+      }
+    };
+    globalThis.addEventListener("keydown", onKeyDown);
+    return () => globalThis.removeEventListener("keydown", onKeyDown);
+  }, [toggle, seek, data.startMs, data.endMs]);
+
+  const activeDayIndex = window.kind === "day" ? window.dayIndex : -1;
 
   return (
     <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-2 text-sm">
@@ -95,22 +130,35 @@ export function TimelineControls({ data }: Props) {
           ))}
         </select>
       </label>
-      <label className="flex items-center gap-1">
-        Jour&nbsp;:
-        <select
-          data-testid="timeline-day"
-          value={currentDay}
-          onChange={(e) => {
-            const idx = Number(e.target.value) - 1;
-            seek(dayBoundaries[idx]?.ms ?? data.startMs);
-          }}
-          className="rounded border border-slate-300 px-1 py-0.5"
+      <div className="flex items-center gap-1" role="group" aria-label="Fenêtre temporelle">
+        <button
+          type="button"
+          data-testid="timeline-window-tout"
+          onClick={() => setWindow({ kind: "all" })}
+          className={`rounded px-2 py-0.5 text-xs ${
+            window.kind === "all"
+              ? "bg-slate-900 text-white"
+              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+          }`}
         >
-          {dayBoundaries.map((d, i) => (
-            <option key={i} value={i + 1}>{`J${i + 1} — ${d.label}`}</option>
-          ))}
-        </select>
-      </label>
+          Tout
+        </button>
+        {Array.from({ length: data.totalDays }, (_, i) => (
+          <button
+            key={i}
+            type="button"
+            data-testid={`timeline-window-day-${i + 1}`}
+            onClick={() => setWindow({ kind: "day", dayIndex: i })}
+            className={`rounded px-2 py-0.5 text-xs ${
+              activeDayIndex === i
+                ? "bg-slate-900 text-white"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            {`J${i + 1}`}
+          </button>
+        ))}
+      </div>
       <span className="text-slate-500" data-testid="timeline-cursor-label">
         {new Date(cursor).toISOString().slice(0, 16).replace("T", " ")} UTC
       </span>
@@ -144,13 +192,4 @@ export function TimelineControls({ data }: Props) {
       </div>
     </div>
   );
-}
-
-function computeDayBoundaries(startMs: number, totalDays: number): Array<{ ms: number; label: string }> {
-  const out: Array<{ ms: number; label: string }> = [];
-  for (let i = 0; i < totalDays; i++) {
-    const ms = startMs + i * 86_400_000;
-    out.push({ ms, label: new Date(ms).toISOString().slice(0, 10) });
-  }
-  return out;
 }

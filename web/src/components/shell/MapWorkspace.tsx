@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Sidebar } from "./Sidebar";
 import { LayersControl } from "./LayersControl";
@@ -15,10 +15,13 @@ import { VSToolSidebar, type VSToolFrame } from "@/features/map/tools/VSToolSide
 import { usePushStack } from "@/components/sidebar/usePushStack";
 import { TimelineMap } from "@/features/timeline/TimelineMap";
 import { TimelineView } from "@/features/timeline/TimelineView";
+import { useGanttHeight } from "@/features/timeline/useGanttHeight";
 import { useTimelineData } from "@/features/timeline/useTimelineData";
 import type { VS } from "@/features/vs/api";
 import { makeDraft } from "@/features/vs/VSForm";
 import { navigate } from "@/lib/router";
+
+const HANDLE_H = 4;
 
 interface Props {
   source: TileSource;
@@ -191,6 +194,10 @@ function VSSidebarController({ sub }: { sub: MapSub | undefined }) {
 
 function ChronologieWorkspace({ source }: { source: TileSource }) {
   const data = useTimelineData();
+  const { heightPx, collapsed, setHeightPx, toggleCollapsed } = useGanttHeight();
+  const effective = collapsed ? 80 : heightPx;
+  const [contentH, setContentH] = useState(0);
+  const [scrollY, setScrollY] = useState(0);
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex min-h-0 flex-1">
@@ -209,12 +216,112 @@ function ChronologieWorkspace({ source }: { source: TileSource }) {
         </Sidebar>
       </div>
       {!data.loading && (
-        <div className="border-t border-slate-200 bg-white">
-          <div className="overflow-x-auto">
-            <TimelineView data={data} />
-          </div>
-        </div>
+        <ResizableTimelineContainer
+          heightPx={effective}
+          onResize={setHeightPx}
+          onToggleCollapse={toggleCollapsed}
+        >
+          <ScrollableArea
+            height={effective - HANDLE_H}
+            contentH={contentH}
+            onScroll={setScrollY}
+          >
+            <TimelineView
+              data={data}
+              height={effective - HANDLE_H}
+              scrollY={scrollY}
+              onContentHeightChange={setContentH}
+            />
+          </ScrollableArea>
+        </ResizableTimelineContainer>
       )}
+    </div>
+  );
+}
+
+function ResizableTimelineContainer({
+  heightPx,
+  onResize,
+  onToggleCollapse,
+  children,
+}: {
+  heightPx: number;
+  onResize: (px: number) => void;
+  onToggleCollapse: () => void;
+  children: ReactNode;
+}) {
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{ startY: number; startH: number } | null>(null);
+
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      dragRef.current = { startY: e.clientY, startH: heightPx };
+      setDragging(true);
+    },
+    [heightPx],
+  );
+
+  useEffect(() => {
+    if (!dragging) return;
+    const prevCursor = document.body.style.cursor;
+    const prevSelect = document.body.style.userSelect;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+
+    function onMove(ev: MouseEvent) {
+      const d = dragRef.current;
+      if (!d) return;
+      onResize(d.startH + (d.startY - ev.clientY));
+    }
+    function onUp() {
+      dragRef.current = null;
+      setDragging(false);
+    }
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = prevCursor;
+      document.body.style.userSelect = prevSelect;
+    };
+  }, [dragging, onResize]);
+
+  return (
+    <div
+      style={{ height: heightPx }}
+      className="flex flex-col border-t border-slate-200 bg-white"
+    >
+      <div
+        data-testid="timeline-resize-handle"
+        className="h-1 w-full cursor-row-resize bg-slate-200 hover:bg-slate-400"
+        onMouseDown={onMouseDown}
+        onDoubleClick={onToggleCollapse}
+      />
+      {children}
+    </div>
+  );
+}
+
+function ScrollableArea({
+  height,
+  contentH,
+  onScroll,
+  children,
+}: {
+  height: number;
+  contentH: number;
+  onScroll: (y: number) => void;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      data-testid="timeline-scroll"
+      className="relative"
+      style={{ height, overflow: "auto" }}
+      onScroll={(e) => onScroll(e.currentTarget.scrollTop)}
+    >
+      <div style={{ height: Math.max(height, contentH) }}>{children}</div>
     </div>
   );
 }

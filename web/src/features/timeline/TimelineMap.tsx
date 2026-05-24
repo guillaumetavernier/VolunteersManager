@@ -36,6 +36,17 @@ interface ReusableCollection {
   features: ReusableFeature[];
 }
 
+interface LineFeature {
+  type: "Feature";
+  geometry: { type: "LineString"; coordinates: number[][] };
+  properties: { leg_index: number };
+}
+
+interface LineCollection {
+  type: "FeatureCollection";
+  features: LineFeature[];
+}
+
 export function TimelineMap({ source, data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
@@ -119,7 +130,7 @@ export function TimelineMap({ source, data }: Props) {
             });
           }
           const visible = visibleRaces[r.id] ?? true;
-          const dim = selected != null && selected.raceID !== r.id;
+          const dim = selected != null && selected.kind === "race-seg" && selected.raceID !== r.id;
           map.setLayoutProperty(lid, "visibility", visible ? "visible" : "none");
           map.setPaintProperty(lid, "line-opacity", dim ? 0.15 : 1);
         }
@@ -148,7 +159,7 @@ export function TimelineMap({ source, data }: Props) {
   // Zoom to sub-race segment.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !selected) return;
+    if (!map || !selected || selected.kind !== "race-seg") return;
     const tl = data.raceTimelines.get(selected.raceID);
     if (!tl) return;
     // Find dist range for from→to VS via projected_dist_m in race-VS entries.
@@ -176,6 +187,198 @@ export function TimelineMap({ source, data }: Props) {
       map.fitBounds(bounds, { padding: 60, animate: true, duration: 600 });
     }
   }, [selected, data.raceTimelines]);
+
+  const assignedVolIDs = useMemo(() => {
+    if (!selected || selected.kind !== "mission") return null;
+    const ids: number[] = [];
+    for (const [volID, missions] of data.context.missionsByVolunteer) {
+      for (const m of missions) {
+        if (m.id === selected.missionID) {
+          ids.push(volID);
+          break;
+        }
+      }
+    }
+    return ids;
+  }, [selected, data.context.missionsByVolunteer]);
+
+  const prevTripIDRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    let raf = 0;
+
+    const pulseSrcID = "tl-vs-pulse";
+    const pulseLayerID = "tl-vs-pulse";
+    const ringLayerID = "tl-volunteers-ring";
+
+    const ensure = (): boolean => {
+      try {
+        if (!map.getSource(pulseSrcID)) {
+          map.addSource(pulseSrcID, {
+            type: "geojson",
+            data: { type: "FeatureCollection", features: [] },
+          });
+          map.addLayer({
+            id: pulseLayerID,
+            type: "circle",
+            source: pulseSrcID,
+            paint: {
+              "circle-radius": 12,
+              "circle-color": "transparent",
+              "circle-stroke-color": "#dc2626",
+              "circle-stroke-width": 3,
+            },
+          });
+        }
+        if (map.getSource("tl-volunteers") && !map.getLayer(ringLayerID)) {
+          map.addLayer({
+            id: ringLayerID,
+            type: "circle",
+            source: "tl-volunteers",
+            paint: {
+              "circle-radius": 8,
+              "circle-color": "transparent",
+              "circle-stroke-color": "#facc15",
+              "circle-stroke-width": 3,
+            },
+            filter: ["in", ["get", "id"], ["literal", []]],
+          });
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const pulseFeatures: ReusableFeature[] = [];
+    let tripPolylineID: number | null = null;
+
+    if (selected?.kind === "mission") {
+      const mission = data.missions.find((m) => m.id === selected.missionID);
+      if (mission) {
+        const vs = data.vsById.get(mission.vs_id);
+        if (vs) pulseFeatures.push(pointFeature(vs.lon, vs.lat, { vs_id: vs.id }));
+      }
+    } else if (selected?.kind === "trip-leg") {
+      const trip = data.trips.find((t) => t.id === selected.tripID);
+      if (trip && trip.stops.length >= 2 && selected.legIndex >= 0 && selected.legIndex < trip.stops.length - 1) {
+        tripPolylineID = trip.id;
+        const fromStop = trip.stops[selected.legIndex];
+        const toStop = trip.stops[selected.legIndex + 1];
+        const fromVs = data.vsById.get(fromStop.vs_id);
+        const toVs = data.vsById.get(toStop.vs_id);
+        if (fromVs) pulseFeatures.push(pointFeature(fromVs.lon, fromVs.lat, { vs_id: fromVs.id }));
+        if (toVs) pulseFeatures.push(pointFeature(toVs.lon, toVs.lat, { vs_id: toVs.id }));
+      }
+    }
+
+    const prevTripID = prevTripIDRef.current;
+    if (prevTripID != null && prevTripID !== tripPolylineID) {
+      const prevSid = `tl-trip-polyline-${prevTripID}`;
+      const prevLid = `tl-trip-polyline-${prevTripID}`;
+      if (map.getLayer(prevLid)) map.removeLayer(prevLid);
+      if (map.getSource(prevSid)) map.removeSource(prevSid);
+    }
+    prevTripIDRef.current = tripPolylineID;
+
+    const applyOnce = () => {
+      if (!ensure()) return false;
+      (map.getSource(pulseSrcID) as GeoJSONSource | undefined)?.setData({
+        type: "FeatureCollection",
+        features: pulseFeatures,
+      });
+      if (map.getLayer(ringLayerID)) {
+        const ids = assignedVolIDs ?? [];
+        map.setFilter(ringLayerID, ["in", ["get", "id"], ["literal", ids]]);
+      }
+      if (tripPolylineID != null && selected?.kind === "trip-leg") {
+        const trip = data.trips.find((t) => t.id === tripPolylineID);
+        if (trip) {
+          const sid = `tl-trip-polyline-${tripPolylineID}`;
+          const lid = `tl-trip-polyline-${tripPolylineID}`;
+          const features: LineFeature[] = [];
+          for (let i = 0; i < trip.stops.length - 1; i++) {
+            const a = data.vsById.get(trip.stops[i].vs_id);
+            const b = data.vsById.get(trip.stops[i + 1].vs_id);
+            if (!a || !b) continue;
+            features.push({
+              type: "Feature",
+              geometry: { type: "LineString", coordinates: [[a.lon, a.lat], [b.lon, b.lat]] },
+              properties: { leg_index: i },
+            });
+          }
+          const fc: LineCollection = { type: "FeatureCollection", features };
+          if (!map.getSource(sid)) {
+            map.addSource(sid, { type: "geojson", data: fc });
+            map.addLayer({
+              id: lid,
+              type: "line",
+              source: sid,
+              paint: {
+                "line-color": "#1d4ed8",
+                "line-width": [
+                  "case",
+                  ["==", ["get", "leg_index"], selected.legIndex],
+                  4,
+                  2,
+                ],
+                "line-opacity": [
+                  "case",
+                  ["==", ["get", "leg_index"], selected.legIndex],
+                  1,
+                  0.5,
+                ],
+              },
+            });
+          } else {
+            (map.getSource(sid) as GeoJSONSource).setData(fc);
+            map.setPaintProperty(lid, "line-width", [
+              "case",
+              ["==", ["get", "leg_index"], selected.legIndex],
+              4,
+              2,
+            ]);
+            map.setPaintProperty(lid, "line-opacity", [
+              "case",
+              ["==", ["get", "leg_index"], selected.legIndex],
+              1,
+              0.5,
+            ]);
+          }
+        }
+      }
+      return true;
+    };
+
+    let applied = applyOnce();
+    const onStyleData = () => {
+      if (applied) return;
+      applied = applyOnce();
+      if (applied) map.off("styledata", onStyleData);
+    };
+    if (!applied) map.on("styledata", onStyleData);
+
+    const animate = () => {
+      if (pulseFeatures.length > 0 && map.getLayer(pulseLayerID)) {
+        const now = Date.now();
+        const r = 12 + 8 * Math.abs(Math.sin(now / 600));
+        try {
+          map.setPaintProperty(pulseLayerID, "circle-radius", r);
+        } catch {
+          // style not ready yet
+        }
+      }
+      raf = requestAnimationFrame(animate);
+    };
+    if (pulseFeatures.length > 0) raf = requestAnimationFrame(animate);
+
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      map.off("styledata", onStyleData);
+    };
+  }, [selected, data, assignedVolIDs]);
 
   // Per-frame dynamic markers (runners, volunteers, cars).
   const cursorMs = useTimelineCursor((s) => s.cursorTime);
@@ -281,7 +484,7 @@ export function TimelineMap({ source, data }: Props) {
         if (!tl) continue;
         const frontSrc = map.getSource(`tl-race-front-${r.id}`) as GeoJSONSource | undefined;
         const tailSrc = map.getSource(`tl-race-tail-${r.id}`) as GeoJSONSource | undefined;
-        const on = (visibleRaces[r.id] ?? true) && (!selected || selected.raceID === r.id);
+        const on = (visibleRaces[r.id] ?? true) && (!selected || selected.kind !== "race-seg" || selected.raceID === r.id);
         if (frontSrc) {
           let entry = frontRefByRace.current.get(r.id);
           if (!entry) {

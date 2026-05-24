@@ -178,7 +178,7 @@ test("timeline renders bars, plays, scrubs, sub-race zooms, race toggle hides ba
     };
     if (w.__setCursor) w.__setCursor(Date.parse("2026-06-03T00:05:00Z"));
   });
-  // Fallback: navigate via day picker.
-  await page.getByTestId("timeline-day").selectOption("3");
+  // Fallback: navigate via segmented J3 window.
+  await page.getByTestId("timeline-window-day-3").click();
   await expect(page.getByTestId("timeline-cursor-label")).toContainText("2026-06-03");
 });

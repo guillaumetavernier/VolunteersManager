@@ -17,6 +17,8 @@ import { listTrips } from "@/features/trip/api";
 import type { Trip } from "@/features/trip/api";
 import { listAssignmentsForVolunteer } from "@/features/assignment/api";
 import { useEvent } from "@/features/event/hooks";
+import { useWarnings } from "@/features/warnings/hooks";
+import type { Warning } from "@/features/warnings/api";
 
 import type {
   CarCtx,
@@ -29,6 +31,8 @@ import type {
   VolunteerCtx,
   VsPoint,
 } from "./positions";
+import { buildWarningLookups } from "./warningLookup";
+import { effectiveTimeBounds, useTimelineWindow } from "./useTimelineWindow";
 
 export interface TrialBadge {
   id: number;
@@ -42,6 +46,8 @@ export interface TimelineData {
   loading: boolean;
   startMs: number;
   endMs: number;
+  dataStartMs: number;
+  dataEndMs: number;
   totalDays: number;
   races: Race[];
   racesById: Map<number, Race>;
@@ -56,6 +62,8 @@ export interface TimelineData {
   missionsByVS: Map<number, Mission[]>;
   trips: Trip[];
   tripsByCar: Map<number, Trip[]>;
+  warningsByMission: Map<number, Warning[]>;
+  warningsByTripLeg: Map<string, Warning[]>;
   context: PositionContext;
 }
 
@@ -70,6 +78,8 @@ export function useTimelineData(): TimelineData {
   const cars = useQuery({ queryKey: ["cars"], queryFn: listCars });
   const missions = useQuery({ queryKey: ["missions"], queryFn: () => listMissions({}) });
   const trips = useQuery({ queryKey: ["trips"], queryFn: () => listTrips() });
+  const warnings = useWarnings();
+  const window = useTimelineWindow((s) => s.window);
 
   const raceIDs = races.data?.map((r) => r.id) ?? [];
   const raceTracks = useQueries({
@@ -107,7 +117,8 @@ export function useTimelineData(): TimelineData {
       volunteers.isLoading ||
       cars.isLoading ||
       missions.isLoading ||
-      trips.isLoading;
+      trips.isLoading ||
+      warnings.isLoading;
 
     const eventStart = ev.data?.start_date ?? "";
     const eventEnd = ev.data?.end_date ?? "";
@@ -166,19 +177,20 @@ export function useTimelineData(): TimelineData {
       for (const s of t.stops) considerMs(s.time);
     }
 
-    let startMs: number;
-    let endMs: number;
+    let dataStartMs: number;
+    let dataEndMs: number;
     if (Number.isFinite(dataStart) && Number.isFinite(dataEnd)) {
-      startMs = Math.floor(dataStart / 86_400_000) * 86_400_000;
-      endMs = (Math.floor(dataEnd / 86_400_000) + 1) * 86_400_000 - 1;
+      dataStartMs = Math.floor(dataStart / 86_400_000) * 86_400_000;
+      dataEndMs = (Math.floor(dataEnd / 86_400_000) + 1) * 86_400_000 - 1;
     } else if (eventStart && eventEnd) {
-      startMs = Date.parse(`${eventStart}T00:00:00Z`);
-      endMs = Date.parse(`${eventEnd}T23:59:59Z`);
+      dataStartMs = Date.parse(`${eventStart}T00:00:00Z`);
+      dataEndMs = Date.parse(`${eventEnd}T23:59:59Z`);
     } else {
-      startMs = 0;
-      endMs = startMs + 86_400_000;
+      dataStartMs = 0;
+      dataEndMs = dataStartMs + 86_400_000;
     }
-    const totalDays = Math.max(1, Math.floor((endMs - startMs) / 86_400_000) + 1);
+    const totalDays = Math.max(1, Math.floor((dataEndMs - dataStartMs) / 86_400_000) + 1);
+    const { startMs, endMs } = effectiveTimeBounds(window, dataStartMs, dataEndMs);
 
     // Build race timelines from per-trial VS timing.
     const raceTimelines = new Map<number, RaceTimeline>();
@@ -250,10 +262,18 @@ export function useTimelineData(): TimelineData {
       carById: carCtxById,
     };
 
+    const { warningsByMission, warningsByTripLeg } = buildWarningLookups(
+      missionsArr,
+      tripsArr,
+      warnings.data ?? [],
+    );
+
     return {
       loading,
       startMs,
       endMs,
+      dataStartMs,
+      dataEndMs,
       totalDays,
       races: racesArr,
       racesById,
@@ -268,6 +288,8 @@ export function useTimelineData(): TimelineData {
       missionsByVS,
       trips: tripsArr,
       tripsByCar,
+      warningsByMission,
+      warningsByTripLeg,
       context,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -279,6 +301,8 @@ export function useTimelineData(): TimelineData {
     cars.data,
     missions.data,
     trips.data,
+    warnings.data,
+    window,
     serializeQueryData(raceTracks),
     serializeQueryData(raceVSEntries),
     serializeQueryData(raceTrials),

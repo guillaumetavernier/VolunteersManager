@@ -1,15 +1,15 @@
 import { create } from "zustand";
 
-export interface SelectedSegment {
-  raceID: number;
-  fromVsID: number;
-  toVsID: number;
-}
+export type Selection =
+  | { kind: "race-seg"; raceID: number; fromVsID: number; toVsID: number }
+  | { kind: "mission"; missionID: number }
+  | { kind: "trip-leg"; tripID: number; legIndex: number }
+  | null;
 
 interface State {
-  selected: SelectedSegment | null;
+  selected: Selection;
   visibleRaces: Record<number, boolean>;
-  setSelected(s: SelectedSegment | null): void;
+  setSelected(s: Selection): void;
   toggleRace(id: number, on?: boolean): void;
   isVisible(id: number): boolean;
 }

@@ -3,7 +3,7 @@
 > Single source of truth for **where we are in the plan**. Hand-edited by humans and agents alike. Read before any work; updated as acceptance criteria pass. The harness lint (`scripts/harness/lint_docs.py`) verifies that every milestone file is tracked here.
 
 **Last updated:** 2026-05-24
-**Current milestone:** **[12-timeline-diagnostic](../docs/milestones/12-timeline-diagnostic.md)** — not started.
+**Current milestone:** **[12-timeline-diagnostic](../docs/milestones/12-timeline-diagnostic.md)** — completed.
 
 ## Status legend
 
@@ -28,7 +28,7 @@
 | 09 | 09-archive-polish             | 🟢 completed   | All acceptance criteria pass except the deploy-time tag-push check; harness + Playwright e2e green. |
 | 10 | 10-navigation-rework          | 🟢 completed   | Map-is-home toolbar shipped; AppShell + MapWorkspace + four tool sidebars; legacy MapDrawer/PbEditPanel/MissionsPanel removed; 30 Playwright tests + 87 Vitest tests green. |
 | 11 | 11-trials                     | 🟢 completed   | All acceptance criteria pass; harness green. |
-| 12 | 12-timeline-diagnostic        | ⚪ not_started | Planned post-M11. Frontend-only: warning overlays on bars, click-to-editor, map echoes, resizable + scrollable gantt, `Tout / Jn` day window, space/←/→ keys. See HANDOFF.md. |
+| 12 | 12-timeline-diagnostic        | 🟢 completed   | Warning borders on mission/trip-leg bars; hover tooltips; click-to-editor; map echoes (VS pulse, volunteer rings, trip polylines); resizable + scrollable gantt with `Tout / Jn`; space/←/→ keys. 11 Playwright tests + 175 Vitest tests green. One minor backend enrichment: stranded warnings now include mission entity refs (2-line addition, no schema change). |
 
 ## Acceptance criteria — per-milestone checklist
 
@@ -181,24 +181,24 @@ When an open question gets answered, move it into the relevant milestone file an
 
 ### 12-timeline-diagnostic
 
-- [ ] A mission bar referenced by at least one `error`-severity warning renders with a 2 px red border. Same for `warn` (amber) and `info` (blue).
-- [ ] A trip-leg bar referenced by `capacity_exceeded` for `trip_stop` *S* shows a red border on the single leg that includes stop *S* — no border on the trip's other legs.
-- [ ] `driver_double_book` / `passenger_double_book` borders every leg of the trip.
-- [ ] A `stranded` warning renders a right-edge triangle on the *from* mission bar and a left-edge triangle on the *to* mission bar.
-- [ ] `understaffed` / `overstaffed` mission bars keep their amber/red fill; no border overlay is added.
-- [ ] `unassigned` and `missing_phone_with_assignments` warnings produce no visual change on the timeline.
-- [ ] Hovering a warned bar shows a tooltip listing each warning's localized kind label and `message`. Tooltip flips when near the right edge.
-- [ ] Clicking a mission bar opens the mission editor in the sidebar; clicking a trip-leg opens the trip editor; clicking elsewhere seeks the cursor.
-- [ ] Selecting a mission pulses the mission's VS marker and rings the assigned-volunteer dots on the map.
-- [ ] Selecting a trip-leg draws the trip polyline (selected leg thicker) and pulses from-VS / to-VS markers.
-- [ ] Dragging the handle on the gantt's top border resizes the gantt; the map absorbs the delta. Reload preserves the height.
-- [ ] Double-clicking the handle collapses the gantt to 80 px and restores on the next double-click.
-- [ ] When row content exceeds gantt height, the canvas scrolls vertically inside the container; the day-header strip stays at the top.
-- [ ] `space` toggles play unless focus is inside an input/select/textarea.
-- [ ] `←/→` step the cursor by 15 min, clamped to `[startMs, endMs]`, with the same focus guard.
-- [ ] Segmented control `Tout / J1 / Jn` constrains `timeBounds` accordingly; cursor auto-seeks to the new window start when it falls outside.
-- [ ] `pnpm test` green; Playwright `e2e/timeline-diagnostic.spec.ts` green.
-- [ ] `./scripts/harness/check.sh` green.
+- [x] A mission bar referenced by at least one `error`-severity warning renders with a 2 px red border. Same for `warn` (amber) and `info` (blue). (`drawWarningBorder` in `TimelineView.tsx`; covered by `TimelineView.draw.test.ts`.)
+- [x] A trip-leg bar referenced by `capacity_exceeded` for `trip_stop` *S* shows a red border on the single leg that includes stop *S* — no border on the trip's other legs. (`buildWarningLookups` per-leg precision via `Trip.stops[].id`; covered by `warningLookup.test.ts` and `e2e/timeline-diagnostic.spec.ts`.)
+- [x] `driver_double_book` / `passenger_double_book` borders every leg of the trip. (`warningLookup.test.ts` covers every-leg attachment.)
+- [x] A `stranded` warning renders a right-edge triangle on the *from* mission bar and a left-edge triangle on the *to* mission bar. (`buildStrandedPairs` + canvas triangle draw in `TimelineView.tsx`. Required adding `EntityMission` refs to stranded warnings in `internal/domain/constraints/stranded.go` so the frontend lookup can attach them — 2-line backend enrichment, no schema impact.)
+- [x] `understaffed` / `overstaffed` mission bars keep their amber/red fill; no border overlay is added. (Border code filters out those kinds before computing max severity; covered by `TimelineView.draw.test.ts`.)
+- [x] `unassigned` and `missing_phone_with_assignments` warnings produce no visual change on the timeline. (`buildWarningLookups` short-circuits both kinds.)
+- [x] Hovering a warned bar shows a tooltip listing each warning's localized kind label and `message`. Tooltip flips when near the right edge. (`KIND_LABEL` extracted to `web/src/features/warnings/labels.ts`; tooltip flip when `mouseX > w - TOOLTIP_W - 24`; e2e asserts FR labels.)
+- [x] Clicking a mission bar opens the mission editor in the sidebar; clicking a trip-leg opens the trip editor; clicking elsewhere seeks the cursor. (Click router navigates `/vs/{vsID}?mission={missionID}` and `/trajets/{tripID}`; e2e tests 3 + 4.)
+- [x] Selecting a mission pulses the mission's VS marker and rings the assigned-volunteer dots on the map. (`tl-vs-pulse` source + `tl-volunteers-ring` layer; e2e test 3.)
+- [x] Selecting a trip-leg draws the trip polyline (selected leg thicker) and pulses from-VS / to-VS markers. (`tl-trip-polyline-${tripID}` source/layer; e2e test 4.)
+- [x] Dragging the handle on the gantt's top border resizes the gantt; the map absorbs the delta. Reload preserves the height. (`useGanttHeight` + `ResizableTimelineContainer`; e2e test 8.)
+- [x] Double-clicking the handle collapses the gantt to 80 px and restores on the next double-click. (`useGanttHeight.toggleCollapsed`; e2e test 9.)
+- [x] When row content exceeds gantt height, the canvas scrolls vertically inside the container; the day-header strip stays at the top. (`ScrollableArea` + sticky-header redraw after body in `drawStatic`; e2e test 10.)
+- [x] `space` toggles play unless focus is inside an input/select/textarea. (`TimelineControls` keydown listener with focus guard; e2e test 5.)
+- [x] `←/→` step the cursor by 15 min, clamped to `[startMs, endMs]`, with the same focus guard. (Same handler; e2e test 6.)
+- [x] Segmented control `Tout / J1 / Jn` constrains `timeBounds` accordingly; cursor auto-seeks to the new window start when it falls outside. (`useTimelineWindow` + `effectiveTimeBounds`; e2e test 7.)
+- [x] `pnpm test` green; Playwright `e2e/timeline-diagnostic.spec.ts` green. (175 Vitest tests; 11 Playwright tests.)
+- [x] `./scripts/harness/check.sh` green.
 
 ### 11-trials
 
