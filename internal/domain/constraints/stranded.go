@@ -44,6 +44,8 @@ func stranded(_ EventState, idx *index) []Warning {
 				{Type: EntityVolunteer, ID: volID},
 				{Type: EntityAssignment, ID: prev.a.ID},
 				{Type: EntityAssignment, ID: cur.a.ID},
+				{Type: EntityMission, ID: prev.m.ID},
+				{Type: EntityMission, ID: cur.m.ID},
 			}
 			v := idx.volunteerByID[volID]
 			out = append(out, Warning{
